@@ -8,12 +8,13 @@ interface Props {
 
 export default function Layout({ children }: Props) {
   return (
-    <div className="min-h-screen flex flex-col w-full bg-[#f5f5f5]">
+    <div className="min-h-screen flex flex-col w-full bg-[#f0f0f0]">
       <Header />
-      <div className="flex flex-1 overflow-hidden" style={{ height: "calc(100vh - 60px)" }}>
+      {/* header is 22px hex band + 56px logo = 78px total */}
+      <div className="flex flex-1" style={{ height: "calc(100vh - 78px)" }}>
         <Sidebar />
-        <main className="flex-1 overflow-y-auto">
-          <div className="max-w-4xl mx-auto py-4 px-4 md:px-6">
+        <main className="flex-1 overflow-y-auto bg-[#f0f0f0]">
+          <div className="max-w-[760px] mx-auto py-4 px-4">
             {children}
           </div>
           <Footer />
