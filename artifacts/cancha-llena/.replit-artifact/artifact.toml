@@ -1,0 +1,31 @@
+kind = "web"
+previewPath = "/"
+title = "Cancha Llena"
+version = "1.0.0"
+id = "artifacts/cancha-llena"
+router = "path"
+
+[[integratedSkills]]
+name = "react-vite"
+version = "1.0.0"
+
+[[services]]
+name = "web"
+paths = [ "/" ]
+localPort = 25639
+
+[services.development]
+run = "pnpm --filter @workspace/cancha-llena run dev"
+
+[services.production]
+build = [ "pnpm", "--filter", "@workspace/cancha-llena", "run", "build" ]
+publicDir = "artifacts/cancha-llena/dist/public"
+serve = "static"
+
+[[services.production.rewrites]]
+from = "/*"
+to = "/index.html"
+
+[services.env]
+PORT = "25639"
+BASE_PATH = "/"

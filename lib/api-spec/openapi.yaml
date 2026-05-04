@@ -3,13 +3,17 @@ info:
   # Do not change the title, if the title changes, the import paths will be broken
   title: Api
   version: 0.1.0
-  description: API specification
+  description: API specification for Cancha Llena football scores app
 servers:
   - url: /api
     description: Base API path
 tags:
   - name: health
     description: Health operations
+  - name: tournaments
+    description: Tournament operations
+  - name: matches
+    description: Match operations
 paths:
   /healthz:
     get:
@@ -24,6 +28,119 @@ paths:
             application/json:
               schema:
                 $ref: "#/components/schemas/HealthStatus"
+
+  /tournaments:
+    get:
+      operationId: listTournaments
+      tags: [tournaments]
+      summary: List all tournaments grouped by category
+      responses:
+        "200":
+          description: List of tournaments grouped by category
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/TournamentsGrouped"
+
+  /tournaments/{id}:
+    get:
+      operationId: getTournament
+      tags: [tournaments]
+      summary: Get a tournament by ID
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: integer
+      responses:
+        "200":
+          description: Tournament detail
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Tournament"
+        "404":
+          description: Not found
+
+  /matches:
+    get:
+      operationId: listMatches
+      tags: [matches]
+      summary: List matches with optional filters
+      parameters:
+        - name: date
+          in: query
+          required: false
+          schema:
+            type: string
+            description: ISO date string (YYYY-MM-DD)
+        - name: status
+          in: query
+          required: false
+          schema:
+            type: string
+            enum: [upcoming, live, finished]
+        - name: tournamentId
+          in: query
+          required: false
+          schema:
+            type: integer
+      responses:
+        "200":
+          description: List of matches grouped by tournament
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/MatchesGrouped"
+
+  /matches/today:
+    get:
+      operationId: getTodayMatches
+      tags: [matches]
+      summary: Get today's matches grouped by tournament
+      responses:
+        "200":
+          description: Today's matches grouped by tournament
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/TodaySummary"
+
+  /matches/live:
+    get:
+      operationId: getLiveMatches
+      tags: [matches]
+      summary: Get all currently live matches
+      responses:
+        "200":
+          description: Live matches grouped by tournament
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/MatchesGrouped"
+
+  /matches/{id}:
+    get:
+      operationId: getMatch
+      tags: [matches]
+      summary: Get a single match by ID
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: integer
+      responses:
+        "200":
+          description: Match detail
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Match"
+        "404":
+          description: Not found
+
 components:
   schemas:
     HealthStatus:
@@ -34,3 +151,169 @@ components:
       required:
         - status
 
+    Tournament:
+      type: object
+      properties:
+        id:
+          type: integer
+        name:
+          type: string
+        slug:
+          type: string
+        category:
+          type: string
+          enum: [destacados, argentina, world]
+        logoUrl:
+          type: string
+          nullable: true
+        flagEmoji:
+          type: string
+          nullable: true
+      required:
+        - id
+        - name
+        - slug
+        - category
+
+    TournamentsGrouped:
+      type: object
+      properties:
+        destacados:
+          type: array
+          items:
+            $ref: "#/components/schemas/Tournament"
+        argentina:
+          type: array
+          items:
+            $ref: "#/components/schemas/Tournament"
+        world:
+          type: array
+          items:
+            $ref: "#/components/schemas/Tournament"
+      required:
+        - destacados
+        - argentina
+        - world
+
+    Team:
+      type: object
+      properties:
+        id:
+          type: integer
+        name:
+          type: string
+        logoUrl:
+          type: string
+          nullable: true
+        shortName:
+          type: string
+          nullable: true
+      required:
+        - id
+        - name
+
+    Match:
+      type: object
+      properties:
+        id:
+          type: integer
+        homeTeam:
+          $ref: "#/components/schemas/Team"
+        awayTeam:
+          $ref: "#/components/schemas/Team"
+        homeScore:
+          type: integer
+          nullable: true
+        awayScore:
+          type: integer
+          nullable: true
+        kickoffTime:
+          type: string
+          description: ISO datetime string
+        status:
+          type: string
+          enum: [upcoming, live, finished]
+        minute:
+          type: integer
+          nullable: true
+          description: Current match minute if live
+        tournamentId:
+          type: integer
+        tournamentName:
+          type: string
+        round:
+          type: string
+          nullable: true
+          description: e.g. "Fecha 9"
+        date:
+          type: string
+          description: ISO date string (YYYY-MM-DD)
+        broadcastChannel:
+          type: string
+          nullable: true
+      required:
+        - id
+        - homeTeam
+        - awayTeam
+        - kickoffTime
+        - status
+        - tournamentId
+        - tournamentName
+        - date
+
+    TournamentMatches:
+      type: object
+      properties:
+        tournament:
+          $ref: "#/components/schemas/Tournament"
+        round:
+          type: string
+          nullable: true
+        matches:
+          type: array
+          items:
+            $ref: "#/components/schemas/Match"
+      required:
+        - tournament
+        - matches
+
+    MatchesGrouped:
+      type: object
+      properties:
+        groups:
+          type: array
+          items:
+            $ref: "#/components/schemas/TournamentMatches"
+        totalMatches:
+          type: integer
+        liveCount:
+          type: integer
+      required:
+        - groups
+        - totalMatches
+        - liveCount
+
+    TodaySummary:
+      type: object
+      properties:
+        date:
+          type: string
+        groups:
+          type: array
+          items:
+            $ref: "#/components/schemas/TournamentMatches"
+        totalMatches:
+          type: integer
+        liveCount:
+          type: integer
+        finishedCount:
+          type: integer
+        upcomingCount:
+          type: integer
+      required:
+        - date
+        - groups
+        - totalMatches
+        - liveCount
+        - finishedCount
+        - upcomingCount
