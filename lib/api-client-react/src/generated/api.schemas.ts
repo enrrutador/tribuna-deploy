@@ -54,16 +54,12 @@ export interface Match {
   awayTeam: Team;
   homeScore?: number | null;
   awayScore?: number | null;
-  /** ISO datetime string */
   kickoffTime: string;
   status: MatchStatus;
-  /** Current match minute if live */
   minute?: number | null;
   tournamentId: number;
   tournamentName: string;
-  /** e.g. "Fecha 9" */
   round?: string | null;
-  /** ISO date string (YYYY-MM-DD) */
   date: string;
   broadcastChannel?: string | null;
 }
@@ -89,10 +85,52 @@ export interface TodaySummary {
   upcomingCount: number;
 }
 
+export interface StandingRow {
+  position: number;
+  team: Team;
+  played: number;
+  won: number;
+  drawn: number;
+  lost: number;
+  goalsFor: number;
+  goalsAgainst: number;
+  goalDifference: number;
+  points: number;
+  /** Last 5 results e.g. "WWDLW" */
+  form?: string | null;
+}
+
+export interface StandingsResponse {
+  tournament: Tournament;
+  standings: StandingRow[];
+  round?: string | null;
+}
+
+export type ScorerEntryPlayer = {
+  id: number;
+  name: string;
+  nationality?: string | null;
+};
+
+export interface ScorerEntry {
+  position: number;
+  player: ScorerEntryPlayer;
+  team: Team;
+  goals: number;
+  assists: number;
+  played: number;
+}
+
+export interface ScorersResponse {
+  tournament: Tournament;
+  scorers: ScorerEntry[];
+}
+
+export type GetTournamentFixturesParams = {
+  round?: string;
+};
+
 export type ListMatchesParams = {
-  /**
-   * ISO date string (YYYY-MM-DD)
-   */
   date?: string;
   status?: ListMatchesStatus;
   tournamentId?: number;

@@ -8,9 +8,6 @@
 import type { ListMatchesStatus } from "./listMatchesStatus";
 
 export type ListMatchesParams = {
-  /**
-   * ISO date string (YYYY-MM-DD)
-   */
   date?: string;
   status?: ListMatchesStatus;
   tournamentId?: number;

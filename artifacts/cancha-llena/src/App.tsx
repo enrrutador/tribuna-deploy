@@ -4,15 +4,30 @@ import { Toaster } from "@/components/ui/toaster";
 import { TooltipProvider } from "@/components/ui/tooltip";
 import NotFound from "@/pages/not-found";
 import Home from "@/pages/Home";
+import Tournament from "@/pages/Tournament";
+import Layout from "@/components/Layout";
 
-const queryClient = new QueryClient();
+const queryClient = new QueryClient({
+  defaultOptions: {
+    queries: {
+      staleTime: 30_000,
+      refetchInterval: (query) => {
+        // Auto-refresh live data every 30 seconds
+        return 30_000;
+      },
+    },
+  },
+});
 
 function Router() {
   return (
-    <Switch>
-      <Route path="/" component={Home} />
-      <Route component={NotFound} />
-    </Switch>
+    <Layout>
+      <Switch>
+        <Route path="/" component={Home} />
+        <Route path="/torneo/:slug" component={Tournament} />
+        <Route component={NotFound} />
+      </Switch>
+    </Layout>
   );
 }
 

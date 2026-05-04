@@ -6,12 +6,18 @@
  * OpenAPI spec version: 0.1.0
  */
 
+export * from "./getTournamentFixturesParams";
 export * from "./healthStatus";
 export * from "./listMatchesParams";
 export * from "./listMatchesStatus";
 export * from "./match";
 export * from "./matchesGrouped";
 export * from "./matchStatus";
+export * from "./scorerEntry";
+export * from "./scorerEntryPlayer";
+export * from "./scorersResponse";
+export * from "./standingRow";
+export * from "./standingsResponse";
 export * from "./team";
 export * from "./todaySummary";
 export * from "./tournament";

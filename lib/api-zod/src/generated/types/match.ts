@@ -14,16 +14,12 @@ export interface Match {
   awayTeam: Team;
   homeScore?: number | null;
   awayScore?: number | null;
-  /** ISO datetime string */
   kickoffTime: string;
   status: MatchStatus;
-  /** Current match minute if live */
   minute?: number | null;
   tournamentId: number;
   tournamentName: string;
-  /** e.g. "Fecha 9" */
   round?: string | null;
-  /** ISO date string (YYYY-MM-DD) */
   date: string;
   broadcastChannel?: string | null;
 }

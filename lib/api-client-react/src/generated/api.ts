@@ -14,10 +14,13 @@ import type {
 } from "@tanstack/react-query";
 
 import type {
+  GetTournamentFixturesParams,
   HealthStatus,
   ListMatchesParams,
   Match,
   MatchesGrouped,
+  ScorersResponse,
+  StandingsResponse,
   TodaySummary,
   Tournament,
   TournamentsGrouped,
@@ -33,7 +36,6 @@ type Awaited<O> = O extends AwaitedInput<infer T> ? T : never;
 type SecondParameter<T extends (...args: never) => unknown> = Parameters<T>[1];
 
 /**
- * Returns server health status
  * @summary Health check
  */
 export const getHealthCheckUrl = () => {
@@ -262,6 +264,387 @@ export function useGetTournament<
   },
 ): UseQueryResult<TData, TError> & { queryKey: QueryKey } {
   const queryOptions = getGetTournamentQueryOptions(id, options);
+
+  const query = useQuery(queryOptions) as UseQueryResult<TData, TError> & {
+    queryKey: QueryKey;
+  };
+
+  return { ...query, queryKey: queryOptions.queryKey };
+}
+
+/**
+ * @summary Get a tournament by slug
+ */
+export const getGetTournamentBySlugUrl = (slug: string) => {
+  return `/api/tournaments/by-slug/${slug}`;
+};
+
+export const getTournamentBySlug = async (
+  slug: string,
+  options?: RequestInit,
+): Promise<Tournament> => {
+  return customFetch<Tournament>(getGetTournamentBySlugUrl(slug), {
+    ...options,
+    method: "GET",
+  });
+};
+
+export const getGetTournamentBySlugQueryKey = (slug: string) => {
+  return [`/api/tournaments/by-slug/${slug}`] as const;
+};
+
+export const getGetTournamentBySlugQueryOptions = <
+  TData = Awaited<ReturnType<typeof getTournamentBySlug>>,
+  TError = ErrorType<void>,
+>(
+  slug: string,
+  options?: {
+    query?: UseQueryOptions<
+      Awaited<ReturnType<typeof getTournamentBySlug>>,
+      TError,
+      TData
+    >;
+    request?: SecondParameter<typeof customFetch>;
+  },
+) => {
+  const { query: queryOptions, request: requestOptions } = options ?? {};
+
+  const queryKey =
+    queryOptions?.queryKey ?? getGetTournamentBySlugQueryKey(slug);
+
+  const queryFn: QueryFunction<
+    Awaited<ReturnType<typeof getTournamentBySlug>>
+  > = ({ signal }) => getTournamentBySlug(slug, { signal, ...requestOptions });
+
+  return {
+    queryKey,
+    queryFn,
+    enabled: !!slug,
+    ...queryOptions,
+  } as UseQueryOptions<
+    Awaited<ReturnType<typeof getTournamentBySlug>>,
+    TError,
+    TData
+  > & { queryKey: QueryKey };
+};
+
+export type GetTournamentBySlugQueryResult = NonNullable<
+  Awaited<ReturnType<typeof getTournamentBySlug>>
+>;
+export type GetTournamentBySlugQueryError = ErrorType<void>;
+
+/**
+ * @summary Get a tournament by slug
+ */
+
+export function useGetTournamentBySlug<
+  TData = Awaited<ReturnType<typeof getTournamentBySlug>>,
+  TError = ErrorType<void>,
+>(
+  slug: string,
+  options?: {
+    query?: UseQueryOptions<
+      Awaited<ReturnType<typeof getTournamentBySlug>>,
+      TError,
+      TData
+    >;
+    request?: SecondParameter<typeof customFetch>;
+  },
+): UseQueryResult<TData, TError> & { queryKey: QueryKey } {
+  const queryOptions = getGetTournamentBySlugQueryOptions(slug, options);
+
+  const query = useQuery(queryOptions) as UseQueryResult<TData, TError> & {
+    queryKey: QueryKey;
+  };
+
+  return { ...query, queryKey: queryOptions.queryKey };
+}
+
+/**
+ * @summary Get standings table for a tournament
+ */
+export const getGetTournamentStandingsUrl = (id: number) => {
+  return `/api/tournaments/${id}/standings`;
+};
+
+export const getTournamentStandings = async (
+  id: number,
+  options?: RequestInit,
+): Promise<StandingsResponse> => {
+  return customFetch<StandingsResponse>(getGetTournamentStandingsUrl(id), {
+    ...options,
+    method: "GET",
+  });
+};
+
+export const getGetTournamentStandingsQueryKey = (id: number) => {
+  return [`/api/tournaments/${id}/standings`] as const;
+};
+
+export const getGetTournamentStandingsQueryOptions = <
+  TData = Awaited<ReturnType<typeof getTournamentStandings>>,
+  TError = ErrorType<unknown>,
+>(
+  id: number,
+  options?: {
+    query?: UseQueryOptions<
+      Awaited<ReturnType<typeof getTournamentStandings>>,
+      TError,
+      TData
+    >;
+    request?: SecondParameter<typeof customFetch>;
+  },
+) => {
+  const { query: queryOptions, request: requestOptions } = options ?? {};
+
+  const queryKey =
+    queryOptions?.queryKey ?? getGetTournamentStandingsQueryKey(id);
+
+  const queryFn: QueryFunction<
+    Awaited<ReturnType<typeof getTournamentStandings>>
+  > = ({ signal }) => getTournamentStandings(id, { signal, ...requestOptions });
+
+  return {
+    queryKey,
+    queryFn,
+    enabled: !!id,
+    ...queryOptions,
+  } as UseQueryOptions<
+    Awaited<ReturnType<typeof getTournamentStandings>>,
+    TError,
+    TData
+  > & { queryKey: QueryKey };
+};
+
+export type GetTournamentStandingsQueryResult = NonNullable<
+  Awaited<ReturnType<typeof getTournamentStandings>>
+>;
+export type GetTournamentStandingsQueryError = ErrorType<unknown>;
+
+/**
+ * @summary Get standings table for a tournament
+ */
+
+export function useGetTournamentStandings<
+  TData = Awaited<ReturnType<typeof getTournamentStandings>>,
+  TError = ErrorType<unknown>,
+>(
+  id: number,
+  options?: {
+    query?: UseQueryOptions<
+      Awaited<ReturnType<typeof getTournamentStandings>>,
+      TError,
+      TData
+    >;
+    request?: SecondParameter<typeof customFetch>;
+  },
+): UseQueryResult<TData, TError> & { queryKey: QueryKey } {
+  const queryOptions = getGetTournamentStandingsQueryOptions(id, options);
+
+  const query = useQuery(queryOptions) as UseQueryResult<TData, TError> & {
+    queryKey: QueryKey;
+  };
+
+  return { ...query, queryKey: queryOptions.queryKey };
+}
+
+/**
+ * @summary Get top scorers for a tournament
+ */
+export const getGetTournamentScorersUrl = (id: number) => {
+  return `/api/tournaments/${id}/scorers`;
+};
+
+export const getTournamentScorers = async (
+  id: number,
+  options?: RequestInit,
+): Promise<ScorersResponse> => {
+  return customFetch<ScorersResponse>(getGetTournamentScorersUrl(id), {
+    ...options,
+    method: "GET",
+  });
+};
+
+export const getGetTournamentScorersQueryKey = (id: number) => {
+  return [`/api/tournaments/${id}/scorers`] as const;
+};
+
+export const getGetTournamentScorersQueryOptions = <
+  TData = Awaited<ReturnType<typeof getTournamentScorers>>,
+  TError = ErrorType<unknown>,
+>(
+  id: number,
+  options?: {
+    query?: UseQueryOptions<
+      Awaited<ReturnType<typeof getTournamentScorers>>,
+      TError,
+      TData
+    >;
+    request?: SecondParameter<typeof customFetch>;
+  },
+) => {
+  const { query: queryOptions, request: requestOptions } = options ?? {};
+
+  const queryKey =
+    queryOptions?.queryKey ?? getGetTournamentScorersQueryKey(id);
+
+  const queryFn: QueryFunction<
+    Awaited<ReturnType<typeof getTournamentScorers>>
+  > = ({ signal }) => getTournamentScorers(id, { signal, ...requestOptions });
+
+  return {
+    queryKey,
+    queryFn,
+    enabled: !!id,
+    ...queryOptions,
+  } as UseQueryOptions<
+    Awaited<ReturnType<typeof getTournamentScorers>>,
+    TError,
+    TData
+  > & { queryKey: QueryKey };
+};
+
+export type GetTournamentScorersQueryResult = NonNullable<
+  Awaited<ReturnType<typeof getTournamentScorers>>
+>;
+export type GetTournamentScorersQueryError = ErrorType<unknown>;
+
+/**
+ * @summary Get top scorers for a tournament
+ */
+
+export function useGetTournamentScorers<
+  TData = Awaited<ReturnType<typeof getTournamentScorers>>,
+  TError = ErrorType<unknown>,
+>(
+  id: number,
+  options?: {
+    query?: UseQueryOptions<
+      Awaited<ReturnType<typeof getTournamentScorers>>,
+      TError,
+      TData
+    >;
+    request?: SecondParameter<typeof customFetch>;
+  },
+): UseQueryResult<TData, TError> & { queryKey: QueryKey } {
+  const queryOptions = getGetTournamentScorersQueryOptions(id, options);
+
+  const query = useQuery(queryOptions) as UseQueryResult<TData, TError> & {
+    queryKey: QueryKey;
+  };
+
+  return { ...query, queryKey: queryOptions.queryKey };
+}
+
+/**
+ * @summary Get all fixtures/matches for a tournament
+ */
+export const getGetTournamentFixturesUrl = (
+  id: number,
+  params?: GetTournamentFixturesParams,
+) => {
+  const normalizedParams = new URLSearchParams();
+
+  Object.entries(params || {}).forEach(([key, value]) => {
+    if (value !== undefined) {
+      normalizedParams.append(key, value === null ? "null" : value.toString());
+    }
+  });
+
+  const stringifiedParams = normalizedParams.toString();
+
+  return stringifiedParams.length > 0
+    ? `/api/tournaments/${id}/fixtures?${stringifiedParams}`
+    : `/api/tournaments/${id}/fixtures`;
+};
+
+export const getTournamentFixtures = async (
+  id: number,
+  params?: GetTournamentFixturesParams,
+  options?: RequestInit,
+): Promise<MatchesGrouped> => {
+  return customFetch<MatchesGrouped>(getGetTournamentFixturesUrl(id, params), {
+    ...options,
+    method: "GET",
+  });
+};
+
+export const getGetTournamentFixturesQueryKey = (
+  id: number,
+  params?: GetTournamentFixturesParams,
+) => {
+  return [
+    `/api/tournaments/${id}/fixtures`,
+    ...(params ? [params] : []),
+  ] as const;
+};
+
+export const getGetTournamentFixturesQueryOptions = <
+  TData = Awaited<ReturnType<typeof getTournamentFixtures>>,
+  TError = ErrorType<unknown>,
+>(
+  id: number,
+  params?: GetTournamentFixturesParams,
+  options?: {
+    query?: UseQueryOptions<
+      Awaited<ReturnType<typeof getTournamentFixtures>>,
+      TError,
+      TData
+    >;
+    request?: SecondParameter<typeof customFetch>;
+  },
+) => {
+  const { query: queryOptions, request: requestOptions } = options ?? {};
+
+  const queryKey =
+    queryOptions?.queryKey ?? getGetTournamentFixturesQueryKey(id, params);
+
+  const queryFn: QueryFunction<
+    Awaited<ReturnType<typeof getTournamentFixtures>>
+  > = ({ signal }) =>
+    getTournamentFixtures(id, params, { signal, ...requestOptions });
+
+  return {
+    queryKey,
+    queryFn,
+    enabled: !!id,
+    ...queryOptions,
+  } as UseQueryOptions<
+    Awaited<ReturnType<typeof getTournamentFixtures>>,
+    TError,
+    TData
+  > & { queryKey: QueryKey };
+};
+
+export type GetTournamentFixturesQueryResult = NonNullable<
+  Awaited<ReturnType<typeof getTournamentFixtures>>
+>;
+export type GetTournamentFixturesQueryError = ErrorType<unknown>;
+
+/**
+ * @summary Get all fixtures/matches for a tournament
+ */
+
+export function useGetTournamentFixtures<
+  TData = Awaited<ReturnType<typeof getTournamentFixtures>>,
+  TError = ErrorType<unknown>,
+>(
+  id: number,
+  params?: GetTournamentFixturesParams,
+  options?: {
+    query?: UseQueryOptions<
+      Awaited<ReturnType<typeof getTournamentFixtures>>,
+      TError,
+      TData
+    >;
+    request?: SecondParameter<typeof customFetch>;
+  },
+): UseQueryResult<TData, TError> & { queryKey: QueryKey } {
+  const queryOptions = getGetTournamentFixturesQueryOptions(
+    id,
+    params,
+    options,
+  );
 
   const query = useQuery(queryOptions) as UseQueryResult<TData, TError> & {
     queryKey: QueryKey;

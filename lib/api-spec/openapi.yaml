@@ -20,7 +20,6 @@ paths:
       operationId: healthCheck
       tags: [health]
       summary: Health check
-      description: Returns server health status
       responses:
         "200":
           description: Healthy
@@ -63,6 +62,89 @@ paths:
         "404":
           description: Not found
 
+  /tournaments/by-slug/{slug}:
+    get:
+      operationId: getTournamentBySlug
+      tags: [tournaments]
+      summary: Get a tournament by slug
+      parameters:
+        - name: slug
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        "200":
+          description: Tournament detail
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Tournament"
+        "404":
+          description: Not found
+
+  /tournaments/{id}/standings:
+    get:
+      operationId: getTournamentStandings
+      tags: [tournaments]
+      summary: Get standings table for a tournament
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: integer
+      responses:
+        "200":
+          description: Standings table
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/StandingsResponse"
+
+  /tournaments/{id}/scorers:
+    get:
+      operationId: getTournamentScorers
+      tags: [tournaments]
+      summary: Get top scorers for a tournament
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: integer
+      responses:
+        "200":
+          description: Top scorers
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ScorersResponse"
+
+  /tournaments/{id}/fixtures:
+    get:
+      operationId: getTournamentFixtures
+      tags: [tournaments]
+      summary: Get all fixtures/matches for a tournament
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: integer
+        - name: round
+          in: query
+          required: false
+          schema:
+            type: string
+      responses:
+        "200":
+          description: Matches for the tournament
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/MatchesGrouped"
+
   /matches:
     get:
       operationId: listMatches
@@ -74,7 +156,6 @@ paths:
           required: false
           schema:
             type: string
-            description: ISO date string (YYYY-MM-DD)
         - name: status
           in: query
           required: false
@@ -229,14 +310,12 @@ components:
           nullable: true
         kickoffTime:
           type: string
-          description: ISO datetime string
         status:
           type: string
           enum: [upcoming, live, finished]
         minute:
           type: integer
           nullable: true
-          description: Current match minute if live
         tournamentId:
           type: integer
         tournamentName:
@@ -244,10 +323,8 @@ components:
         round:
           type: string
           nullable: true
-          description: e.g. "Fecha 9"
         date:
           type: string
-          description: ISO date string (YYYY-MM-DD)
         broadcastChannel:
           type: string
           nullable: true
@@ -317,3 +394,105 @@ components:
         - liveCount
         - finishedCount
         - upcomingCount
+
+    StandingRow:
+      type: object
+      properties:
+        position:
+          type: integer
+        team:
+          $ref: "#/components/schemas/Team"
+        played:
+          type: integer
+        won:
+          type: integer
+        drawn:
+          type: integer
+        lost:
+          type: integer
+        goalsFor:
+          type: integer
+        goalsAgainst:
+          type: integer
+        goalDifference:
+          type: integer
+        points:
+          type: integer
+        form:
+          type: string
+          nullable: true
+          description: Last 5 results e.g. "WWDLW"
+      required:
+        - position
+        - team
+        - played
+        - won
+        - drawn
+        - lost
+        - goalsFor
+        - goalsAgainst
+        - goalDifference
+        - points
+
+    StandingsResponse:
+      type: object
+      properties:
+        tournament:
+          $ref: "#/components/schemas/Tournament"
+        standings:
+          type: array
+          items:
+            $ref: "#/components/schemas/StandingRow"
+        round:
+          type: string
+          nullable: true
+      required:
+        - tournament
+        - standings
+
+    ScorerEntry:
+      type: object
+      properties:
+        position:
+          type: integer
+        player:
+          type: object
+          properties:
+            id:
+              type: integer
+            name:
+              type: string
+            nationality:
+              type: string
+              nullable: true
+          required:
+            - id
+            - name
+        team:
+          $ref: "#/components/schemas/Team"
+        goals:
+          type: integer
+        assists:
+          type: integer
+        played:
+          type: integer
+      required:
+        - position
+        - player
+        - team
+        - goals
+        - assists
+        - played
+
+    ScorersResponse:
+      type: object
+      properties:
+        tournament:
+          $ref: "#/components/schemas/Tournament"
+        scorers:
+          type: array
+          items:
+            $ref: "#/components/schemas/ScorerEntry"
+      required:
+        - tournament
+        - scorers
