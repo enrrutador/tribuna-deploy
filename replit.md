@@ -40,11 +40,28 @@ This is a clone of https://canchallena.lanacion.com.ar/ — Argentine football s
 
 ### DB Schema Tables
 - `tournaments` — tournaments with slug, category (destacados/argentina/world), flagEmoji
-- `teams` — teams with shortName, logoUrl
+- `teams` — teams with shortName, logoUrl (32 teams seeded including Argentine + international)
 - `matches` — match records with status (upcoming/live/finished), minute, scores, broadcastChannel, round
-- `standings` — table positions per tournament (position, played, won, drawn, lost, goals, points, form)
-- `players` — player names and nationality
-- `scorers` — top scorers per tournament (goals, assists, played)
+- `standings` — table positions per tournament (position, played, won, drawn, lost, goals, points, form) — seeded for 9 tournaments
+- `players` — player names and nationality (20 players seeded)
+- `scorers` — top scorers per tournament (goals, assists, played) — seeded for 8 tournaments
+
+### Seeded Data
+- 20 tournaments across destacados/argentina/world categories
+- 32 teams (Argentine clubs + European + national teams)
+- Matches for May 4–5 2026 across all tournaments (live, finished, upcoming)
+- 9 tournaments with standings data
+- 8 tournaments with scorer data
+- 20 players seeded
+
+### Visual Design
+- Dark outer background (#1a1a1a), light content area (#f0f0f0)
+- Circular team badges with club colors (teamColors.ts)
+- Broadcaster badges: ESPN (red), TNT Sports (purple), ESPN Premium, TyC Sports, etc.
+- Two-tier header: hex pattern band (22px) + logo row (56px)
+- Dark sidebar (#111, 250px) with active left-border highlight
+- Match group cards: white with border + shadow, round separated by border-left
+- Live match indicator: red pulsing dot with minute counter
 
 ### API Routes
 - `GET /api/tournaments` — all tournaments grouped by category

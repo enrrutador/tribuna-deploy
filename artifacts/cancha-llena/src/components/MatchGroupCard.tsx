@@ -29,7 +29,7 @@ interface Props {
 
 export default function MatchGroupCard({ group, showLink = true }: Props) {
   return (
-    <div className="bg-white rounded-sm overflow-hidden border border-gray-200">
+    <div className="bg-white rounded-sm overflow-hidden border border-gray-200 shadow-sm">
       {/* Header */}
       <div className="bg-white px-4 py-2.5 border-b border-gray-100 flex items-center justify-between">
         <div className="flex items-center gap-2">
@@ -46,7 +46,7 @@ export default function MatchGroupCard({ group, showLink = true }: Props) {
           )}
         </div>
         {group.round && (
-          <span className="text-[12px] text-gray-400 font-medium pl-3 border-l border-gray-200">{group.round}</span>
+          <span className="text-[12px] text-gray-500 font-medium border-l-2 border-gray-200 pl-2.5">{group.round}</span>
         )}
       </div>
 
@@ -59,8 +59,8 @@ export default function MatchGroupCard({ group, showLink = true }: Props) {
 
       {/* Footer link */}
       {showLink && (
-        <div className="border-t border-gray-100 px-4 py-2.5 bg-white">
-          <Link href={`/torneo/${group.tournament.slug}`} className="text-[#1a9be6] text-[13px] font-semibold hover:underline">
+        <div className="px-[72px] py-2.5 bg-white border-t border-gray-50">
+          <Link href={`/torneo/${group.tournament.slug}`} className="text-[#1a9be6] text-[13px] font-medium hover:underline">
             Ir a {group.tournament.name}
           </Link>
         </div>
@@ -137,13 +137,13 @@ function TeamRow({ team, score, isWinner, hasScore }: { team: Team; score?: numb
   return (
     <div className="flex items-center justify-between">
       <div className="flex items-center gap-2">
-        {/* Colored team badge */}
+        {/* Colored team badge — circular */}
         <div
-          className="w-[20px] h-[20px] rounded-sm flex items-center justify-center text-[10px] font-bold shrink-0"
+          className="w-[22px] h-[22px] rounded-full flex items-center justify-center text-[9px] font-bold shrink-0 overflow-hidden"
           style={{ backgroundColor: color.bg, color: color.text }}
         >
           {team.logoUrl
-            ? <img src={team.logoUrl} className="w-full h-full object-contain rounded-sm" alt="" />
+            ? <img src={team.logoUrl} className="w-full h-full object-contain" alt="" />
             : (team.shortName ?? team.name).substring(0, 2).toUpperCase()
           }
         </div>
@@ -152,7 +152,7 @@ function TeamRow({ team, score, isWinner, hasScore }: { team: Team; score?: numb
         </span>
       </div>
       {hasScore && score != null && (
-        <span className={`text-[15px] font-bold ml-4 w-5 text-center ${isWinner ? "text-gray-900" : "text-gray-400"}`}>
+        <span className={`text-[15px] font-bold ml-4 w-5 text-center tabular-nums ${isWinner ? "text-gray-900" : "text-gray-400"}`}>
           {score}
         </span>
       )}

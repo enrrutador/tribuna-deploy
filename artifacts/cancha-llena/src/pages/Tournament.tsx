@@ -13,6 +13,22 @@ import {
 import { Skeleton } from "@/components/ui/skeleton";
 import { ChevronLeft, Trophy, Target, Calendar } from "lucide-react";
 import MatchGroupCard from "@/components/MatchGroupCard";
+import { getTeamColor } from "@/utils/teamColors";
+
+function TeamBadge({ name, logoUrl }: { name: string; logoUrl?: string | null }) {
+  const color = getTeamColor(name);
+  return (
+    <div
+      className="w-[18px] h-[18px] rounded-full flex items-center justify-center text-[8px] font-bold shrink-0 overflow-hidden"
+      style={{ backgroundColor: color.bg, color: color.text }}
+    >
+      {logoUrl
+        ? <img src={logoUrl} className="w-full h-full object-contain" alt="" />
+        : name.substring(0, 2).toUpperCase()
+      }
+    </div>
+  );
+}
 
 type Tab = "partidos" | "tabla" | "goleadores";
 
@@ -189,12 +205,7 @@ export default function Tournament() {
                       <td className="px-3 py-2.5 text-gray-400 font-medium">{row.position}</td>
                       <td className="px-3 py-2.5">
                         <div className="flex items-center gap-2">
-                          <div className="w-5 h-5 bg-gray-100 rounded-sm flex items-center justify-center text-[10px] font-bold overflow-hidden">
-                            {row.team.logoUrl
-                              ? <img src={row.team.logoUrl} className="w-5 h-5 object-contain" alt="" />
-                              : row.team.name.charAt(0)
-                            }
-                          </div>
+                          <TeamBadge name={row.team.name} logoUrl={row.team.logoUrl} />
                           <span className="font-semibold text-gray-900">{row.team.name}</span>
                         </div>
                       </td>

@@ -8,9 +8,9 @@ export default function Header() {
       {/* Logo row */}
       <div className="h-[56px] w-full bg-[#1a1a1a] border-b border-[#2a2a2a] flex items-center px-6">
         <Link href="/" className="flex items-center hover:opacity-90 transition-opacity select-none">
-          <span className="text-white text-[22px] font-light tracking-tight" style={{ fontFamily: "Georgia, 'Times New Roman', serif" }}>cancha</span>
-          <span className="text-white text-[22px] font-bold tracking-tight" style={{ fontFamily: "Georgia, 'Times New Roman', serif" }}>lle</span>
-          <span className="text-white text-[22px] font-bold tracking-tight" style={{ fontFamily: "Georgia, 'Times New Roman', serif" }}>ña</span>
+          <span className="text-white text-[22px] font-light tracking-[-0.5px]" style={{ fontFamily: "'Arial', 'Helvetica Neue', sans-serif" }}>cancha</span>
+          <span className="text-white text-[22px] font-black tracking-[-0.5px]" style={{ fontFamily: "'Arial', 'Helvetica Neue', sans-serif" }}>lle</span>
+          <span className="text-white text-[22px] font-black tracking-[-0.5px]" style={{ fontFamily: "'Arial', 'Helvetica Neue', sans-serif" }}>ña</span>
         </Link>
       </div>
     </header>
