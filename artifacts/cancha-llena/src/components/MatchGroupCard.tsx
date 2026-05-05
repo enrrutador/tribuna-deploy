@@ -1,6 +1,6 @@
 import { format } from "date-fns";
 import { Bell, ChevronRight } from "lucide-react";
-import { Link } from "wouter";
+import { Link, useLocation } from "wouter";
 import { getTeamColor, getBroadcasterStyle } from "@/utils/teamColors";
 
 type Team = { id: number; name: string; logoUrl?: string | null; shortName?: string | null };
@@ -70,6 +70,7 @@ export default function MatchGroupCard({ group, showLink = true }: Props) {
 }
 
 function MatchRow({ match }: { match: Match }) {
+  const [, navigate] = useLocation();
   const isLive = match.status === "live";
   const isFinished = match.status === "finished";
   const hasScore = match.homeScore != null && match.awayScore != null;
@@ -78,7 +79,10 @@ function MatchRow({ match }: { match: Match }) {
   const broadcaster = getBroadcasterStyle(match.broadcastChannel);
 
   return (
-    <div className="flex items-center border-b border-gray-50 hover:bg-[#f8faff] transition-colors last:border-b-0 group/row">
+    <div
+      className="flex items-center border-b border-gray-50 hover:bg-[#f8faff] transition-colors last:border-b-0 cursor-pointer group/row"
+      onClick={() => navigate(`/partido/${match.id}`)}
+    >
       {/* Time + broadcaster column */}
       <div className="w-[60px] shrink-0 flex flex-col items-center justify-center gap-1 py-3 border-r border-gray-100">
         {isLive ? (
@@ -133,14 +137,16 @@ function MatchRow({ match }: { match: Match }) {
 
 function TeamRow({ team, score, isWinner, hasScore }: { team: Team; score?: number | null; isWinner: boolean; hasScore: boolean }) {
   const color = getTeamColor(team.name);
+  const [, navigate] = useLocation();
 
   return (
     <div className="flex items-center justify-between">
       <div className="flex items-center gap-2">
-        {/* Colored team badge — circular */}
+        {/* Team badge — navigates to team page */}
         <div
-          className="w-[22px] h-[22px] rounded-full flex items-center justify-center text-[9px] font-bold shrink-0 overflow-hidden"
+          className="w-[22px] h-[22px] rounded-full flex items-center justify-center text-[9px] font-bold shrink-0 overflow-hidden hover:ring-2 hover:ring-[#1a9be6] hover:ring-offset-1 transition-all cursor-pointer"
           style={{ backgroundColor: color.bg, color: color.text }}
+          onClick={(e) => { e.stopPropagation(); navigate(`/equipo/${team.id}`); }}
         >
           {team.logoUrl
             ? <img src={team.logoUrl} className="w-full h-full object-contain" alt="" />

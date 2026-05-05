@@ -1,6 +1,6 @@
 import { Router } from "express";
 import { db } from "@workspace/db";
-import { matchesTable, teamsTable, tournamentsTable } from "@workspace/db";
+import { matchesTable, teamsTable, tournamentsTable, matchEventsTable } from "@workspace/db";
 import { eq, and, sql } from "drizzle-orm";
 import { ListMatchesQueryParams, GetMatchParams } from "@workspace/api-zod";
 
@@ -246,7 +246,36 @@ router.get("/:id", async (req, res) => {
       return;
     }
 
-    res.json(match);
+    // Fetch match events
+    const events = await db
+      .select({
+        id: matchEventsTable.id,
+        eventType: matchEventsTable.eventType,
+        minute: matchEventsTable.minute,
+        playerName: matchEventsTable.playerName,
+        assistName: matchEventsTable.assistName,
+        description: matchEventsTable.description,
+        teamId: matchEventsTable.teamId,
+        teamName: teamsTable.name,
+      })
+      .from(matchEventsTable)
+      .leftJoin(teamsTable, eq(matchEventsTable.teamId, teamsTable.id))
+      .where(eq(matchEventsTable.matchId, parsed.data.id))
+      .orderBy(matchEventsTable.minute);
+
+    res.json({
+      ...match,
+      events: events.map((e) => ({
+        id: e.id,
+        eventType: e.eventType,
+        minute: e.minute,
+        playerName: e.playerName,
+        assistName: e.assistName,
+        description: e.description,
+        teamId: e.teamId,
+        teamName: e.teamName,
+      })),
+    });
   } catch (err) {
     req.log.error({ err }, "Failed to get match");
     res.status(500).json({ error: "Internal server error" });

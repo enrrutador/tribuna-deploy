@@ -25,6 +25,11 @@ export interface Tournament {
   category: TournamentCategory;
   logoUrl?: string | null;
   flagEmoji?: string | null;
+  description?: string | null;
+  country?: string | null;
+  currentChampion?: string | null;
+  format?: string | null;
+  participantCount?: number | null;
 }
 
 export interface TournamentsGrouped {
@@ -38,6 +43,20 @@ export interface Team {
   name: string;
   logoUrl?: string | null;
   shortName?: string | null;
+}
+
+export interface TeamDetail {
+  id: number;
+  name: string;
+  shortName?: string | null;
+  logoUrl?: string | null;
+  slug?: string | null;
+  stadium?: string | null;
+  city?: string | null;
+  country?: string | null;
+  founded?: number | null;
+  coach?: string | null;
+  description?: string | null;
 }
 
 export type MatchStatus = (typeof MatchStatus)[keyof typeof MatchStatus];
@@ -63,6 +82,44 @@ export interface Match {
   date: string;
   broadcastChannel?: string | null;
 }
+
+export interface TeamDetailResponse {
+  team: TeamDetail;
+  recentMatches: Match[];
+}
+
+export interface TeamsListResponse {
+  teams: TeamDetail[];
+}
+
+export type MatchEventEventType =
+  (typeof MatchEventEventType)[keyof typeof MatchEventEventType];
+
+export const MatchEventEventType = {
+  goal: "goal",
+  owngoal: "owngoal",
+  yellow_card: "yellow_card",
+  red_card: "red_card",
+  substitution: "substitution",
+  penalty: "penalty",
+  penalty_miss: "penalty_miss",
+  var_review: "var_review",
+} as const;
+
+export interface MatchEvent {
+  id: number;
+  eventType: MatchEventEventType;
+  minute: number;
+  playerName?: string | null;
+  assistName?: string | null;
+  description?: string | null;
+  teamId?: number | null;
+  teamName?: string | null;
+}
+
+export type MatchDetail = Match & {
+  events: MatchEvent[];
+};
 
 export interface TournamentMatches {
   tournament: Tournament;

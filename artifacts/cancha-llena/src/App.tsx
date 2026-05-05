@@ -5,16 +5,15 @@ import { TooltipProvider } from "@/components/ui/tooltip";
 import NotFound from "@/pages/not-found";
 import Home from "@/pages/Home";
 import Tournament from "@/pages/Tournament";
+import TeamPage from "@/pages/TeamPage";
+import MatchDetail from "@/pages/MatchDetail";
 import Layout from "@/components/Layout";
 
 const queryClient = new QueryClient({
   defaultOptions: {
     queries: {
       staleTime: 30_000,
-      refetchInterval: (query) => {
-        // Auto-refresh live data every 30 seconds
-        return 30_000;
-      },
+      refetchInterval: () => 30_000,
     },
   },
 });
@@ -25,6 +24,8 @@ function Router() {
       <Switch>
         <Route path="/" component={Home} />
         <Route path="/torneo/:slug" component={Tournament} />
+        <Route path="/equipo/:id" component={TeamPage} />
+        <Route path="/partido/:id" component={MatchDetail} />
         <Route component={NotFound} />
       </Switch>
     </Layout>

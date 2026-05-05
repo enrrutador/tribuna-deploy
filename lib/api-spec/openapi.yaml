@@ -14,6 +14,8 @@ tags:
     description: Tournament operations
   - name: matches
     description: Match operations
+  - name: teams
+    description: Team operations
 paths:
   /healthz:
     get:
@@ -205,7 +207,7 @@ paths:
     get:
       operationId: getMatch
       tags: [matches]
-      summary: Get a single match by ID
+      summary: Get a single match by ID with events
       parameters:
         - name: id
           in: path
@@ -214,11 +216,45 @@ paths:
             type: integer
       responses:
         "200":
-          description: Match detail
+          description: Match detail with events
           content:
             application/json:
               schema:
-                $ref: "#/components/schemas/Match"
+                $ref: "#/components/schemas/MatchDetail"
+        "404":
+          description: Not found
+
+  /teams:
+    get:
+      operationId: listTeams
+      tags: [teams]
+      summary: List all teams
+      responses:
+        "200":
+          description: List of teams
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/TeamsListResponse"
+
+  /teams/{id}:
+    get:
+      operationId: getTeam
+      tags: [teams]
+      summary: Get a team by ID with recent matches
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: integer
+      responses:
+        "200":
+          description: Team detail with recent matches
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/TeamDetailResponse"
         "404":
           description: Not found
 
@@ -249,6 +285,21 @@ components:
           nullable: true
         flagEmoji:
           type: string
+          nullable: true
+        description:
+          type: string
+          nullable: true
+        country:
+          type: string
+          nullable: true
+        currentChampion:
+          type: string
+          nullable: true
+        format:
+          type: string
+          nullable: true
+        participantCount:
+          type: integer
           nullable: true
       required:
         - id
@@ -292,6 +343,97 @@ components:
       required:
         - id
         - name
+
+    TeamDetail:
+      type: object
+      properties:
+        id:
+          type: integer
+        name:
+          type: string
+        shortName:
+          type: string
+          nullable: true
+        logoUrl:
+          type: string
+          nullable: true
+        slug:
+          type: string
+          nullable: true
+        stadium:
+          type: string
+          nullable: true
+        city:
+          type: string
+          nullable: true
+        country:
+          type: string
+          nullable: true
+        founded:
+          type: integer
+          nullable: true
+        coach:
+          type: string
+          nullable: true
+        description:
+          type: string
+          nullable: true
+      required:
+        - id
+        - name
+
+    TeamDetailResponse:
+      type: object
+      properties:
+        team:
+          $ref: "#/components/schemas/TeamDetail"
+        recentMatches:
+          type: array
+          items:
+            $ref: "#/components/schemas/Match"
+      required:
+        - team
+        - recentMatches
+
+    TeamsListResponse:
+      type: object
+      properties:
+        teams:
+          type: array
+          items:
+            $ref: "#/components/schemas/TeamDetail"
+      required:
+        - teams
+
+    MatchEvent:
+      type: object
+      properties:
+        id:
+          type: integer
+        eventType:
+          type: string
+          enum: [goal, owngoal, yellow_card, red_card, substitution, penalty, penalty_miss, var_review]
+        minute:
+          type: integer
+        playerName:
+          type: string
+          nullable: true
+        assistName:
+          type: string
+          nullable: true
+        description:
+          type: string
+          nullable: true
+        teamId:
+          type: integer
+          nullable: true
+        teamName:
+          type: string
+          nullable: true
+      required:
+        - id
+        - eventType
+        - minute
 
     Match:
       type: object
@@ -337,6 +479,18 @@ components:
         - tournamentId
         - tournamentName
         - date
+
+    MatchDetail:
+      allOf:
+        - $ref: "#/components/schemas/Match"
+        - type: object
+          properties:
+            events:
+              type: array
+              items:
+                $ref: "#/components/schemas/MatchEvent"
+          required:
+            - events
 
     TournamentMatches:
       type: object

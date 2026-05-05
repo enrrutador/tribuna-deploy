@@ -40,16 +40,18 @@ This is a clone of https://canchallena.lanacion.com.ar/ — Argentine football s
 
 ### DB Schema Tables
 - `tournaments` — tournaments with slug, category (destacados/argentina/world), flagEmoji
-- `teams` — teams with shortName, logoUrl (32 teams seeded including Argentine + international)
+- `teams` — teams with shortName, logoUrl, slug, stadium, city, country, founded, coach, description (32 teams seeded)
 - `matches` — match records with status (upcoming/live/finished), minute, scores, broadcastChannel, round
+- `match_events` — individual match events (goal/owngoal/yellow_card/red_card/substitution/penalty/penalty_miss/var_review) with minute, player_name, assist_name, team_id
 - `standings` — table positions per tournament (position, played, won, drawn, lost, goals, points, form) — seeded for 9 tournaments
 - `players` — player names and nationality (20 players seeded)
 - `scorers` — top scorers per tournament (goals, assists, played) — seeded for 8 tournaments
 
 ### Seeded Data
-- 20 tournaments across destacados/argentina/world categories
-- 32 teams (Argentine clubs + European + national teams)
+- 20 tournaments across destacados/argentina/world categories with descriptions, country, format, participantCount, currentChampion
+- 32 teams (Argentine clubs + European + national teams) with full metadata (stadium, city, country, founded, coach, description, slug)
 - Matches for May 4–5 2026 across all tournaments (live, finished, upcoming)
+- 30 match events (goals, cards) seeded across 10 key matches
 - 9 tournaments with standings data
 - 8 tournaments with scorer data
 - 20 players seeded
@@ -73,11 +75,21 @@ This is a clone of https://canchallena.lanacion.com.ar/ — Argentine football s
 - `GET /api/matches` — matches with optional `status` and `date` filters, grouped by tournament
 - `GET /api/matches/today` — today's matches grouped by tournament
 - `GET /api/matches/live` — live matches
-- `GET /api/matches/:id` — single match
+- `GET /api/matches/:id` — single match with events array (goals, cards, etc.)
+- `GET /api/teams` — list all teams
+- `GET /api/teams/:id` — team detail with metadata + recent matches
 
 ### Frontend Pages
 - `/` — Home (all today's matches, date picker, filter tabs, auto-refresh)
 - `/torneo/:slug` — Tournament page (Partidos / Tabla / Goleadores tabs)
+- `/equipo/:id` — Team detail page (badge, description, stadium/city/coach/founded, recent matches with G/E/P results)
+- `/partido/:id` — Match detail page (score card, event timeline, match info)
+
+### Navigation
+- Match rows in MatchGroupCard are clickable → navigate to `/partido/:id`
+- Team badges in MatchGroupCard are clickable → navigate to `/equipo/:id` (stops propagation so only badge navigates to team)
+- Team badges in match detail page link to team pages
+- Breadcrumb navigation on match detail: Inicio > Torneo > Ronda
 
 ### Frontend Components
 - `Layout` — wraps Header + Sidebar + main content + Footer

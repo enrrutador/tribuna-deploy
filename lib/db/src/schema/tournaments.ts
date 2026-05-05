@@ -1,4 +1,4 @@
-import { pgTable, serial, text, pgEnum } from "drizzle-orm/pg-core";
+import { pgTable, serial, text, integer, pgEnum } from "drizzle-orm/pg-core";
 import { createInsertSchema } from "drizzle-zod";
 import { z } from "zod/v4";
 
@@ -15,6 +15,12 @@ export const tournamentsTable = pgTable("tournaments", {
   category: tournamentCategoryEnum("category").notNull(),
   logoUrl: text("logo_url"),
   flagEmoji: text("flag_emoji"),
+  description: text("description"),
+  country: text("country"),
+  currentChampion: text("current_champion"),
+  format: text("format"),
+  participantCount: integer("participant_count"),
+  website: text("website"),
 });
 
 export const insertTournamentSchema = createInsertSchema(tournamentsTable).omit({ id: true });

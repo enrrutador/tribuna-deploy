@@ -26,6 +26,11 @@ export const ListTournamentsResponse = zod.object({
       category: zod.enum(["destacados", "argentina", "world"]),
       logoUrl: zod.string().nullish(),
       flagEmoji: zod.string().nullish(),
+      description: zod.string().nullish(),
+      country: zod.string().nullish(),
+      currentChampion: zod.string().nullish(),
+      format: zod.string().nullish(),
+      participantCount: zod.number().nullish(),
     }),
   ),
   argentina: zod.array(
@@ -36,6 +41,11 @@ export const ListTournamentsResponse = zod.object({
       category: zod.enum(["destacados", "argentina", "world"]),
       logoUrl: zod.string().nullish(),
       flagEmoji: zod.string().nullish(),
+      description: zod.string().nullish(),
+      country: zod.string().nullish(),
+      currentChampion: zod.string().nullish(),
+      format: zod.string().nullish(),
+      participantCount: zod.number().nullish(),
     }),
   ),
   world: zod.array(
@@ -46,6 +56,11 @@ export const ListTournamentsResponse = zod.object({
       category: zod.enum(["destacados", "argentina", "world"]),
       logoUrl: zod.string().nullish(),
       flagEmoji: zod.string().nullish(),
+      description: zod.string().nullish(),
+      country: zod.string().nullish(),
+      currentChampion: zod.string().nullish(),
+      format: zod.string().nullish(),
+      participantCount: zod.number().nullish(),
     }),
   ),
 });
@@ -64,6 +79,11 @@ export const GetTournamentResponse = zod.object({
   category: zod.enum(["destacados", "argentina", "world"]),
   logoUrl: zod.string().nullish(),
   flagEmoji: zod.string().nullish(),
+  description: zod.string().nullish(),
+  country: zod.string().nullish(),
+  currentChampion: zod.string().nullish(),
+  format: zod.string().nullish(),
+  participantCount: zod.number().nullish(),
 });
 
 /**
@@ -80,6 +100,11 @@ export const GetTournamentBySlugResponse = zod.object({
   category: zod.enum(["destacados", "argentina", "world"]),
   logoUrl: zod.string().nullish(),
   flagEmoji: zod.string().nullish(),
+  description: zod.string().nullish(),
+  country: zod.string().nullish(),
+  currentChampion: zod.string().nullish(),
+  format: zod.string().nullish(),
+  participantCount: zod.number().nullish(),
 });
 
 /**
@@ -97,6 +122,11 @@ export const GetTournamentStandingsResponse = zod.object({
     category: zod.enum(["destacados", "argentina", "world"]),
     logoUrl: zod.string().nullish(),
     flagEmoji: zod.string().nullish(),
+    description: zod.string().nullish(),
+    country: zod.string().nullish(),
+    currentChampion: zod.string().nullish(),
+    format: zod.string().nullish(),
+    participantCount: zod.number().nullish(),
   }),
   standings: zod.array(
     zod.object({
@@ -136,6 +166,11 @@ export const GetTournamentScorersResponse = zod.object({
     category: zod.enum(["destacados", "argentina", "world"]),
     logoUrl: zod.string().nullish(),
     flagEmoji: zod.string().nullish(),
+    description: zod.string().nullish(),
+    country: zod.string().nullish(),
+    currentChampion: zod.string().nullish(),
+    format: zod.string().nullish(),
+    participantCount: zod.number().nullish(),
   }),
   scorers: zod.array(
     zod.object({
@@ -179,6 +214,11 @@ export const GetTournamentFixturesResponse = zod.object({
         category: zod.enum(["destacados", "argentina", "world"]),
         logoUrl: zod.string().nullish(),
         flagEmoji: zod.string().nullish(),
+        description: zod.string().nullish(),
+        country: zod.string().nullish(),
+        currentChampion: zod.string().nullish(),
+        format: zod.string().nullish(),
+        participantCount: zod.number().nullish(),
       }),
       round: zod.string().nullish(),
       matches: zod.array(
@@ -233,6 +273,11 @@ export const ListMatchesResponse = zod.object({
         category: zod.enum(["destacados", "argentina", "world"]),
         logoUrl: zod.string().nullish(),
         flagEmoji: zod.string().nullish(),
+        description: zod.string().nullish(),
+        country: zod.string().nullish(),
+        currentChampion: zod.string().nullish(),
+        format: zod.string().nullish(),
+        participantCount: zod.number().nullish(),
       }),
       round: zod.string().nullish(),
       matches: zod.array(
@@ -282,6 +327,11 @@ export const GetTodayMatchesResponse = zod.object({
         category: zod.enum(["destacados", "argentina", "world"]),
         logoUrl: zod.string().nullish(),
         flagEmoji: zod.string().nullish(),
+        description: zod.string().nullish(),
+        country: zod.string().nullish(),
+        currentChampion: zod.string().nullish(),
+        format: zod.string().nullish(),
+        participantCount: zod.number().nullish(),
       }),
       round: zod.string().nullish(),
       matches: zod.array(
@@ -332,6 +382,11 @@ export const GetLiveMatchesResponse = zod.object({
         category: zod.enum(["destacados", "argentina", "world"]),
         logoUrl: zod.string().nullish(),
         flagEmoji: zod.string().nullish(),
+        description: zod.string().nullish(),
+        country: zod.string().nullish(),
+        currentChampion: zod.string().nullish(),
+        format: zod.string().nullish(),
+        participantCount: zod.number().nullish(),
       }),
       round: zod.string().nullish(),
       matches: zod.array(
@@ -368,34 +423,131 @@ export const GetLiveMatchesResponse = zod.object({
 });
 
 /**
- * @summary Get a single match by ID
+ * @summary Get a single match by ID with events
  */
 export const GetMatchParams = zod.object({
   id: zod.coerce.number(),
 });
 
-export const GetMatchResponse = zod.object({
-  id: zod.number(),
-  homeTeam: zod.object({
+export const GetMatchResponse = zod
+  .object({
+    id: zod.number(),
+    homeTeam: zod.object({
+      id: zod.number(),
+      name: zod.string(),
+      logoUrl: zod.string().nullish(),
+      shortName: zod.string().nullish(),
+    }),
+    awayTeam: zod.object({
+      id: zod.number(),
+      name: zod.string(),
+      logoUrl: zod.string().nullish(),
+      shortName: zod.string().nullish(),
+    }),
+    homeScore: zod.number().nullish(),
+    awayScore: zod.number().nullish(),
+    kickoffTime: zod.string(),
+    status: zod.enum(["upcoming", "live", "finished"]),
+    minute: zod.number().nullish(),
+    tournamentId: zod.number(),
+    tournamentName: zod.string(),
+    round: zod.string().nullish(),
+    date: zod.string(),
+    broadcastChannel: zod.string().nullish(),
+  })
+  .and(
+    zod.object({
+      events: zod.array(
+        zod.object({
+          id: zod.number(),
+          eventType: zod.enum([
+            "goal",
+            "owngoal",
+            "yellow_card",
+            "red_card",
+            "substitution",
+            "penalty",
+            "penalty_miss",
+            "var_review",
+          ]),
+          minute: zod.number(),
+          playerName: zod.string().nullish(),
+          assistName: zod.string().nullish(),
+          description: zod.string().nullish(),
+          teamId: zod.number().nullish(),
+          teamName: zod.string().nullish(),
+        }),
+      ),
+    }),
+  );
+
+/**
+ * @summary List all teams
+ */
+export const ListTeamsResponse = zod.object({
+  teams: zod.array(
+    zod.object({
+      id: zod.number(),
+      name: zod.string(),
+      shortName: zod.string().nullish(),
+      logoUrl: zod.string().nullish(),
+      slug: zod.string().nullish(),
+      stadium: zod.string().nullish(),
+      city: zod.string().nullish(),
+      country: zod.string().nullish(),
+      founded: zod.number().nullish(),
+      coach: zod.string().nullish(),
+      description: zod.string().nullish(),
+    }),
+  ),
+});
+
+/**
+ * @summary Get a team by ID with recent matches
+ */
+export const GetTeamParams = zod.object({
+  id: zod.coerce.number(),
+});
+
+export const GetTeamResponse = zod.object({
+  team: zod.object({
     id: zod.number(),
     name: zod.string(),
-    logoUrl: zod.string().nullish(),
     shortName: zod.string().nullish(),
-  }),
-  awayTeam: zod.object({
-    id: zod.number(),
-    name: zod.string(),
     logoUrl: zod.string().nullish(),
-    shortName: zod.string().nullish(),
+    slug: zod.string().nullish(),
+    stadium: zod.string().nullish(),
+    city: zod.string().nullish(),
+    country: zod.string().nullish(),
+    founded: zod.number().nullish(),
+    coach: zod.string().nullish(),
+    description: zod.string().nullish(),
   }),
-  homeScore: zod.number().nullish(),
-  awayScore: zod.number().nullish(),
-  kickoffTime: zod.string(),
-  status: zod.enum(["upcoming", "live", "finished"]),
-  minute: zod.number().nullish(),
-  tournamentId: zod.number(),
-  tournamentName: zod.string(),
-  round: zod.string().nullish(),
-  date: zod.string(),
-  broadcastChannel: zod.string().nullish(),
+  recentMatches: zod.array(
+    zod.object({
+      id: zod.number(),
+      homeTeam: zod.object({
+        id: zod.number(),
+        name: zod.string(),
+        logoUrl: zod.string().nullish(),
+        shortName: zod.string().nullish(),
+      }),
+      awayTeam: zod.object({
+        id: zod.number(),
+        name: zod.string(),
+        logoUrl: zod.string().nullish(),
+        shortName: zod.string().nullish(),
+      }),
+      homeScore: zod.number().nullish(),
+      awayScore: zod.number().nullish(),
+      kickoffTime: zod.string(),
+      status: zod.enum(["upcoming", "live", "finished"]),
+      minute: zod.number().nullish(),
+      tournamentId: zod.number(),
+      tournamentName: zod.string(),
+      round: zod.string().nullish(),
+      date: zod.string(),
+      broadcastChannel: zod.string().nullish(),
+    }),
+  ),
 });

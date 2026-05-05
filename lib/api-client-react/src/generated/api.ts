@@ -17,10 +17,12 @@ import type {
   GetTournamentFixturesParams,
   HealthStatus,
   ListMatchesParams,
-  Match,
+  MatchDetail,
   MatchesGrouped,
   ScorersResponse,
   StandingsResponse,
+  TeamDetailResponse,
+  TeamsListResponse,
   TodaySummary,
   Tournament,
   TournamentsGrouped,
@@ -898,7 +900,7 @@ export function useGetLiveMatches<
 }
 
 /**
- * @summary Get a single match by ID
+ * @summary Get a single match by ID with events
  */
 export const getGetMatchUrl = (id: number) => {
   return `/api/matches/${id}`;
@@ -907,8 +909,8 @@ export const getGetMatchUrl = (id: number) => {
 export const getMatch = async (
   id: number,
   options?: RequestInit,
-): Promise<Match> => {
-  return customFetch<Match>(getGetMatchUrl(id), {
+): Promise<MatchDetail> => {
+  return customFetch<MatchDetail>(getGetMatchUrl(id), {
     ...options,
     method: "GET",
   });
@@ -956,7 +958,7 @@ export type GetMatchQueryResult = NonNullable<
 export type GetMatchQueryError = ErrorType<void>;
 
 /**
- * @summary Get a single match by ID
+ * @summary Get a single match by ID with events
  */
 
 export function useGetMatch<
@@ -974,6 +976,150 @@ export function useGetMatch<
   },
 ): UseQueryResult<TData, TError> & { queryKey: QueryKey } {
   const queryOptions = getGetMatchQueryOptions(id, options);
+
+  const query = useQuery(queryOptions) as UseQueryResult<TData, TError> & {
+    queryKey: QueryKey;
+  };
+
+  return { ...query, queryKey: queryOptions.queryKey };
+}
+
+/**
+ * @summary List all teams
+ */
+export const getListTeamsUrl = () => {
+  return `/api/teams`;
+};
+
+export const listTeams = async (
+  options?: RequestInit,
+): Promise<TeamsListResponse> => {
+  return customFetch<TeamsListResponse>(getListTeamsUrl(), {
+    ...options,
+    method: "GET",
+  });
+};
+
+export const getListTeamsQueryKey = () => {
+  return [`/api/teams`] as const;
+};
+
+export const getListTeamsQueryOptions = <
+  TData = Awaited<ReturnType<typeof listTeams>>,
+  TError = ErrorType<unknown>,
+>(options?: {
+  query?: UseQueryOptions<Awaited<ReturnType<typeof listTeams>>, TError, TData>;
+  request?: SecondParameter<typeof customFetch>;
+}) => {
+  const { query: queryOptions, request: requestOptions } = options ?? {};
+
+  const queryKey = queryOptions?.queryKey ?? getListTeamsQueryKey();
+
+  const queryFn: QueryFunction<Awaited<ReturnType<typeof listTeams>>> = ({
+    signal,
+  }) => listTeams({ signal, ...requestOptions });
+
+  return { queryKey, queryFn, ...queryOptions } as UseQueryOptions<
+    Awaited<ReturnType<typeof listTeams>>,
+    TError,
+    TData
+  > & { queryKey: QueryKey };
+};
+
+export type ListTeamsQueryResult = NonNullable<
+  Awaited<ReturnType<typeof listTeams>>
+>;
+export type ListTeamsQueryError = ErrorType<unknown>;
+
+/**
+ * @summary List all teams
+ */
+
+export function useListTeams<
+  TData = Awaited<ReturnType<typeof listTeams>>,
+  TError = ErrorType<unknown>,
+>(options?: {
+  query?: UseQueryOptions<Awaited<ReturnType<typeof listTeams>>, TError, TData>;
+  request?: SecondParameter<typeof customFetch>;
+}): UseQueryResult<TData, TError> & { queryKey: QueryKey } {
+  const queryOptions = getListTeamsQueryOptions(options);
+
+  const query = useQuery(queryOptions) as UseQueryResult<TData, TError> & {
+    queryKey: QueryKey;
+  };
+
+  return { ...query, queryKey: queryOptions.queryKey };
+}
+
+/**
+ * @summary Get a team by ID with recent matches
+ */
+export const getGetTeamUrl = (id: number) => {
+  return `/api/teams/${id}`;
+};
+
+export const getTeam = async (
+  id: number,
+  options?: RequestInit,
+): Promise<TeamDetailResponse> => {
+  return customFetch<TeamDetailResponse>(getGetTeamUrl(id), {
+    ...options,
+    method: "GET",
+  });
+};
+
+export const getGetTeamQueryKey = (id: number) => {
+  return [`/api/teams/${id}`] as const;
+};
+
+export const getGetTeamQueryOptions = <
+  TData = Awaited<ReturnType<typeof getTeam>>,
+  TError = ErrorType<void>,
+>(
+  id: number,
+  options?: {
+    query?: UseQueryOptions<Awaited<ReturnType<typeof getTeam>>, TError, TData>;
+    request?: SecondParameter<typeof customFetch>;
+  },
+) => {
+  const { query: queryOptions, request: requestOptions } = options ?? {};
+
+  const queryKey = queryOptions?.queryKey ?? getGetTeamQueryKey(id);
+
+  const queryFn: QueryFunction<Awaited<ReturnType<typeof getTeam>>> = ({
+    signal,
+  }) => getTeam(id, { signal, ...requestOptions });
+
+  return {
+    queryKey,
+    queryFn,
+    enabled: !!id,
+    ...queryOptions,
+  } as UseQueryOptions<Awaited<ReturnType<typeof getTeam>>, TError, TData> & {
+    queryKey: QueryKey;
+  };
+};
+
+export type GetTeamQueryResult = NonNullable<
+  Awaited<ReturnType<typeof getTeam>>
+>;
+export type GetTeamQueryError = ErrorType<void>;
+
+/**
+ * @summary Get a team by ID with recent matches
+ */
+
+export function useGetTeam<
+  TData = Awaited<ReturnType<typeof getTeam>>,
+  TError = ErrorType<void>,
+>(
+  id: number,
+  options?: {
+    query?: UseQueryOptions<Awaited<ReturnType<typeof getTeam>>, TError, TData>;
+    request?: SecondParameter<typeof customFetch>;
+  },
+): UseQueryResult<TData, TError> & { queryKey: QueryKey } {
+  const queryOptions = getGetTeamQueryOptions(id, options);
 
   const query = useQuery(queryOptions) as UseQueryResult<TData, TError> & {
     queryKey: QueryKey;

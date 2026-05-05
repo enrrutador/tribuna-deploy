@@ -14,4 +14,9 @@ export interface Tournament {
   category: TournamentCategory;
   logoUrl?: string | null;
   flagEmoji?: string | null;
+  description?: string | null;
+  country?: string | null;
+  currentChampion?: string | null;
+  format?: string | null;
+  participantCount?: number | null;
 }
