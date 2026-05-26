@@ -12,8 +12,18 @@ import Layout from "@/components/Layout";
 const queryClient = new QueryClient({
   defaultOptions: {
     queries: {
-      staleTime: 30_000,
-      refetchInterval: () => 30_000,
+      // Data is immediately stale — always check server on focus/mount
+      staleTime: 0,
+      // Refetch when tab becomes active again
+      refetchOnWindowFocus: true,
+      // Refetch when network reconnects
+      refetchOnReconnect: true,
+      // Refetch on component mount if stale (which is always, given staleTime: 0)
+      refetchOnMount: true,
+      // Default background refresh: 30s (overridden per-query where needed)
+      refetchInterval: 30_000,
+      // Keep unused data in cache for 5 minutes
+      gcTime: 5 * 60 * 1000,
     },
   },
 });

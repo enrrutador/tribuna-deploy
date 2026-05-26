@@ -1,8 +1,8 @@
 import { useParams, Link } from "wouter";
-import { useGetMatch } from "@workspace/api-client-react";
-import { format } from "date-fns";
+import { useGetMatch, getGetMatchQueryKey } from "@workspace/api-client-react";
+import { format, formatDistanceToNow } from "date-fns";
 import { es } from "date-fns/locale";
-import { ChevronRight, Tv } from "lucide-react";
+import { ChevronRight, Tv, RefreshCw } from "lucide-react";
 import { getTeamColor, getBroadcasterStyle } from "@/utils/teamColors";
 
 const EVENT_ICONS: Record<string, string> = {
@@ -30,7 +30,21 @@ const EVENT_LABELS: Record<string, string> = {
 export default function MatchDetail() {
   const params = useParams<{ id: string }>();
   const matchId = Number(params.id);
-  const { data: match, isLoading, isError } = useGetMatch(matchId);
+
+  const { data: match, isLoading, isError, dataUpdatedAt, refetch, isFetching } = useGetMatch(matchId, {
+    query: {
+      queryKey: getGetMatchQueryKey(matchId),
+      enabled: !!matchId,
+      // Refetch every 15s for live matches, 60s for others
+      refetchInterval: (query) => {
+        const status = (query.state.data as any)?.status;
+        if (status === "live") return 15_000;
+        if (status === "finished") return false; // no background refresh for finished
+        return 60_000; // upcoming
+      },
+      staleTime: 0,
+    },
+  });
 
   if (isLoading) return <LoadingSkeleton />;
   if (isError || !match) return <ErrorState />;
@@ -45,24 +59,39 @@ export default function MatchDetail() {
   const broadcaster = getBroadcasterStyle(match.broadcastChannel ?? null);
 
   const events = (match as any).events ?? [];
-  const homeEvents = events.filter((e: any) => e.teamId === match.homeTeam.id);
-  const awayEvents = events.filter((e: any) => e.teamId === match.awayTeam.id);
+
+  const updatedAgo = dataUpdatedAt
+    ? formatDistanceToNow(new Date(dataUpdatedAt), { addSuffix: true, locale: es })
+    : null;
 
   return (
     <div className="space-y-4">
       {/* Tournament breadcrumb */}
-      <div className="flex items-center gap-1 text-[13px] text-gray-500">
-        <Link href="/" className="hover:text-[#1a9be6] transition-colors">Inicio</Link>
-        <ChevronRight className="w-3.5 h-3.5" />
-        <Link href={`/torneo/${match.tournamentSlug ?? ""}`} className="hover:text-[#1a9be6] transition-colors">
-          {match.tournamentName}
-        </Link>
-        {match.round && (
-          <>
-            <ChevronRight className="w-3.5 h-3.5" />
-            <span>{match.round}</span>
-          </>
-        )}
+      <div className="flex items-center justify-between">
+        <div className="flex items-center gap-1 text-[13px] text-gray-500">
+          <Link href="/" className="hover:text-[#1a9be6] transition-colors">Inicio</Link>
+          <ChevronRight className="w-3.5 h-3.5" />
+          <Link href={`/torneo/${match.tournamentSlug ?? ""}`} className="hover:text-[#1a9be6] transition-colors">
+            {match.tournamentName}
+          </Link>
+          {match.round && (
+            <>
+              <ChevronRight className="w-3.5 h-3.5" />
+              <span>{match.round}</span>
+            </>
+          )}
+        </div>
+        {/* Refresh indicator */}
+        <div className="flex items-center gap-1.5 text-[11px] text-gray-400">
+          {isFetching && <RefreshCw className="w-3 h-3 animate-spin text-[#1a9be6]" />}
+          {updatedAgo && !isFetching && <span>Actualizado {updatedAgo}</span>}
+          {isLive && !isFetching && (
+            <span className="flex items-center gap-1 text-[#e53935]">
+              <span className="w-1.5 h-1.5 rounded-full bg-[#e53935] animate-pulse" />
+              en vivo
+            </span>
+          )}
+        </div>
       </div>
 
       {/* Score card */}
@@ -156,8 +185,14 @@ export default function MatchDetail() {
       {/* Events */}
       {events.length > 0 && (
         <div className="bg-white rounded-sm border border-gray-200 shadow-sm overflow-hidden">
-          <div className="px-4 py-2.5 border-b border-gray-100">
+          <div className="px-4 py-2.5 border-b border-gray-100 flex items-center justify-between">
             <span className="font-bold text-gray-900 text-[13px]">Incidencias del partido</span>
+            {isLive && (
+              <span className="text-[11px] text-[#e53935] font-medium flex items-center gap-1">
+                <span className="w-1.5 h-1.5 rounded-full bg-[#e53935] animate-pulse" />
+                Se actualiza automáticamente
+              </span>
+            )}
           </div>
 
           {/* Two-column events layout */}

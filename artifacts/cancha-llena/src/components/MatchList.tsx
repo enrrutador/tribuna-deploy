@@ -6,9 +6,9 @@ import {
   getListMatchesQueryKey,
 } from "@workspace/api-client-react";
 import type { ListMatchesStatus } from "@workspace/api-client-react";
-import { format, isToday } from "date-fns";
+import { format, isToday, formatDistanceToNow } from "date-fns";
 import { es } from "date-fns/locale";
-import { BarChart2, Settings, Calendar as CalendarIcon } from "lucide-react";
+import { BarChart2, Settings, Calendar as CalendarIcon, RefreshCw } from "lucide-react";
 import { Skeleton } from "./ui/skeleton";
 import { Popover, PopoverContent, PopoverTrigger } from "./ui/popover";
 import { Calendar } from "./ui/calendar";
@@ -69,6 +69,8 @@ export default function MatchList() {
   const {
     data: todayData,
     isLoading: loadingToday,
+    isFetching: fetchingToday,
+    dataUpdatedAt: updatedToday,
     refetch: refetchToday,
   } = useGetTodayMatches({
     query: {
@@ -81,6 +83,8 @@ export default function MatchList() {
   const {
     data: filteredData,
     isLoading: loadingFiltered,
+    isFetching: fetchingFiltered,
+    dataUpdatedAt: updatedFiltered,
     refetch: refetchFiltered,
   } = useListMatches(
     { status: statusParam, date: dateParam },
@@ -94,8 +98,14 @@ export default function MatchList() {
   );
 
   const isLoading = isDefaultView ? loadingToday : loadingFiltered;
+  const isFetching = isDefaultView ? fetchingToday : fetchingFiltered;
+  const dataUpdatedAt = isDefaultView ? updatedToday : updatedFiltered;
   const matchGroups = isDefaultView ? todayData?.groups : filteredData?.groups;
   const liveCount = isDefaultView ? todayData?.liveCount : filteredData?.liveCount;
+
+  const updatedAgo = dataUpdatedAt && !isLoading
+    ? formatDistanceToNow(new Date(dataUpdatedAt), { addSuffix: true, locale: es })
+    : null;
 
   const handleRefresh = () => {
     if (isDefaultView) refetchToday();
@@ -155,11 +165,26 @@ export default function MatchList() {
               {liveCount} en vivo
             </div>
           )}
+          {/* Last updated indicator */}
+          {updatedAgo && (
+            <span className="text-[11px] text-gray-400 hidden sm:block">
+              {isFetching ? (
+                <span className="flex items-center gap-1 text-[#1a9be6]">
+                  <RefreshCw className="w-2.5 h-2.5 animate-spin" />
+                  Actualizando…
+                </span>
+              ) : (
+                `Act. ${updatedAgo}`
+              )}
+            </span>
+          )}
           <button
             onClick={handleRefresh}
-            className="p-1.5 text-gray-500 hover:bg-gray-100 rounded-sm border border-gray-200 bg-white transition-colors"
+            disabled={isFetching}
+            className={`p-1.5 rounded-sm border border-gray-200 bg-white transition-colors ${isFetching ? "text-[#1a9be6]" : "text-gray-500 hover:bg-gray-100"}`}
+            title="Actualizar"
           >
-            <BarChart2 className="w-4 h-4" />
+            <RefreshCw className={`w-4 h-4 ${isFetching ? "animate-spin" : ""}`} />
           </button>
           <button className="p-1.5 text-gray-500 hover:bg-gray-100 rounded-sm border border-gray-200 bg-white transition-colors">
             <Settings className="w-4 h-4" />
