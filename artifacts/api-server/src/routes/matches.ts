@@ -119,6 +119,8 @@ async function fetchMatches(filters: {
       minute: r.minute,
       tournamentId: r.tournamentId,
       tournamentName: r.tournamentName,
+      tournamentSlug: r.tournamentSlug,
+      tournamentFlagEmoji: r.tournamentFlagEmoji,
       round: r.round,
       date: r.matchDate,
       broadcastChannel: r.broadcastChannel,

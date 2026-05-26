@@ -462,6 +462,12 @@ components:
           type: integer
         tournamentName:
           type: string
+        tournamentSlug:
+          type: string
+          nullable: true
+        tournamentFlagEmoji:
+          type: string
+          nullable: true
         round:
           type: string
           nullable: true

@@ -54,7 +54,7 @@ export default function MatchDetail() {
       <div className="flex items-center gap-1 text-[13px] text-gray-500">
         <Link href="/" className="hover:text-[#1a9be6] transition-colors">Inicio</Link>
         <ChevronRight className="w-3.5 h-3.5" />
-        <Link href={`/torneo/${(match as any).tournamentSlug ?? ""}`} className="hover:text-[#1a9be6] transition-colors">
+        <Link href={`/torneo/${match.tournamentSlug ?? ""}`} className="hover:text-[#1a9be6] transition-colors">
           {match.tournamentName}
         </Link>
         {match.round && (

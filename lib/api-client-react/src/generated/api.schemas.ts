@@ -78,6 +78,8 @@ export interface Match {
   minute?: number | null;
   tournamentId: number;
   tournamentName: string;
+  tournamentSlug?: string | null;
+  tournamentFlagEmoji?: string | null;
   round?: string | null;
   date: string;
   broadcastChannel?: string | null;
