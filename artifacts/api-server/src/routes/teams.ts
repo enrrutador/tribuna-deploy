@@ -1,120 +1,87 @@
 import { Router } from "express";
-import { db } from "@workspace/db";
-import { teamsTable, matchesTable, tournamentsTable, matchEventsTable } from "@workspace/db";
-import { eq, or, desc, sql } from "drizzle-orm";
+import { fetchTodayMatches, ESPN_LEAGUES, type EspnMatch } from "../lib/espnService";
 
 const router = Router();
 
-router.get("/", async (req, res) => {
-  try {
-    const teams = await db.select().from(teamsTable).orderBy(teamsTable.name);
-    res.json({ teams });
-  } catch (err) {
-    req.log.error({ err }, "Failed to list teams");
-    res.status(500).json({ error: "Internal server error" });
-  }
+// GET /teams — not used heavily but kept for compatibility
+router.get("/", async (_req, res) => {
+  res.json({ teams: [] });
 });
 
+// GET /teams/:id — ESPN team ID (string like "5" for Boca)
 router.get("/:id", async (req, res) => {
   try {
-    const id = Number(req.params.id);
-    if (!Number.isFinite(id)) {
-      res.status(400).json({ error: "Invalid id" });
-      return;
+    const teamId = req.params.id;
+
+    // Search across all leagues for this team's matches
+    const allLeagues = Object.keys(ESPN_LEAGUES);
+    const { fetchLeagueMatches } = await import("../lib/espnService");
+
+    const results = await Promise.allSettled(
+      allLeagues.map((lid) => fetchLeagueMatches(lid))
+    );
+
+    const allMatches: EspnMatch[] = [];
+    for (const r of results) {
+      if (r.status === "fulfilled") allMatches.push(...r.value);
     }
 
-    const [team] = await db.select().from(teamsTable).where(eq(teamsTable.id, id));
-    if (!team) {
+    // Find team info from any match involving this team
+    let teamInfo: { id: string; name: string; shortName: string; abbreviation: string; logoUrl: string; color: string } | null = null;
+    const teamMatches: EspnMatch[] = [];
+
+    for (const m of allMatches) {
+      const isHome = m.homeTeam.id === teamId;
+      const isAway = m.awayTeam.id === teamId;
+      if (isHome || isAway) {
+        teamMatches.push(m);
+        if (!teamInfo) teamInfo = isHome ? m.homeTeam : m.awayTeam;
+      }
+    }
+
+    if (!teamInfo) {
       res.status(404).json({ error: "Team not found" });
       return;
     }
 
-    const homeTeams = db.$with("ht").as(db.select().from(teamsTable));
-    const awayTeams = db.$with("at").as(db.select().from(teamsTable));
+    // Sort by kickoff time descending
+    teamMatches.sort((a, b) => new Date(b.kickoffTime).getTime() - new Date(a.kickoffTime).getTime());
 
-    const recentMatches = await db
-      .with(homeTeams, awayTeams)
-      .select({
-        id: matchesTable.id,
-        homeScore: matchesTable.homeScore,
-        awayScore: matchesTable.awayScore,
-        kickoffTime: matchesTable.kickoffTime,
-        status: matchesTable.status,
-        minute: matchesTable.minute,
-        round: matchesTable.round,
-        matchDate: matchesTable.matchDate,
-        broadcastChannel: matchesTable.broadcastChannel,
-        homeTeamId: matchesTable.homeTeamId,
-        awayTeamId: matchesTable.awayTeamId,
-        homeTeamName: sql<string>`ht.name`,
-        homeTeamLogoUrl: sql<string | null>`ht.logo_url`,
-        homeTeamShortName: sql<string | null>`ht.short_name`,
-        awayTeamName: sql<string>`at.name`,
-        awayTeamLogoUrl: sql<string | null>`at.logo_url`,
-        awayTeamShortName: sql<string | null>`at.short_name`,
-        tournamentId: tournamentsTable.id,
-        tournamentName: tournamentsTable.name,
-        tournamentSlug: tournamentsTable.slug,
-        tournamentFlagEmoji: tournamentsTable.flagEmoji,
-      })
-      .from(matchesTable)
-      .innerJoin(homeTeams, eq(matchesTable.homeTeamId, sql`ht.id`))
-      .innerJoin(awayTeams, eq(matchesTable.awayTeamId, sql`at.id`))
-      .innerJoin(tournamentsTable, eq(matchesTable.tournamentId, tournamentsTable.id))
-      .where(or(eq(matchesTable.homeTeamId, id), eq(matchesTable.awayTeamId, id)))
-      .orderBy(desc(matchesTable.kickoffTime))
-      .limit(20);
-
-    const matches = recentMatches.map((m) => ({
+    const recentMatches = teamMatches.slice(0, 10).map((m) => ({
       id: m.id,
-      homeTeam: { id: m.homeTeamId, name: m.homeTeamName, logoUrl: m.homeTeamLogoUrl, shortName: m.homeTeamShortName },
-      awayTeam: { id: m.awayTeamId, name: m.awayTeamName, logoUrl: m.awayTeamLogoUrl, shortName: m.awayTeamShortName },
+      homeTeam: { id: m.homeTeam.id, name: m.homeTeam.name, shortName: m.homeTeam.shortName, logoUrl: m.homeTeam.logoUrl },
+      awayTeam: { id: m.awayTeam.id, name: m.awayTeam.name, shortName: m.awayTeam.shortName, logoUrl: m.awayTeam.logoUrl },
       homeScore: m.homeScore,
       awayScore: m.awayScore,
-      kickoffTime: m.kickoffTime.toISOString(),
+      kickoffTime: m.kickoffTime,
       status: m.status,
       minute: m.minute,
-      tournamentId: m.tournamentId,
+      tournamentId: m.leagueId,
       tournamentName: m.tournamentName,
       tournamentSlug: m.tournamentSlug,
       round: m.round,
-      date: m.matchDate,
+      date: m.kickoffTime.split("T")[0],
       broadcastChannel: m.broadcastChannel,
     }));
 
     res.json({
       team: {
-        id: team.id,
-        name: team.name,
-        shortName: team.shortName,
-        logoUrl: team.logoUrl,
-        slug: team.slug,
-        stadium: team.stadium,
-        city: team.city,
-        country: team.country,
-        founded: team.founded,
-        coach: team.coach,
-        description: team.description,
+        id: teamInfo.id,
+        name: teamInfo.name,
+        shortName: teamInfo.shortName,
+        logoUrl: teamInfo.logoUrl,
+        slug: teamInfo.abbreviation.toLowerCase(),
+        stadium: null,
+        city: null,
+        country: null,
+        founded: null,
+        coach: null,
+        description: null,
       },
-      recentMatches: matches,
+      recentMatches,
     });
   } catch (err) {
     req.log.error({ err }, "Failed to get team");
-    res.status(500).json({ error: "Internal server error" });
-  }
-});
-
-router.get("/by-slug/:slug", async (req, res) => {
-  try {
-    const slug = req.params.slug;
-    const [team] = await db.select().from(teamsTable).where(eq(teamsTable.slug, slug));
-    if (!team) {
-      res.status(404).json({ error: "Team not found" });
-      return;
-    }
-    res.redirect(`/api/teams/${team.id}`);
-  } catch (err) {
-    req.log.error({ err }, "Failed to get team by slug");
     res.status(500).json({ error: "Internal server error" });
   }
 });

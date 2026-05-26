@@ -29,11 +29,11 @@ const EVENT_LABELS: Record<string, string> = {
 
 export default function MatchDetail() {
   const params = useParams<{ id: string }>();
-  const matchId = Number(params.id);
+  const matchId = params.id ?? "";
 
-  const { data: match, isLoading, isError, dataUpdatedAt, refetch, isFetching } = useGetMatch(matchId, {
+  const { data: match, isLoading, isError, dataUpdatedAt, refetch, isFetching } = useGetMatch(matchId as unknown as number, {
     query: {
-      queryKey: getGetMatchQueryKey(matchId),
+      queryKey: getGetMatchQueryKey(matchId as unknown as number),
       enabled: !!matchId,
       // Refetch every 15s for live matches, 60s for others
       refetchInterval: (query) => {

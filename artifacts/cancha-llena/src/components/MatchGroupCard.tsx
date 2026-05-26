@@ -3,23 +3,23 @@ import { Bell, ChevronRight } from "lucide-react";
 import { Link, useLocation } from "wouter";
 import { getTeamColor, getBroadcasterStyle } from "@/utils/teamColors";
 
-type Team = { id: number; name: string; logoUrl?: string | null; shortName?: string | null };
+type Team = { id: string | number; name: string; logoUrl?: string | null; shortName?: string | null };
 type Match = {
-  id: number;
+  id: string | number;
   homeTeam: Team;
   awayTeam: Team;
   homeScore?: number | null;
   awayScore?: number | null;
   kickoffTime: string;
   status: "upcoming" | "live" | "finished";
-  minute?: number | null;
-  tournamentId: number;
+  minute?: string | number | null;
+  tournamentId: string | number;
   tournamentName: string;
   round?: string | null;
   date: string;
   broadcastChannel?: string | null;
 };
-type Tournament = { id: number; name: string; slug: string; category: string; logoUrl?: string | null; flagEmoji?: string | null };
+type Tournament = { id: string | number; name: string; slug: string; category: string; logoUrl?: string | null; flagEmoji?: string | null };
 type Group = { tournament: Tournament; round?: string | null; matches: Match[] };
 
 interface Props {

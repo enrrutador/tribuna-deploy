@@ -46,7 +46,8 @@ export default function Tournament() {
     query: { queryKey: getGetTournamentBySlugQueryKey(slug), enabled: !!slug },
   });
 
-  const tournamentId = tournament?.id ?? 0;
+  const tournamentId = (tournament?.id ?? "") as unknown as number;
+  const hasId = !!tournament?.id;
 
   const { data: fixturesData, isLoading: loadingFixtures } = useGetTournamentFixtures(
     tournamentId,
@@ -54,7 +55,7 @@ export default function Tournament() {
     {
       query: {
         queryKey: getGetTournamentFixturesQueryKey(tournamentId, {}),
-        enabled: !!tournamentId && activeTab === "partidos",
+        enabled: hasId && activeTab === "partidos",
         refetchInterval: 30_000,
       },
     }
@@ -65,7 +66,7 @@ export default function Tournament() {
     {
       query: {
         queryKey: getGetTournamentStandingsQueryKey(tournamentId),
-        enabled: !!tournamentId && activeTab === "tabla",
+        enabled: hasId && activeTab === "tabla",
       },
     }
   );
@@ -75,7 +76,7 @@ export default function Tournament() {
     {
       query: {
         queryKey: getGetTournamentScorersQueryKey(tournamentId),
-        enabled: !!tournamentId && activeTab === "goleadores",
+        enabled: hasId && activeTab === "goleadores",
       },
     }
   );

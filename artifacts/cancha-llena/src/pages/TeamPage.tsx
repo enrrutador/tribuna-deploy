@@ -7,7 +7,7 @@ import { getTeamColor } from "@/utils/teamColors";
 
 export default function TeamPage() {
   const params = useParams<{ id: string }>();
-  const teamId = Number(params.id);
+  const teamId = params.id as unknown as number;
   const { data, isLoading, isError } = useGetTeam(teamId);
 
   if (isLoading) return <LoadingSkeleton />;

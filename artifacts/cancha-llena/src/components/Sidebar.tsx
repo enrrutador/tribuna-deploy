@@ -85,9 +85,6 @@ export default function Sidebar() {
           <SectionLabel label="Argentina" />
           <ul>
             {tournamentsData?.argentina?.map((t) => <TournamentItem key={t.id} tournament={t} />)}
-            <StaticItem label="Tabla anual" emoji="📊" />
-            <StaticItem label="Tabla de promedios" emoji="📉" />
-            <StaticItem label="Torneo Proyección" emoji="🔭" />
           </ul>
 
           <SectionLabel label="Resto del Mundo" />
