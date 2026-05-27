@@ -212,83 +212,115 @@ export default function Tournament() {
       {activeTab === "tabla" && (
         <>
           {loadingStandings ? (
-            <Skeleton className="h-64 w-full rounded-sm" />
-          ) : !standingsData?.standings.length ? (
-            <div className="bg-white border border-gray-200 rounded-sm p-10 text-center text-gray-500">
-              No hay tabla de posiciones disponible.
+            <div className="space-y-3">
+              <Skeleton className="h-64 w-full rounded-sm" />
             </div>
-          ) : (
-            <div className="bg-white border border-gray-200 rounded-sm overflow-hidden">
+          ) : (() => {
+            const groups = (standingsData as any)?.groups as Array<{ name: string; standings: typeof standingsData.standings }> | undefined;
+            const hasMultipleGroups = groups && groups.length > 1;
+
+            if (!groups?.length && !standingsData?.standings?.length) {
+              return (
+                <div className="bg-white border border-gray-200 rounded-sm p-10 text-center text-gray-500">
+                  No hay tabla de posiciones disponible.
+                </div>
+              );
+            }
+
+            const renderTable = (rows: typeof standingsData.standings, isGroupStage = false) => (
               <table className="w-full text-[13px]">
                 <thead>
                   <tr className="bg-[#f5f5f5] border-b text-gray-400 text-[11px] uppercase tracking-wider">
-                    <th className="px-3 py-2.5 text-left w-7">#</th>
-                    <th className="px-3 py-2.5 text-left">Equipo</th>
-                    <th className="px-2 py-2.5 text-center w-9">PJ</th>
-                    <th className="px-2 py-2.5 text-center w-9">G</th>
-                    <th className="px-2 py-2.5 text-center w-9">E</th>
-                    <th className="px-2 py-2.5 text-center w-9">P</th>
-                    <th className="px-2 py-2.5 text-center w-10">GF</th>
-                    <th className="px-2 py-2.5 text-center w-10">GC</th>
-                    <th className="px-2 py-2.5 text-center w-10">DG</th>
-                    <th className="px-2 py-2.5 text-center w-10 font-bold text-gray-600">Pts</th>
-                    <th className="px-3 py-2.5 text-center hidden md:table-cell">Forma</th>
+                    <th className="px-3 py-2 text-left w-7">#</th>
+                    <th className="px-3 py-2 text-left">Equipo</th>
+                    <th className="px-2 py-2 text-center w-9">PJ</th>
+                    <th className="px-2 py-2 text-center w-9">G</th>
+                    <th className="px-2 py-2 text-center w-9">E</th>
+                    <th className="px-2 py-2 text-center w-9">P</th>
+                    <th className="px-2 py-2 text-center w-10 hidden sm:table-cell">GF</th>
+                    <th className="px-2 py-2 text-center w-10 hidden sm:table-cell">GC</th>
+                    <th className="px-2 py-2 text-center w-10">DG</th>
+                    <th className="px-2 py-2 text-center w-10 font-bold text-gray-600">Pts</th>
                   </tr>
                 </thead>
                 <tbody className="divide-y divide-gray-100">
-                  {standingsData.standings.map((row, idx) => (
-                    <tr
-                      key={row.team.id}
-                      className={`hover:bg-[#f8faff] transition-colors cursor-pointer ${idx < 4 ? "border-l-2 border-l-[#1a9be6]" : idx < 6 ? "border-l-2 border-l-amber-400" : "border-l-2 border-l-transparent"}`}
-                      onClick={() => navigate(`/equipo/${row.team.id}`)}
-                    >
-                      <td className="px-3 py-2.5 text-gray-400 font-medium">{row.position}</td>
-                      <td className="px-3 py-2.5">
-                        <div className="flex items-center gap-2">
-                          <TeamBadge id={row.team.id} name={row.team.name} logoUrl={row.team.logoUrl} clickable />
-                          <span className="font-semibold text-gray-900 hover:text-[#1a9be6] transition-colors">{row.team.name}</span>
-                        </div>
-                      </td>
-                      <td className="px-2 py-2.5 text-center text-gray-500">{row.played}</td>
-                      <td className="px-2 py-2.5 text-center text-gray-500">{row.won}</td>
-                      <td className="px-2 py-2.5 text-center text-gray-500">{row.drawn}</td>
-                      <td className="px-2 py-2.5 text-center text-gray-500">{row.lost}</td>
-                      <td className="px-2 py-2.5 text-center text-gray-500">{row.goalsFor}</td>
-                      <td className="px-2 py-2.5 text-center text-gray-500">{row.goalsAgainst}</td>
-                      <td className="px-2 py-2.5 text-center text-gray-500">{row.goalDifference > 0 ? `+${row.goalDifference}` : row.goalDifference}</td>
-                      <td className="px-2 py-2.5 text-center font-bold text-gray-900">{row.points}</td>
-                      <td className="px-3 py-2.5 hidden md:table-cell">
-                        {row.form && (
-                          <div className="flex items-center justify-center gap-0.5">
-                            {row.form.split("").map((r, i) => (
-                              <span
-                                key={i}
-                                className={`w-4 h-4 rounded-sm text-white text-[9px] flex items-center justify-center font-bold leading-none ${
-                                  r === "W" ? "bg-green-500" : r === "D" ? "bg-amber-400" : "bg-red-500"
-                                }`}
-                              >
-                                {r === "W" ? "G" : r === "D" ? "E" : "P"}
-                              </span>
-                            ))}
+                  {rows.map((row, idx) => {
+                    const qualifies = isGroupStage ? idx < 2 : idx < 4;
+                    const playoff = isGroupStage ? idx === 2 : idx === 4 || idx === 5;
+                    return (
+                      <tr
+                        key={`${row.team.id}-${idx}`}
+                        className={`hover:bg-[#f8faff] transition-colors cursor-pointer ${qualifies ? "border-l-2 border-l-[#1a9be6]" : playoff ? "border-l-2 border-l-amber-400" : "border-l-2 border-l-transparent"}`}
+                        onClick={() => navigate(`/equipo/${row.team.id}`)}
+                      >
+                        <td className="px-3 py-2 text-gray-400 font-medium text-[12px]">{row.position}</td>
+                        <td className="px-3 py-2">
+                          <div className="flex items-center gap-2">
+                            <TeamBadge id={row.team.id} name={row.team.name} logoUrl={(row.team as any).logoUrl} clickable />
+                            <span className="font-semibold text-gray-900 hover:text-[#1a9be6] transition-colors truncate max-w-[120px] sm:max-w-none">{row.team.name}</span>
                           </div>
-                        )}
-                      </td>
-                    </tr>
-                  ))}
+                        </td>
+                        <td className="px-2 py-2 text-center text-gray-500">{row.played}</td>
+                        <td className="px-2 py-2 text-center text-gray-500">{row.won}</td>
+                        <td className="px-2 py-2 text-center text-gray-500">{row.drawn}</td>
+                        <td className="px-2 py-2 text-center text-gray-500">{row.lost}</td>
+                        <td className="px-2 py-2 text-center text-gray-500 hidden sm:table-cell">{row.goalsFor}</td>
+                        <td className="px-2 py-2 text-center text-gray-500 hidden sm:table-cell">{row.goalsAgainst}</td>
+                        <td className="px-2 py-2 text-center text-gray-500">{row.goalDifference}</td>
+                        <td className="px-2 py-2 text-center font-bold text-gray-900">{row.points}</td>
+                      </tr>
+                    );
+                  })}
                 </tbody>
               </table>
-              <div className="px-4 py-2.5 bg-[#f5f5f5] border-t flex gap-4 text-[11px] text-gray-400">
-                <span className="flex items-center gap-1.5">
-                  <span className="w-2 h-3 bg-[#1a9be6] rounded-sm inline-block" />
-                  Clasificación directa
-                </span>
-                <span className="flex items-center gap-1.5">
-                  <span className="w-2 h-3 bg-amber-400 rounded-sm inline-block" />
-                  Playoff
-                </span>
+            );
+
+            if (hasMultipleGroups) {
+              // Group stage layout: grid of group tables
+              return (
+                <div className="space-y-3">
+                  <div className="grid grid-cols-1 lg:grid-cols-2 gap-3">
+                    {groups!.map((group) => (
+                      <div key={group.name} className="bg-white border border-gray-200 rounded-sm overflow-hidden">
+                        <div className="px-3 py-2 bg-[#1a1a2e] text-white text-[12px] font-bold uppercase tracking-wide">
+                          {group.name}
+                        </div>
+                        {renderTable(group.standings, true)}
+                      </div>
+                    ))}
+                  </div>
+                  <div className="bg-white border border-gray-200 rounded-sm px-4 py-2.5 flex gap-4 text-[11px] text-gray-400">
+                    <span className="flex items-center gap-1.5">
+                      <span className="w-2 h-3 bg-[#1a9be6] rounded-sm inline-block" />
+                      Clasifican a octavos
+                    </span>
+                    <span className="flex items-center gap-1.5">
+                      <span className="w-2 h-3 bg-amber-400 rounded-sm inline-block" />
+                      Playoff repechaje
+                    </span>
+                  </div>
+                </div>
+              );
+            }
+
+            // Single flat table (leagues)
+            const rows = groups?.[0]?.standings ?? standingsData?.standings ?? [];
+            return (
+              <div className="bg-white border border-gray-200 rounded-sm overflow-hidden">
+                {renderTable(rows, false)}
+                <div className="px-4 py-2.5 bg-[#f5f5f5] border-t flex gap-4 text-[11px] text-gray-400">
+                  <span className="flex items-center gap-1.5">
+                    <span className="w-2 h-3 bg-[#1a9be6] rounded-sm inline-block" />
+                    Clasificación directa
+                  </span>
+                  <span className="flex items-center gap-1.5">
+                    <span className="w-2 h-3 bg-amber-400 rounded-sm inline-block" />
+                    Playoff
+                  </span>
+                </div>
               </div>
-            </div>
-          )}
+            );
+          })()}
         </>
       )}
 
@@ -298,7 +330,7 @@ export default function Tournament() {
             <Skeleton className="h-64 w-full rounded-sm" />
           ) : !scorersData?.scorers.length ? (
             <div className="bg-white border border-gray-200 rounded-sm p-10 text-center text-gray-500">
-              No hay datos de goleadores disponibles.
+              No hay datos de goleadores disponibles para este torneo.
             </div>
           ) : (
             <div className="bg-white border border-gray-200 rounded-sm overflow-hidden">
@@ -308,33 +340,26 @@ export default function Tournament() {
                     <th className="px-3 py-2.5 text-left w-7">#</th>
                     <th className="px-3 py-2.5 text-left">Jugador</th>
                     <th className="px-3 py-2.5 text-left hidden sm:table-cell">Equipo</th>
-                    <th className="px-3 py-2.5 text-center w-14">PJ</th>
-                    <th className="px-3 py-2.5 text-center w-14">Asist.</th>
                     <th className="px-3 py-2.5 text-center w-14 font-bold text-gray-600">Goles</th>
                   </tr>
                 </thead>
                 <tbody className="divide-y divide-gray-100">
-                  {scorersData.scorers.map((entry) => (
+                  {scorersData.scorers.map((entry, idx) => (
                     <tr
-                      key={entry.player.id}
+                      key={`${entry.player.id}-${idx}`}
                       className="hover:bg-[#f8faff] transition-colors cursor-pointer"
                       onClick={() => navigate(`/equipo/${entry.team.id}`)}
                     >
                       <td className="px-3 py-3 text-gray-400 font-medium">{entry.position}</td>
                       <td className="px-3 py-3">
                         <div className="font-semibold text-gray-900">{entry.player.name}</div>
-                        {entry.player.nationality && (
-                          <div className="text-[11px] text-gray-400">{entry.player.nationality}</div>
-                        )}
                       </td>
                       <td className="px-3 py-3 hidden sm:table-cell">
                         <div className="flex items-center gap-2">
-                          <TeamBadge id={entry.team.id} name={entry.team.name} logoUrl={entry.team.logoUrl} clickable />
+                          <TeamBadge id={entry.team.id} name={entry.team.name} logoUrl={(entry.team as any).logoUrl} clickable />
                           <span className="text-gray-600 hover:text-[#1a9be6] transition-colors">{entry.team.name}</span>
                         </div>
                       </td>
-                      <td className="px-3 py-3 text-center text-gray-500">{entry.played}</td>
-                      <td className="px-3 py-3 text-center text-gray-500">{entry.assists}</td>
                       <td className="px-3 py-3 text-center font-bold text-gray-900 text-[16px]">{entry.goals}</td>
                     </tr>
                   ))}

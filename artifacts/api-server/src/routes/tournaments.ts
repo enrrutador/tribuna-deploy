@@ -4,6 +4,7 @@ import {
   SLUG_TO_LEAGUE,
   fetchLeagueMatches,
   fetchStandings,
+  fetchScorers,
   type EspnMatch,
 } from "../lib/espnService";
 
@@ -96,46 +97,73 @@ router.get("/:id/standings", async (req, res) => {
       return;
     }
 
-    const groups = await fetchStandings(leagueId);
+    const rawGroups = await fetchStandings(leagueId);
 
-    // Flatten to single standings array (first group, or merge if multiple)
-    const standings = (groups as Array<{ entries: unknown[] }>).flatMap((g, groupIdx) =>
-      (g.entries as Array<Record<string, unknown>>).map((e, idx) => ({
-        position: groupIdx === 0 ? idx + 1 : idx + 1,
-        team: {
-          id: String(e.teamId),
-          name: String(e.teamName),
-          shortName: String(e.teamShortName),
-          logoUrl: String(e.teamLogoUrl),
-        },
-        played: Number(e.played),
-        won: Number(e.won),
-        drawn: Number(e.drawn),
-        lost: Number(e.lost),
-        goalsFor: Number(e.goalsFor),
-        goalsAgainst: Number(e.goalsAgainst),
-        goalDifference: String(e.goalDiff),
-        points: Number(e.points),
-        form: null,
-      }))
-    ).sort((a, b) => b.points - a.points).map((e, i) => ({ ...e, position: i + 1 }));
+    const formatEntry = (e: ReturnType<typeof rawGroups>[0]["entries"][0], idx: number) => ({
+      position: idx + 1,
+      team: {
+        id: e.teamId,
+        name: e.teamName,
+        shortName: e.teamShortName,
+        logoUrl: e.teamLogoUrl,
+      },
+      played: e.played,
+      won: e.won,
+      drawn: e.drawn,
+      lost: e.lost,
+      goalsFor: e.goalsFor,
+      goalsAgainst: e.goalsAgainst,
+      goalDifference: e.goalDiff,
+      points: e.points,
+      form: null,
+    });
 
-    res.json({ tournament, standings, round: null });
+    // groups = named sections (Group A, Group B… or single "League Phase")
+    const groups = rawGroups.map((g) => ({
+      name: g.name,
+      standings: g.entries.map(formatEntry),
+    }));
+
+    // flat standings = first group entries re-sorted (for backward-compat single-table leagues)
+    const firstGroup = rawGroups[0]?.entries ?? [];
+    const standings = firstGroup
+      .map(formatEntry)
+      .sort((a, b) => b.points - a.points)
+      .map((e, i) => ({ ...e, position: i + 1 }));
+
+    res.json({ tournament, standings, groups, round: null });
   } catch (err) {
     req.log.error({ err }, "Failed to get standings");
     res.status(500).json({ error: "Internal server error" });
   }
 });
 
-// GET /tournaments/:id/scorers  (ESPN doesn't have free scorers, return empty gracefully)
+// GET /tournaments/:id/scorers
 router.get("/:id/scorers", async (req, res) => {
-  const leagueId = req.params.id;
-  const tournament = leagueToTournament(leagueId);
-  if (!tournament) {
-    res.status(404).json({ error: "Not found" });
-    return;
+  try {
+    const leagueId = req.params.id;
+    const tournament = leagueToTournament(leagueId);
+    if (!tournament) {
+      res.status(404).json({ error: "Not found" });
+      return;
+    }
+
+    const rawScorers = await fetchScorers(leagueId);
+
+    const scorers = rawScorers.map((s) => ({
+      position: s.rank,
+      player: { id: `${leagueId}:${s.playerName}`, name: s.playerName, nationality: null },
+      team: { id: s.teamId, name: s.teamName, shortName: s.teamName, logoUrl: s.teamLogoUrl },
+      goals: s.goals,
+      assists: s.assists,
+      played: s.played,
+    }));
+
+    res.json({ tournament, scorers });
+  } catch (err) {
+    req.log.error({ err }, "Failed to get scorers");
+    res.status(500).json({ error: "Internal server error" });
   }
-  res.json({ tournament, scorers: [] });
 });
 
 // GET /tournaments/:id/fixtures

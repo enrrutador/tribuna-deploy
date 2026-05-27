@@ -257,42 +257,65 @@ export async function fetchMatchEvents(matchId: string, leagueId: string): Promi
   }
 }
 
-/** Fetch standings for a league */
-export async function fetchStandings(leagueId: string) {
+export type StandingEntry = {
+  position: number;
+  teamId: string;
+  teamName: string;
+  teamShortName: string;
+  teamLogoUrl: string;
+  played: number;
+  won: number;
+  drawn: number;
+  lost: number;
+  goalsFor: number;
+  goalsAgainst: number;
+  goalDiff: string;
+  points: number;
+};
+
+export type StandingsGroup = {
+  name: string;
+  entries: StandingEntry[];
+};
+
+/** Fetch standings for a league — returns grouped structure (1 group = flat table, n groups = group stage) */
+export async function fetchStandings(leagueId: string): Promise<StandingsGroup[]> {
   const cacheKey = `standings:${leagueId}`;
-  const cached = getCache<unknown>(cacheKey);
+  const cached = getCache<StandingsGroup[]>(cacheKey);
   if (cached) return cached;
 
   try {
     const data = await espnFetch(`${ESPN_STANDINGS}/${leagueId}/standings`) as Record<string, unknown>;
     const children = (data.children as Record<string, unknown>[]) ?? [data];
-    const groups: Array<{ name: string; entries: unknown[] }> = [];
+    const groups: StandingsGroup[] = [];
 
     for (const child of children) {
       const standings = child.standings as Record<string, unknown>;
       const entries = (standings?.entries as Record<string, unknown>[]) ?? [];
+      if (entries.length === 0) continue;
+
       const groupName = String(child.name ?? standings?.name ?? "");
 
-      const parsed = entries.map((entry, idx) => {
+      const parsed: StandingEntry[] = entries.map((entry, idx) => {
         const team = entry.team as Record<string, unknown>;
         const logos = (team.logos as Record<string, unknown>[]) ?? [];
         const stats = (entry.stats as Record<string, unknown>[]) ?? [];
-        const stat = (name: string) => stats.find((s) => s.name === name || s.abbreviation === name);
+        const stat = (name: string) => stats.find((s) => (s as Record<string, unknown>).name === name || (s as Record<string, unknown>).abbreviation === name) as Record<string, unknown> | undefined;
 
         return {
           position: idx + 1,
-          teamId: String(team.id),
-          teamName: String(team.displayName ?? team.name),
-          teamShortName: String(team.shortDisplayName ?? team.name),
-          teamLogoUrl: String(logos[0]?.href ?? ""),
-          played: Number(stat("gamesPlayed")?.value ?? 0),
-          won: Number(stat("wins")?.value ?? 0),
-          drawn: Number(stat("ties")?.value ?? 0),
-          lost: Number(stat("losses")?.value ?? 0),
-          goalsFor: Number(stat("pointsFor")?.value ?? 0),
-          goalsAgainst: Number(stat("pointsAgainst")?.value ?? 0),
-          goalDiff: String(stat("pointDifferential")?.displayValue ?? "0"),
-          points: Number(stat("points")?.value ?? 0),
+          teamId: String(team.id ?? ""),
+          teamName: String(team.displayName ?? team.name ?? ""),
+          teamShortName: String(team.shortDisplayName ?? team.name ?? ""),
+          teamLogoUrl: String((logos[0] as Record<string, unknown>)?.href ?? ""),
+          played: Number(stat("GP")?.value ?? stat("gamesPlayed")?.value ?? 0),
+          won: Number(stat("W")?.value ?? stat("wins")?.value ?? 0),
+          drawn: Number(stat("D")?.value ?? stat("ties")?.value ?? 0),
+          lost: Number(stat("L")?.value ?? stat("losses")?.value ?? 0),
+          goalsFor: Number(stat("F")?.value ?? stat("pointsFor")?.value ?? 0),
+          goalsAgainst: Number(stat("A")?.value ?? stat("pointsAgainst")?.value ?? 0),
+          goalDiff: String(stat("GD")?.displayValue ?? stat("pointDifferential")?.displayValue ?? "0"),
+          points: Number(stat("P")?.value ?? stat("points")?.value ?? 0),
         };
       });
 
@@ -303,6 +326,63 @@ export async function fetchStandings(leagueId: string) {
     return groups;
   } catch (err) {
     logger.error({ err, leagueId }, "ESPN standings fetch failed");
+    return [];
+  }
+}
+
+/** Fetch top scorers using ESPN stats endpoint */
+export type ScorerEntry = {
+  rank: number;
+  playerName: string;
+  teamId: string;
+  teamName: string;
+  teamLogoUrl: string;
+  goals: number;
+  assists: number;
+  played: number;
+};
+
+export async function fetchScorers(leagueId: string): Promise<ScorerEntry[]> {
+  const cacheKey = `scorers:${leagueId}`;
+  const cached = getCache<ScorerEntry[]>(cacheKey);
+  if (cached) return cached;
+
+  try {
+    // ESPN scoreboard has a leaders section per event; use the season leaders endpoint
+    const data = await espnFetch(`${ESPN_BASE}/${leagueId}/scoreboard`) as Record<string, unknown>;
+    // Try to extract season leaders from scoreboard leagues data
+    const leagues = (data.leagues as Record<string, unknown>[]) ?? [];
+    const league = leagues[0] ?? {};
+    const leaders = (league.leaders as Record<string, unknown>[]) ?? [];
+
+    const scorers: ScorerEntry[] = [];
+    for (const cat of leaders) {
+      const catName = String((cat as Record<string, unknown>).name ?? "");
+      if (!catName.toLowerCase().includes("goal") && !catName.toLowerCase().includes("score")) continue;
+      const entries = ((cat as Record<string, unknown>).leaders as Record<string, unknown>[]) ?? [];
+      entries.forEach((entry, i) => {
+        const athletes = (entry.athletes as Record<string, unknown>[]) ?? [];
+        const athlete = athletes[0] ?? {};
+        const team = (athlete.team as Record<string, unknown>) ?? {};
+        const logos = (team.logos as Record<string, unknown>[]) ?? [];
+        scorers.push({
+          rank: i + 1,
+          playerName: String((athlete.athlete as Record<string, unknown>)?.displayName ?? athlete.displayName ?? ""),
+          teamId: String(team.id ?? ""),
+          teamName: String(team.displayName ?? ""),
+          teamLogoUrl: String((logos[0] as Record<string, unknown>)?.href ?? ""),
+          goals: Number(entry.value ?? 0),
+          assists: 0,
+          played: 0,
+        });
+      });
+      if (scorers.length > 0) break;
+    }
+
+    setCache(cacheKey, scorers, 10 * 60_000);
+    return scorers;
+  } catch (err) {
+    logger.error({ err, leagueId }, "ESPN scorers fetch failed");
     return [];
   }
 }
