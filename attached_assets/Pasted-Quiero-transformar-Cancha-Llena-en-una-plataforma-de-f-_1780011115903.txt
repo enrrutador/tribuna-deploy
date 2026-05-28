@@ -1,0 +1,272 @@
+Quiero transformar “Cancha Llena” en una plataforma de fútbol moderna tipo Sofascore / OneFootball / Flashscore, manteniendo el diseño actual pero evolucionándolo a una experiencia mucho más dinámica, visual y centrada en datos en vivo.
+
+OBJETIVO GENERAL:
+Convertir la web actual en una aplicación futbolera profesional con:
+- resultados en vivo,
+- fixtures,
+- tablas de posiciones,
+- perfiles de equipos,
+- perfiles de jugadores,
+- estadísticas,
+- noticias dinámicas,
+- sistema de favoritos.
+
+IMPORTANTE:
+- NO romper la estructura actual.
+- Mantener compatibilidad mobile.
+- Mantener el branding “Cancha Llena”.
+- Usar componentes reutilizables.
+- Priorizar performance y UI moderna.
+- Todo debe quedar modular y escalable.
+
+========================================
+1. LIVE MATCH CENTER
+========================================
+
+Crear un sistema de partidos en vivo con:
+
+- marcador en tiempo real,
+- minuto actual,
+- estado del partido:
+  - EN VIVO,
+  - FINALIZADO,
+  - ENTRETIEMPO,
+  - PROGRAMADO,
+- goleadores,
+- tarjetas amarillas y rojas,
+- cambios,
+- timeline del partido,
+- estadísticas rápidas:
+  - posesión,
+  - tiros,
+  - tiros al arco,
+  - corners,
+  - faltas.
+
+Diseñar:
+- cards modernas,
+- badges de estado,
+- animaciones suaves,
+- actualización automática.
+
+Agregar una sección:
+“Partidos en Vivo”.
+
+Si no hay API conectada:
+- generar mock data realista.
+
+========================================
+2. FIXTURES Y CALENDARIO
+========================================
+
+Agregar sección completa de fixtures.
+
+Funciones:
+- próximos partidos,
+- partidos pasados,
+- filtrar por:
+  - liga,
+  - fecha,
+  - equipo.
+
+Cada partido debe tener:
+- escudos,
+- fecha,
+- hora,
+- estadio,
+- estado,
+- botón “Ver partido”.
+
+Diseñar calendario responsive.
+
+========================================
+3. TABLAS DE POSICIONES
+========================================
+
+Agregar tablas completas por liga.
+
+Columnas:
+- PJ,
+- PG,
+- PE,
+- PP,
+- GF,
+- GC,
+- DG,
+- PTS.
+
+Agregar:
+- colores para clasificación a copas,
+- zona descenso,
+- últimos 5 partidos.
+
+Diseño tipo aplicación profesional deportiva.
+
+========================================
+4. PERFIL DE EQUIPOS
+========================================
+
+Crear páginas dinámicas para equipos.
+
+Cada equipo debe tener:
+- escudo,
+- nombre,
+- estadio,
+- DT,
+- plantilla,
+- próximos partidos,
+- últimos resultados,
+- estadísticas generales,
+- noticias relacionadas.
+
+Agregar tabs:
+- Resumen,
+- Plantilla,
+- Estadísticas,
+- Partidos,
+- Noticias.
+
+========================================
+5. PERFIL DE JUGADORES
+========================================
+
+Crear perfiles completos de jugadores.
+
+Información:
+- foto,
+- edad,
+- nacionalidad,
+- posición,
+- club,
+- estadísticas,
+- goles,
+- asistencias,
+- minutos jugados.
+
+Agregar diseño moderno tipo FIFA/Sofascore.
+
+========================================
+6. SISTEMA DE NOTICIAS
+========================================
+
+Agregar feed dinámico de noticias deportivas.
+
+Categorías:
+- Mercado de pases,
+- Libertadores,
+- Champions,
+- Selecciones,
+- Liga Profesional,
+- Premier League.
+
+Cada noticia:
+- imagen,
+- titular,
+- resumen,
+- fecha,
+- autor.
+
+Diseño tipo portal deportivo moderno.
+
+Agregar:
+- cards destacadas,
+- carrusel,
+- trending news.
+
+========================================
+7. FAVORITOS Y USUARIO
+========================================
+
+Agregar sistema de usuario simple.
+
+Funciones:
+- seguir equipos,
+- guardar favoritos,
+- recibir alertas,
+- ver partidos favoritos.
+
+Persistencia:
+- localStorage inicialmente.
+
+========================================
+8. UI/UX PROFESIONAL
+========================================
+
+Actualizar el diseño general.
+
+Quiero:
+- estética tipo Sofascore/FotMob,
+- dark mode elegante,
+- tipografía moderna,
+- mejor spacing,
+- mejores cards,
+- más jerarquía visual,
+- diseño deportivo premium.
+
+Agregar:
+- skeleton loaders,
+- hover animations,
+- transiciones suaves,
+- estados vacíos elegantes,
+- responsive perfecto.
+
+========================================
+9. ARQUITECTURA
+========================================
+
+Reorganizar el proyecto profesionalmente.
+
+Separar:
+- components,
+- pages,
+- services,
+- hooks,
+- utils,
+- mock-data.
+
+Preparar el proyecto para:
+- futura API real,
+- websocket live data,
+- autenticación,
+- backend escalable.
+
+========================================
+10. TECNOLOGÍA
+========================================
+
+Mantener stack actual.
+
+Pero:
+- optimizar rendimiento,
+- evitar código duplicado,
+- mejorar estructura,
+- tipado fuerte si usa TypeScript,
+- componentes reutilizables.
+
+========================================
+11. DATOS MOCK REALISTAS
+========================================
+
+Si faltan APIs:
+- crear mock data MUY realista,
+- con equipos reales,
+- jugadores reales,
+- estadísticas coherentes.
+
+========================================
+12. RESULTADO FINAL
+========================================
+
+Quiero que el resultado se vea como:
+- una startup deportiva real,
+- no un template,
+- no una demo simple.
+
+Debe sentirse:
+- moderno,
+- rápido,
+- profesional,
+- visualmente impactante,
+- listo para convertirse en app móvil luego.
+
+Implementar todo progresivamente sin romper funcionalidades existentes.

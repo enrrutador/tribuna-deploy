@@ -1,6 +1,9 @@
 import { Link, useLocation } from "wouter";
 import { useListTournaments, getListTournamentsQueryKey } from "@workspace/api-client-react";
 import { Skeleton } from "./ui/skeleton";
+import { useFavorites } from "@/hooks/useFavorites";
+import { getTeamColor } from "@/utils/teamColors";
+import { Star } from "lucide-react";
 
 type Tournament = { id: number; name: string; slug: string; logoUrl?: string | null; flagEmoji?: string | null };
 
@@ -32,19 +35,6 @@ function TournamentItem({ tournament }: { tournament: Tournament }) {
   );
 }
 
-function StaticItem({ label, emoji, href = "#" }: { label: string; emoji: string; href?: string }) {
-  return (
-    <li>
-      <Link href={href}>
-        <div className="w-full flex items-center gap-2.5 px-3 py-[7px] text-[13px] cursor-pointer border-l-2 border-l-transparent text-[#aaa] hover:text-white hover:bg-white/5 transition-all">
-          <span className="w-5 h-5 flex items-center justify-center shrink-0 text-base leading-none">{emoji}</span>
-          <span className="font-medium">{label}</span>
-        </div>
-      </Link>
-    </li>
-  );
-}
-
 function SectionLabel({ label }: { label: string }) {
   return (
     <div className="px-3 pt-5 pb-1.5">
@@ -63,6 +53,54 @@ function SkeletonItems({ count = 5 }: { count?: number }) {
   );
 }
 
+function FavoriteTeamsSection() {
+  const { favoriteTeams, toggleTeam } = useFavorites();
+  const [location] = useLocation();
+
+  if (!favoriteTeams.length) return null;
+
+  return (
+    <>
+      <SectionLabel label="Mis Equipos" />
+      <ul>
+        {favoriteTeams.map((team) => {
+          const color = getTeamColor(team.name);
+          const isActive = location === `/equipo/${team.id}`;
+          return (
+            <li key={team.id}>
+              <div className={`w-full flex items-center gap-2.5 px-3 py-[7px] text-[13px] cursor-pointer transition-all group ${
+                isActive
+                  ? "bg-[#0066cc]/15 border-l-2 border-l-amber-400 text-white"
+                  : "border-l-2 border-l-transparent text-[#aaa] hover:text-white hover:bg-white/5"
+              }`}>
+                <Link href={`/equipo/${team.id}`} className="flex items-center gap-2.5 flex-1 min-w-0">
+                  <div
+                    className="w-5 h-5 rounded-full flex items-center justify-center text-[7px] font-bold shrink-0 overflow-hidden"
+                    style={{ backgroundColor: color.bg, color: color.text }}
+                  >
+                    {team.logoUrl
+                      ? <img src={team.logoUrl} className="w-full h-full object-contain" alt="" />
+                      : team.name.substring(0, 2).toUpperCase()
+                    }
+                  </div>
+                  <span className="truncate font-medium">{team.name}</span>
+                </Link>
+                <button
+                  onClick={() => toggleTeam(team)}
+                  className="opacity-0 group-hover:opacity-100 transition-opacity text-amber-400 hover:text-amber-300 p-0.5"
+                  title="Dejar de seguir"
+                >
+                  <Star className="w-3 h-3 fill-amber-400" />
+                </button>
+              </div>
+            </li>
+          );
+        })}
+      </ul>
+    </>
+  );
+}
+
 export default function Sidebar() {
   const { data: tournamentsData, isLoading } = useListTournaments({
     query: { queryKey: getListTournamentsQueryKey() }
@@ -77,6 +115,9 @@ export default function Sidebar() {
         </div>
       ) : (
         <nav>
+          {/* Favorite teams — shown when user follows at least one */}
+          <FavoriteTeamsSection />
+
           <SectionLabel label="Destacados" />
           <ul>
             {tournamentsData?.destacados?.map((t) => <TournamentItem key={t.id} tournament={t} />)}

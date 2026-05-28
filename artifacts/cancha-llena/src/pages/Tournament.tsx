@@ -216,7 +216,8 @@ export default function Tournament() {
               <Skeleton className="h-64 w-full rounded-sm" />
             </div>
           ) : (() => {
-            const groups = (standingsData as any)?.groups as Array<{ name: string; standings: typeof standingsData.standings }> | undefined;
+            type StandingRow = NonNullable<typeof standingsData>["standings"][0];
+            const groups = (standingsData as any)?.groups as Array<{ name: string; standings: StandingRow[] }> | undefined;
             const hasMultipleGroups = groups && groups.length > 1;
 
             if (!groups?.length && !standingsData?.standings?.length) {
@@ -227,7 +228,7 @@ export default function Tournament() {
               );
             }
 
-            const renderTable = (rows: typeof standingsData.standings, isGroupStage = false) => (
+            const renderTable = (rows: StandingRow[], isGroupStage = false) => (
               <table className="w-full text-[13px]">
                 <thead>
                   <tr className="bg-[#f5f5f5] border-b text-gray-400 text-[11px] uppercase tracking-wider">

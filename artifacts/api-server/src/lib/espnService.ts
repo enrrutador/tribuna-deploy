@@ -74,9 +74,9 @@ export type EspnEvent = {
 type CacheEntry<T> = { data: T; expiresAt: number };
 const cache = new Map<string, CacheEntry<unknown>>();
 
-function getCache<T>(key: string): T | null {
+function getCache<T>(key: string): T | undefined {
   const entry = cache.get(key) as CacheEntry<T> | undefined;
-  if (!entry || Date.now() > entry.expiresAt) return null;
+  if (!entry || Date.now() > entry.expiresAt) return undefined;
   return entry.data;
 }
 
@@ -341,6 +341,97 @@ export type ScorerEntry = {
   assists: number;
   played: number;
 };
+
+export type MatchStats = {
+  home: {
+    possession: number;
+    totalShots: number;
+    shotsOnTarget: number;
+    corners: number;
+    fouls: number;
+    yellowCards: number;
+    redCards: number;
+    offsides: number;
+    saves: number;
+    passes: number;
+    passAccuracy: number;
+  };
+  away: {
+    possession: number;
+    totalShots: number;
+    shotsOnTarget: number;
+    corners: number;
+    fouls: number;
+    yellowCards: number;
+    redCards: number;
+    offsides: number;
+    saves: number;
+    passes: number;
+    passAccuracy: number;
+  };
+};
+
+/** Fetch match statistics from ESPN summary endpoint */
+export async function fetchMatchStats(eventId: string, leagueId: string): Promise<MatchStats | null> {
+  const cacheKey = `stats:${leagueId}:${eventId}`;
+  const cached = getCache<MatchStats | null>(cacheKey);
+  if (cached !== undefined) return cached;
+
+  try {
+    const data = await espnFetch(`${ESPN_BASE}/${leagueId}/summary?event=${eventId}`) as Record<string, unknown>;
+    const teams = ((data.boxscore as Record<string, unknown>)?.teams as Record<string, unknown>[]) ?? [];
+    if (teams.length < 2) {
+      setCache(cacheKey, null, 60_000);
+      return null;
+    }
+
+    const parseStat = (team: Record<string, unknown>, name: string) => {
+      const stats = (team.statistics as Record<string, unknown>[]) ?? [];
+      const s = stats.find((x) => (x as Record<string, unknown>).name === name) as Record<string, unknown> | undefined;
+      // ESPN stats have displayValue as string, value may be undefined
+      return Number(s?.value ?? (s?.displayValue != null ? parseFloat(String(s.displayValue)) : 0));
+    };
+
+    const home = teams[0]!;
+    const away = teams[1]!;
+
+    const result: MatchStats = {
+      home: {
+        possession: parseStat(home, "possessionPct"),
+        totalShots: parseStat(home, "totalShots"),
+        shotsOnTarget: parseStat(home, "shotsOnTarget"),
+        corners: parseStat(home, "wonCorners"),
+        fouls: parseStat(home, "foulsCommitted"),
+        yellowCards: parseStat(home, "yellowCards"),
+        redCards: parseStat(home, "redCards"),
+        offsides: parseStat(home, "offsides"),
+        saves: parseStat(home, "saves"),
+        passes: parseStat(home, "accuratePasses"),
+        passAccuracy: Math.round(parseStat(home, "passPct") * 100),
+      },
+      away: {
+        possession: parseStat(away, "possessionPct"),
+        totalShots: parseStat(away, "totalShots"),
+        shotsOnTarget: parseStat(away, "shotsOnTarget"),
+        corners: parseStat(away, "wonCorners"),
+        fouls: parseStat(away, "foulsCommitted"),
+        yellowCards: parseStat(away, "yellowCards"),
+        redCards: parseStat(away, "redCards"),
+        offsides: parseStat(away, "offsides"),
+        saves: parseStat(away, "saves"),
+        passes: parseStat(away, "accuratePasses"),
+        passAccuracy: Math.round(parseStat(away, "passPct") * 100),
+      },
+    };
+
+    setCache(cacheKey, result, 30_000);
+    return result;
+  } catch (err) {
+    logger.error({ err, eventId, leagueId }, "ESPN match stats fetch failed");
+    setCache(cacheKey, null, 60_000);
+    return null;
+  }
+}
 
 export async function fetchScorers(leagueId: string): Promise<ScorerEntry[]> {
   const cacheKey = `scorers:${leagueId}`;

@@ -3,6 +3,7 @@ import {
   fetchTodayMatches,
   fetchLeagueMatches,
   fetchMatchEvents,
+  fetchMatchStats,
   ESPN_LEAGUES,
   SLUG_TO_LEAGUE,
   type EspnMatch,
@@ -174,10 +175,14 @@ router.get("/:id", async (req, res) => {
       return;
     }
 
-    const events = await fetchMatchEvents(found.id, foundLeagueId);
+    const [events, stats] = await Promise.all([
+      fetchMatchEvents(found.id, foundLeagueId),
+      fetchMatchStats(found.id, foundLeagueId),
+    ]);
 
     res.json({
       ...formatMatch(found),
+      stats,
       events: events.map((e) => ({
         id: e.id,
         eventType: e.type,

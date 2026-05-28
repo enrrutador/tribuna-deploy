@@ -2,19 +2,22 @@ import { useParams, Link } from "wouter";
 import { useGetTeam } from "@workspace/api-client-react";
 import { format } from "date-fns";
 import { es } from "date-fns/locale";
-import { ChevronRight, MapPin, Calendar, Users, Trophy, User } from "lucide-react";
+import { ChevronRight, MapPin, Calendar, User, Star } from "lucide-react";
 import { getTeamColor } from "@/utils/teamColors";
+import { useFavorites } from "@/hooks/useFavorites";
 
 export default function TeamPage() {
   const params = useParams<{ id: string }>();
   const teamId = params.id as unknown as number;
   const { data, isLoading, isError } = useGetTeam(teamId);
+  const { isTeamFavorite, toggleTeam } = useFavorites();
 
   if (isLoading) return <LoadingSkeleton />;
   if (isError || !data) return <ErrorState />;
 
   const { team, recentMatches } = data;
   const color = getTeamColor(team.name);
+  const isFav = isTeamFavorite(String((team as any).id ?? teamId));
 
   return (
     <div className="space-y-4">
@@ -23,7 +26,7 @@ export default function TeamPage() {
         <div className="p-5 flex items-start gap-4">
           {/* Badge */}
           <div
-            className="w-16 h-16 rounded-full flex items-center justify-center text-2xl font-bold shrink-0 overflow-hidden border-2 border-white shadow"
+            className="w-20 h-20 rounded-full flex items-center justify-center text-2xl font-bold shrink-0 overflow-hidden border-2 border-white shadow-lg"
             style={{ backgroundColor: color.bg, color: color.text }}
           >
             {team.logoUrl
@@ -34,8 +37,28 @@ export default function TeamPage() {
 
           {/* Info */}
           <div className="flex-1 min-w-0">
-            <h1 className="text-xl font-black text-gray-900 leading-tight">{team.name}</h1>
-            {team.shortName && <p className="text-sm text-gray-400 font-medium mt-0.5">{team.shortName}</p>}
+            <div className="flex items-start justify-between gap-2">
+              <div>
+                <h1 className="text-xl font-black text-gray-900 leading-tight">{team.name}</h1>
+                {team.shortName && <p className="text-sm text-gray-400 font-medium mt-0.5">{team.shortName}</p>}
+              </div>
+              {/* Favorite button */}
+              <button
+                onClick={() => toggleTeam({
+                  id: String((team as any).id ?? teamId),
+                  name: team.name,
+                  logoUrl: team.logoUrl,
+                })}
+                className={`flex items-center gap-1.5 text-[12px] font-semibold px-3 py-1.5 rounded-sm border transition-colors shrink-0 ${
+                  isFav
+                    ? "border-amber-400 bg-amber-50 text-amber-600"
+                    : "border-gray-200 text-gray-500 hover:border-amber-300 hover:text-amber-500"
+                }`}
+              >
+                <Star className={`w-3.5 h-3.5 ${isFav ? "fill-amber-400" : ""}`} />
+                {isFav ? "Siguiendo" : "Seguir equipo"}
+              </button>
+            </div>
             {team.description && (
               <p className="text-[13px] text-gray-600 mt-2 leading-relaxed line-clamp-3">{team.description}</p>
             )}
@@ -47,8 +70,8 @@ export default function TeamPage() {
           {team.stadium && (
             <MetaField icon={<MapPin className="w-3.5 h-3.5" />} label="Estadio" value={team.stadium} />
           )}
-          {team.city && (
-            <MetaField icon={<MapPin className="w-3.5 h-3.5" />} label="Ciudad" value={`${team.city}${team.country ? `, ${team.country}` : ""}`} />
+          {(team.city || team.country) && (
+            <MetaField icon={<MapPin className="w-3.5 h-3.5" />} label="Ciudad" value={`${team.city ?? ""}${team.country ? `, ${team.country}` : ""}`} />
           )}
           {team.founded && (
             <MetaField icon={<Calendar className="w-3.5 h-3.5" />} label="Fundación" value={String(team.founded)} />
@@ -59,6 +82,40 @@ export default function TeamPage() {
         </div>
       </div>
 
+      {/* Form summary */}
+      {recentMatches.length > 0 && (() => {
+        const finished = recentMatches.filter((m: any) => m.status === "finished").slice(0, 5);
+        if (!finished.length) return null;
+
+        const results = finished.map((match: any) => {
+          const isHome = String(match.homeTeam.id) === String(teamId);
+          const ts = isHome ? match.homeScore : match.awayScore;
+          const os = isHome ? match.awayScore : match.homeScore;
+          if (ts == null || os == null) return "—";
+          if (ts > os) return "G";
+          if (ts < os) return "P";
+          return "E";
+        });
+
+        return (
+          <div className="bg-white rounded-sm border border-gray-200 shadow-sm p-4 flex items-center gap-4">
+            <span className="text-[12px] text-gray-500 font-semibold uppercase tracking-wide">Últimos 5</span>
+            <div className="flex items-center gap-1">
+              {results.map((r: string, i: number) => (
+                <span
+                  key={i}
+                  className={`w-7 h-7 rounded-sm text-white text-[11px] flex items-center justify-center font-bold ${
+                    r === "G" ? "bg-emerald-500" : r === "P" ? "bg-red-500" : r === "E" ? "bg-gray-400" : "bg-gray-200"
+                  }`}
+                >
+                  {r}
+                </span>
+              ))}
+            </div>
+          </div>
+        );
+      })()}
+
       {/* Recent matches */}
       {recentMatches.length > 0 && (
         <div className="bg-white rounded-sm border border-gray-200 shadow-sm overflow-hidden">
@@ -67,8 +124,8 @@ export default function TeamPage() {
             <span className="font-bold text-gray-900 text-[13px]">Partidos recientes</span>
           </div>
           <div>
-            {recentMatches.slice(0, 12).map((match) => (
-              <RecentMatchRow key={match.id} match={match} teamId={teamId} />
+            {recentMatches.slice(0, 12).map((match: any) => (
+              <RecentMatchRow key={match.id} match={match} teamId={String(teamId)} />
             ))}
           </div>
         </div>
@@ -89,8 +146,8 @@ function MetaField({ icon, label, value }: { icon: React.ReactNode; label: strin
   );
 }
 
-function RecentMatchRow({ match, teamId }: { match: any; teamId: number }) {
-  const isHome = match.homeTeam.id === teamId;
+function RecentMatchRow({ match, teamId }: { match: any; teamId: string }) {
+  const isHome = String(match.homeTeam.id) === teamId;
   const opponent = isHome ? match.awayTeam : match.homeTeam;
   const teamScore = isHome ? match.homeScore : match.awayScore;
   const opponentScore = isHome ? match.awayScore : match.homeScore;
@@ -101,11 +158,11 @@ function RecentMatchRow({ match, teamId }: { match: any; teamId: number }) {
   const hasScore = teamScore != null && opponentScore != null;
 
   let resultLabel = "";
-  let resultClass = "text-gray-400";
+  let resultBg = "bg-gray-200";
   if (hasScore && isFinished) {
-    if (teamScore > opponentScore) { resultLabel = "G"; resultClass = "text-emerald-600 font-bold"; }
-    else if (teamScore < opponentScore) { resultLabel = "P"; resultClass = "text-red-500 font-bold"; }
-    else { resultLabel = "E"; resultClass = "text-gray-500 font-bold"; }
+    if (teamScore > opponentScore) { resultLabel = "G"; resultBg = "bg-emerald-500"; }
+    else if (teamScore < opponentScore) { resultLabel = "P"; resultBg = "bg-red-500"; }
+    else { resultLabel = "E"; resultBg = "bg-gray-400"; }
   }
 
   const dateStr = isLive
@@ -147,10 +204,12 @@ function RecentMatchRow({ match, teamId }: { match: any; teamId: number }) {
         {/* Score + result */}
         <div className="flex items-center gap-2 shrink-0">
           {hasScore && (
-            <span className="text-[13px] font-bold text-gray-800 tabular-nums">{teamScore} - {opponentScore}</span>
+            <span className="text-[13px] font-bold text-gray-800 tabular-nums">{teamScore} – {opponentScore}</span>
           )}
           {resultLabel && (
-            <span className={`text-[12px] w-5 text-center ${resultClass}`}>{resultLabel}</span>
+            <span className={`text-[11px] w-6 h-6 flex items-center justify-center rounded-sm text-white font-bold ${resultBg}`}>
+              {resultLabel}
+            </span>
           )}
         </div>
 
@@ -170,10 +229,11 @@ function LoadingSkeleton() {
     <div className="space-y-4">
       <div className="bg-white rounded-sm border border-gray-200 shadow-sm p-5 animate-pulse">
         <div className="flex gap-4">
-          <div className="w-16 h-16 rounded-full bg-gray-200" />
+          <div className="w-20 h-20 rounded-full bg-gray-200" />
           <div className="flex-1 space-y-2">
             <div className="h-5 bg-gray-200 rounded w-48" />
             <div className="h-3 bg-gray-100 rounded w-32" />
+            <div className="h-3 bg-gray-100 rounded w-full mt-2" />
           </div>
         </div>
       </div>
