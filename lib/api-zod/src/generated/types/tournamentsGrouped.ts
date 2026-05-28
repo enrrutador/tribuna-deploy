@@ -10,5 +10,6 @@ import type { Tournament } from "./tournament";
 export interface TournamentsGrouped {
   destacados: Tournament[];
   argentina: Tournament[];
+  sudamerica: Tournament[];
   world: Tournament[];
 }

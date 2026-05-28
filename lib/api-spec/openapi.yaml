@@ -279,7 +279,7 @@ components:
           type: string
         category:
           type: string
-          enum: [destacados, argentina, world]
+          enum: [destacados, argentina, sudamerica, world]
         logoUrl:
           type: string
           nullable: true
@@ -318,6 +318,10 @@ components:
           type: array
           items:
             $ref: "#/components/schemas/Tournament"
+        sudamerica:
+          type: array
+          items:
+            $ref: "#/components/schemas/Tournament"
         world:
           type: array
           items:
@@ -325,6 +329,7 @@ components:
       required:
         - destacados
         - argentina
+        - sudamerica
         - world
 
     Team:

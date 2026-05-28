@@ -5,21 +5,38 @@ const ESPN_BASE = "https://site.api.espn.com/apis/site/v2/sports/soccer";
 const ESPN_STANDINGS = "https://site.api.espn.com/apis/v2/sports/soccer";
 
 // Leagues mapped to our tournament slugs
-export const ESPN_LEAGUES: Record<string, { slug: string; name: string; flag: string; category: "destacados" | "argentina" | "world" }> = {
-  "arg.1":                    { slug: "liga-profesional",     name: "Liga Profesional",      flag: "🇦🇷", category: "argentina" },
-  "arg.copa":                 { slug: "copa-argentina",       name: "Copa Argentina",         flag: "🇦🇷", category: "argentina" },
-  "arg.2":                    { slug: "primera-nacional",     name: "Primera Nacional",       flag: "🇦🇷", category: "argentina" },
+export const ESPN_LEAGUES: Record<string, { slug: string; name: string; flag: string; category: "destacados" | "argentina" | "sudamerica" | "world" }> = {
+  // Destacados
   "conmebol.libertadores":    { slug: "copa-libertadores",    name: "Copa Libertadores",      flag: "🏆", category: "destacados" },
   "conmebol.sudamericana":    { slug: "copa-sudamericana",    name: "Copa Sudamericana",      flag: "🏆", category: "destacados" },
+  "fifa.worldq.conmebol":     { slug: "eliminatorias",        name: "Eliminatorias CONMEBOL", flag: "🌎", category: "destacados" },
+  "fifa.world":               { slug: "mundial-2026",         name: "Mundial 2026",           flag: "🌍", category: "destacados" },
   "uefa.champions":           { slug: "champions-league",     name: "Champions League",       flag: "⭐", category: "destacados" },
   "uefa.europa":              { slug: "europa-league",        name: "Europa League",          flag: "⭐", category: "destacados" },
+  "uefa.conference":          { slug: "conference-league",    name: "Conference League",      flag: "⭐", category: "destacados" },
+  // Argentina
+  "arg.1":                    { slug: "liga-profesional",     name: "Liga Profesional",       flag: "🇦🇷", category: "argentina" },
+  "arg.copa":                 { slug: "copa-argentina",       name: "Copa Argentina",         flag: "🇦🇷", category: "argentina" },
+  "arg.2":                    { slug: "primera-nacional",     name: "Primera Nacional",       flag: "🇦🇷", category: "argentina" },
+  // Sudamérica
+  "uru.1":                    { slug: "uruguay-primera",      name: "Uruguay - Primera",      flag: "🇺🇾", category: "sudamerica" },
+  "chi.1":                    { slug: "chile-primera",        name: "Chile - Primera",        flag: "🇨🇱", category: "sudamerica" },
+  "col.1":                    { slug: "colombia-primera-a",   name: "Colombia - Primera A",   flag: "🇨🇴", category: "sudamerica" },
+  "bol.1":                    { slug: "bolivia-primera",      name: "Bolivia - División Prof.", flag: "🇧🇴", category: "sudamerica" },
+  "par.1":                    { slug: "paraguay-primera",     name: "Paraguay - División Pro.", flag: "🇵🇾", category: "sudamerica" },
+  "ecu.1":                    { slug: "ecuador-serie-a",      name: "Ecuador - Serie A",      flag: "🇪🇨", category: "sudamerica" },
+  "per.1":                    { slug: "peru-liga-1",          name: "Perú - Liga 1",          flag: "🇵🇪", category: "sudamerica" },
+  "ven.1":                    { slug: "venezuela-primera",    name: "Venezuela - Primera",    flag: "🇻🇪", category: "sudamerica" },
+  "mex.1":                    { slug: "liga-mx",              name: "Liga MX",                flag: "🇲🇽", category: "sudamerica" },
+  "usa.1":                    { slug: "mls",                  name: "MLS",                    flag: "🇺🇸", category: "sudamerica" },
+  // Europa / Mundo
   "eng.1":                    { slug: "premier-league",       name: "Premier League",         flag: "🏴󠁧󠁢󠁥󠁮󠁧󠁿", category: "world" },
   "esp.1":                    { slug: "la-liga",              name: "La Liga",                flag: "🇪🇸", category: "world" },
   "ger.1":                    { slug: "bundesliga",           name: "Bundesliga",             flag: "🇩🇪", category: "world" },
   "ita.1":                    { slug: "serie-a",              name: "Serie A",                flag: "🇮🇹", category: "world" },
   "fra.1":                    { slug: "ligue-1",              name: "Ligue 1",                flag: "🇫🇷", category: "world" },
-  "fifa.worldq.conmebol":     { slug: "eliminatorias",        name: "Eliminatorias CONMEBOL", flag: "🌎", category: "destacados" },
-  "fifa.world":               { slug: "mundial-2026",         name: "Mundial 2026",           flag: "🌍", category: "destacados" },
+  "ned.1":                    { slug: "eredivisie",           name: "Eredivisie",             flag: "🇳🇱", category: "world" },
+  "por.1":                    { slug: "primeira-liga",        name: "Primeira Liga",          flag: "🇵🇹", category: "world" },
 };
 
 // Slug → leagueId lookup
@@ -68,6 +85,31 @@ export type EspnEvent = {
   assistName: string | null;
   text: string;
 };
+
+// ---- Argentina timezone helpers (ART = UTC-3, no DST) ----
+
+/** Convert a UTC ISO string to Argentine date string (YYYY-MM-DD) */
+function toArgDate(utcIso: string): string {
+  const ms = new Date(utcIso).getTime() - 3 * 60 * 60 * 1000;
+  return new Date(ms).toISOString().split("T")[0]!;
+}
+
+/** Today's date in Argentine timezone (YYYY-MM-DD) */
+function argToday(): string {
+  return toArgDate(new Date().toISOString());
+}
+
+/**
+ * Given an Argentine date (YYYY-MM-DD), return the two UTC dates (YYYYMMDD)
+ * that cover it — since ART = UTC-3, a full ART day spans two UTC calendar days.
+ */
+function artDateToUtcDates(artDate: string): [string, string] {
+  const d1 = artDate.replace(/-/g, "");
+  const next = new Date(artDate + "T12:00:00Z");
+  next.setUTCDate(next.getUTCDate() + 1);
+  const d2 = next.toISOString().split("T")[0]!.replace(/-/g, "");
+  return [d1, d2];
+}
 
 // ---- In-memory cache ----
 
@@ -148,14 +190,20 @@ function parseEvent(ev: Record<string, unknown>): EspnEvent | null {
 
 // ---- Public API ----
 
-/** Fetch all matches for a league from ESPN scoreboard */
-export async function fetchLeagueMatches(leagueId: string): Promise<EspnMatch[]> {
-  const cacheKey = `matches:${leagueId}`;
+/** Fetch all matches for a league from ESPN scoreboard.
+ *  @param utcDateStr — optional YYYYMMDD string; if provided fetches ?dates=YYYYMMDD
+ */
+export async function fetchLeagueMatches(leagueId: string, utcDateStr?: string): Promise<EspnMatch[]> {
+  const cacheKey = `matches:${leagueId}:${utcDateStr ?? "current"}`;
   const cached = getCache<EspnMatch[]>(cacheKey);
   if (cached) return cached;
 
+  const url = utcDateStr
+    ? `${ESPN_BASE}/${leagueId}/scoreboard?dates=${utcDateStr}`
+    : `${ESPN_BASE}/${leagueId}/scoreboard`;
+
   try {
-    const data = await espnFetch(`${ESPN_BASE}/${leagueId}/scoreboard`) as Record<string, unknown>;
+    const data = await espnFetch(url) as Record<string, unknown>;
     const leagueInfo = ESPN_LEAGUES[leagueId];
     if (!leagueInfo) return [];
 
@@ -213,30 +261,51 @@ export async function fetchLeagueMatches(leagueId: string): Promise<EspnMatch[]>
   }
 }
 
-/** Fetch today's matches across all leagues */
-export async function fetchTodayMatches(): Promise<EspnMatch[]> {
-  const cacheKey = "today:all";
+/**
+ * Fetch all matches across all leagues for a given Argentine date (YYYY-MM-DD).
+ * Queries ESPN with both UTC dates that cover that ART day and deduplicates.
+ */
+export async function fetchMatchesForDate(artDate: string): Promise<EspnMatch[]> {
+  const cacheKey = `day:${artDate}`;
   const cached = getCache<EspnMatch[]>(cacheKey);
   if (cached) return cached;
 
+  const [utcD1, utcD2] = artDateToUtcDates(artDate);
+  const leagueIds = Object.keys(ESPN_LEAGUES);
+
+  // Fetch each league for both UTC dates in parallel
   const results = await Promise.allSettled(
-    Object.keys(ESPN_LEAGUES).map((lid) => fetchLeagueMatches(lid))
+    leagueIds.flatMap((lid) => [
+      fetchLeagueMatches(lid, utcD1),
+      fetchLeagueMatches(lid, utcD2),
+    ])
   );
 
-  const today = new Date().toISOString().split("T")[0]!;
+  const seen = new Set<string>();
   const all: EspnMatch[] = [];
   for (const r of results) {
     if (r.status === "fulfilled") {
-      const todayMatches = r.value.filter((m) => m.kickoffTime.startsWith(today));
-      all.push(...todayMatches);
+      for (const m of r.value) {
+        if (!seen.has(m.id) && toArgDate(m.kickoffTime) === artDate) {
+          seen.add(m.id);
+          all.push(m);
+        }
+      }
     }
   }
 
   all.sort((a, b) => new Date(a.kickoffTime).getTime() - new Date(b.kickoffTime).getTime());
 
+  const isToday = artDate === argToday();
   const hasLive = all.some((m) => m.status === "live");
-  setCache(cacheKey, all, hasLive ? 15_000 : 30_000);
+  const ttl = isToday ? (hasLive ? 15_000 : 30_000) : 5 * 60_000;
+  setCache(cacheKey, all, ttl);
   return all;
+}
+
+/** Fetch today's matches (in Argentine timezone) across all leagues */
+export async function fetchTodayMatches(): Promise<EspnMatch[]> {
+  return fetchMatchesForDate(argToday());
 }
 
 /** Fetch match events (goals, cards) from ESPN summary */

@@ -15,6 +15,7 @@ export type TournamentCategory =
 export const TournamentCategory = {
   destacados: "destacados",
   argentina: "argentina",
+  sudamerica: "sudamerica",
   world: "world",
 } as const;
 
@@ -35,6 +36,7 @@ export interface Tournament {
 export interface TournamentsGrouped {
   destacados: Tournament[];
   argentina: Tournament[];
+  sudamerica: Tournament[];
   world: Tournament[];
 }
 

@@ -53,16 +53,18 @@ function leagueToTournament(leagueId: string) {
 router.get("/", async (_req, res) => {
   const destacados = [];
   const argentina = [];
+  const sudamerica = [];
   const world = [];
 
   for (const [id, info] of Object.entries(ESPN_LEAGUES)) {
     const t = leagueToTournament(id)!;
     if (info.category === "destacados") destacados.push(t);
     else if (info.category === "argentina") argentina.push(t);
+    else if (info.category === "sudamerica") sudamerica.push(t);
     else world.push(t);
   }
 
-  res.json({ destacados, argentina, world });
+  res.json({ destacados, argentina, sudamerica, world });
 });
 
 // GET /tournaments/by-slug/:slug

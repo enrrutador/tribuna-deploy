@@ -128,6 +128,11 @@ export default function Sidebar() {
             {tournamentsData?.argentina?.map((t) => <TournamentItem key={t.id} tournament={t} />)}
           </ul>
 
+          <SectionLabel label="Sudamérica" />
+          <ul>
+            {tournamentsData?.sudamerica?.map((t) => <TournamentItem key={t.id} tournament={t} />)}
+          </ul>
+
           <SectionLabel label="Resto del Mundo" />
           <ul className="pb-6">
             {tournamentsData?.world?.map((t) => <TournamentItem key={t.id} tournament={t} />)}

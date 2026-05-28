@@ -1,6 +1,7 @@
 import { Router } from "express";
 import {
   fetchTodayMatches,
+  fetchMatchesForDate,
   fetchLeagueMatches,
   fetchMatchEvents,
   fetchMatchStats,
@@ -105,30 +106,23 @@ router.get("/live", async (req, res) => {
   }
 });
 
-// GET /matches  (with optional ?status= and ?date= filters)
+// GET /matches  (with optional ?status= and ?date= filters; date is YYYY-MM-DD in ART timezone)
 router.get("/", async (req, res) => {
   try {
     const { status, date } = req.query as { status?: string; date?: string };
 
-    const all = await fetchTodayMatches();
-    let matches = all;
-
-    if (date) {
-      matches = matches.filter((m) => m.kickoffTime.startsWith(date));
-    }
-    if (status) {
-      matches = matches.filter((m) => m.status === status);
-    }
+    // If a specific date is requested, fetch for that ART date; otherwise use today
+    const all = date ? await fetchMatchesForDate(date) : await fetchTodayMatches();
+    const matches = status ? all.filter((m) => m.status === status) : all;
 
     const groups = groupByTournament(matches);
-    const liveCount = matches.filter((m) => m.status === "live").length;
 
     res.json({
       groups,
       totalMatches: matches.length,
-      liveCount,
-      finishedCount: matches.filter((m) => m.status === "finished").length,
-      upcomingCount: matches.filter((m) => m.status === "upcoming").length,
+      liveCount: all.filter((m) => m.status === "live").length,
+      finishedCount: all.filter((m) => m.status === "finished").length,
+      upcomingCount: all.filter((m) => m.status === "upcoming").length,
     });
   } catch (err) {
     req.log.error({ err }, "Failed to list matches");

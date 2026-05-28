@@ -12,5 +12,6 @@ export type TournamentCategory =
 export const TournamentCategory = {
   destacados: "destacados",
   argentina: "argentina",
+  sudamerica: "sudamerica",
   world: "world",
 } as const;
