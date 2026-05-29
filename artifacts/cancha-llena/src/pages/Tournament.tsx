@@ -1,5 +1,6 @@
 import { useState } from "react";
 import { useParams, Link, useLocation } from "wouter";
+import { useSeo } from "@/hooks/useSeo";
 import {
   useGetTournamentBySlug,
   getGetTournamentBySlugQueryKey,
@@ -44,6 +45,13 @@ export default function Tournament() {
 
   const { data: tournament, isLoading: loadingTournament } = useGetTournamentBySlug(slug, {
     query: { queryKey: getGetTournamentBySlugQueryKey(slug), enabled: !!slug },
+  });
+
+  useSeo({
+    title: tournament?.name ?? "Competencia",
+    description: tournament?.name
+      ? `Resultados, tabla de posiciones y goleadores de ${tournament.name} en tiempo real.`
+      : undefined,
   });
 
   const tournamentId = (tournament?.id ?? "") as unknown as number;

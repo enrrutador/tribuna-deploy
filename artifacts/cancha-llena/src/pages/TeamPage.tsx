@@ -1,5 +1,6 @@
 import { useParams, Link } from "wouter";
 import { useGetTeam } from "@workspace/api-client-react";
+import { useSeo } from "@/hooks/useSeo";
 import { format } from "date-fns";
 import { es } from "date-fns/locale";
 import { ChevronRight, MapPin, Calendar, User, Star } from "lucide-react";
@@ -11,6 +12,13 @@ export default function TeamPage() {
   const teamId = params.id as unknown as number;
   const { data, isLoading, isError } = useGetTeam(teamId);
   const { isTeamFavorite, toggleTeam } = useFavorites();
+
+  useSeo({
+    title: data?.team?.name ?? "Equipo",
+    description: data?.team?.name
+      ? `Resultados, estadísticas y noticias de ${data.team.name}.`
+      : undefined,
+  });
 
   if (isLoading) return <LoadingSkeleton />;
   if (isError || !data) return <ErrorState />;

@@ -1,6 +1,7 @@
 import Header from "@/components/Header";
 import Sidebar from "@/components/Sidebar";
 import Footer from "@/components/Footer";
+import BottomNav from "@/components/BottomNav";
 
 interface Props {
   children: React.ReactNode;
@@ -14,12 +15,13 @@ export default function Layout({ children }: Props) {
       <div className="flex flex-1" style={{ height: "calc(100vh - 78px)" }}>
         <Sidebar />
         <main className="flex-1 overflow-y-auto bg-[#f0f0f0]">
-          <div className="max-w-[720px] mx-auto py-4 px-4">
+          <div className="max-w-[720px] mx-auto py-4 px-3 sm:px-4 pb-20 md:pb-4">
             {children}
           </div>
           <Footer />
         </main>
       </div>
+      <BottomNav />
     </div>
   );
 }

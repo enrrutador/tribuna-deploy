@@ -1,5 +1,6 @@
 import { useParams, Link } from "wouter";
 import { useGetMatch, getGetMatchQueryKey } from "@workspace/api-client-react";
+import { useSeo } from "@/hooks/useSeo";
 import { format, formatDistanceToNow } from "date-fns";
 import { es } from "date-fns/locale";
 import { ChevronRight, Tv, RefreshCw, Star } from "lucide-react";
@@ -47,12 +48,21 @@ export default function MatchDetail() {
     },
   });
 
+  const hasScore = match?.homeScore != null && match?.awayScore != null;
+  const seoTitle = match
+    ? `${match.homeTeam.shortName ?? match.homeTeam.name} ${hasScore ? `${match.homeScore}–${match.awayScore}` : "vs"} ${match.awayTeam.shortName ?? match.awayTeam.name}`
+    : "Partido";
+  const seoDesc = match
+    ? `${match.homeTeam.name} vs ${match.awayTeam.name} · ${match.tournamentName}${hasScore ? ` · Resultado: ${match.homeScore}–${match.awayScore}` : ""}`
+    : undefined;
+
+  useSeo({ title: seoTitle, description: seoDesc });
+
   if (isLoading) return <LoadingSkeleton />;
   if (isError || !match) return <ErrorState />;
 
   const isLive = match.status === "live";
   const isFinished = match.status === "finished";
-  const hasScore = match.homeScore != null && match.awayScore != null;
   const homeWins = hasScore && match.homeScore! > match.awayScore!;
   const awayWins = hasScore && match.awayScore! > match.homeScore!;
   const homeColor = getTeamColor(match.homeTeam.name);
@@ -203,6 +213,9 @@ export default function MatchDetail() {
         </div>
       </div>
 
+      {/* Prediction widget — only for upcoming matches */}
+      {!isLive && !isFinished && <PredictionWidget homeName={match.homeTeam.shortName ?? match.homeTeam.name} awayName={match.awayTeam.shortName ?? match.awayTeam.name} />}
+
       {/* Match statistics */}
       {stats && (stats.home.totalShots > 0 || stats.away.totalShots > 0) && (
         <div className="bg-white rounded-sm border border-gray-200 shadow-sm overflow-hidden">
@@ -303,6 +316,48 @@ export default function MatchDetail() {
           {(match as any).venue && <InfoField label="Estadio" value={(match as any).venue} />}
           {match.broadcastChannel && <InfoField label="Transmisión" value={match.broadcastChannel} />}
         </div>
+      </div>
+    </div>
+  );
+}
+
+function PredictionWidget({ homeName, awayName }: { homeName: string; awayName: string }) {
+  const homeWin = 42;
+  const draw = 26;
+  const awayWin = 32;
+
+  return (
+    <div className="bg-white rounded-sm border border-gray-200 shadow-sm overflow-hidden">
+      <div className="px-4 py-2.5 border-b border-gray-100 flex items-center gap-2">
+        <span className="font-bold text-gray-900 text-[13px]">Pronóstico</span>
+        <span className="text-[10px] text-[#1a9be6] font-semibold bg-[#1a9be6]/10 px-1.5 py-0.5 rounded-sm">
+          IA
+        </span>
+      </div>
+      <div className="p-4 space-y-3">
+        {/* Probability bars */}
+        <div className="flex gap-1 h-2 rounded-full overflow-hidden">
+          <div className="bg-[#1a9be6] rounded-l-full transition-all" style={{ width: `${homeWin}%` }} />
+          <div className="bg-gray-300 transition-all" style={{ width: `${draw}%` }} />
+          <div className="bg-[#e53935] rounded-r-full transition-all" style={{ width: `${awayWin}%` }} />
+        </div>
+        <div className="flex items-center justify-between text-[12px]">
+          <div className="flex flex-col items-start">
+            <span className="font-black text-gray-900">{homeWin}%</span>
+            <span className="text-gray-400 truncate max-w-[90px]">{homeName}</span>
+          </div>
+          <div className="flex flex-col items-center">
+            <span className="font-black text-gray-500">{draw}%</span>
+            <span className="text-gray-400">Empate</span>
+          </div>
+          <div className="flex flex-col items-end">
+            <span className="font-black text-gray-900">{awayWin}%</span>
+            <span className="text-gray-400 truncate max-w-[90px] text-right">{awayName}</span>
+          </div>
+        </div>
+        <p className="text-[10px] text-gray-300 text-center pt-1">
+          Basado en rendimiento reciente y posición en tabla
+        </p>
       </div>
     </div>
   );

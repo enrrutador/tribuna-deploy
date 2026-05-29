@@ -1,0 +1,475 @@
+Quiero transformar esta web de fútbol en una plataforma moderna tipo OneFootball + SofaScore + Flashscore enfocada en fútbol sudamericano y argentino.
+
+OBJETIVO:
+La web debe dejar de sentirse como una landing/simple blog y convertirse en una plataforma profesional, dinámica, escalable y preparada para monetización real mediante:
+- publicidad
+- SEO
+- retención de usuarios
+- tiempo en página
+- notificaciones
+- comunidad
+- contenido dinámico
+
+IMPORTANTE:
+NO quiero rehacer completamente el diseño actual.
+Quiero mantener la identidad visual existente, pero evolucionarla a una experiencia mucho más moderna, viva y profesional.
+
+NO implementar login todavía.
+Todo debe quedar preparado para agregar autenticación después.
+
+====================================================
+1. ARQUITECTURA GENERAL
+====================================================
+
+Convertir la web en arquitectura modular y escalable.
+
+Separar claramente:
+- Home
+- Noticias
+- Partidos
+- Equipos
+- Jugadores
+- Ligas
+- Transferencias
+- Estadísticas
+- Predicciones
+- Videos
+- Comunidad
+- SEO pages
+
+Usar estructura reusable de componentes.
+
+Crear:
+- layouts reutilizables
+- cards dinámicas
+- widgets deportivos
+- loaders modernos
+- skeleton loading
+- responsive layouts
+
+Optimizar:
+- performance
+- lazy loading
+- imágenes
+- mobile-first UX
+- SEO técnico
+
+====================================================
+2. HOME PAGE PROFESIONAL
+====================================================
+
+Rediseñar la home para que parezca una app deportiva moderna.
+
+Agregar:
+
+HERO SECTION:
+- noticias destacadas
+- partido principal del día
+- marcador destacado
+- CTA visual moderno
+
+SECCIONES:
+- partidos en vivo
+- próximos partidos
+- resultados recientes
+- trending news
+- transferencias
+- jugadores destacados
+- tabla de posiciones rápida
+- goleadores
+- videos/reels
+- predicciones
+- noticias por liga
+
+Agregar scroll dinámico tipo feed.
+
+Diseño:
+- estilo moderno
+- oscuro elegante
+- microanimaciones
+- hover states
+- transiciones suaves
+- sombras modernas
+- glassmorphism sutil
+
+====================================================
+3. SISTEMA DE PARTIDOS EN VIVO
+====================================================
+
+Crear módulo completo de live matches.
+
+Cada partido debe mostrar:
+- equipos
+- escudos
+- marcador
+- minuto actual
+- estado del partido
+- tarjetas
+- goles
+- posesión
+- tiros
+- corners
+- alineaciones
+- cambios
+- estadísticas
+
+Agregar:
+- tabs dinámicos
+- timeline del partido
+- eventos minuto a minuto
+
+Diseño estilo:
+SofaScore / Flashscore / OneFootball.
+
+Agregar:
+- indicador LIVE animado
+- auto refresh
+- animaciones suaves de actualización
+
+====================================================
+4. PAGINAS DE EQUIPOS
+====================================================
+
+Crear páginas dinámicas para equipos.
+
+Ejemplos:
+- /river-plate
+- /boca-juniors
+- /real-madrid
+
+Cada página debe tener:
+
+HEADER:
+- escudo
+- nombre
+- estadio
+- entrenador
+- liga
+
+SECCIONES:
+- últimos partidos
+- próximos partidos
+- plantilla
+- estadísticas
+- noticias relacionadas
+- tabla de posiciones
+- transferencias
+- jugadores destacados
+
+Agregar:
+- tabs
+- gráficos
+- cards modernas
+
+====================================================
+5. PAGINAS DE JUGADORES
+====================================================
+
+Crear perfiles de jugadores.
+
+Ejemplos:
+- /lionel-messi
+- /julian-alvarez
+
+Mostrar:
+- foto
+- club
+- posición
+- edad
+- estadísticas
+- goles
+- asistencias
+- minutos jugados
+- noticias
+- historial
+- transferencias
+- rendimiento reciente
+
+Diseño tipo ficha profesional deportiva.
+
+====================================================
+6. SISTEMA DE TRANSFERENCIAS
+====================================================
+
+Crear sección tipo “mercado de pases”.
+
+Mostrar:
+- rumores
+- fichajes confirmados
+- jugador → club
+- valor estimado
+- estado negociación
+
+Agregar badges:
+- oficial
+- rumor
+- avanzado
+- cerrado
+
+Diseño tipo feed moderno.
+
+====================================================
+7. TABLAS Y ESTADISTICAS
+====================================================
+
+Crear widgets completos:
+
+- tabla de posiciones
+- goleadores
+- asistencias
+- vallas invictas
+- estadísticas por liga
+
+Agregar:
+- filtros
+- orden dinámico
+- tabs
+- responsive tables
+
+====================================================
+8. SISTEMA DE PREDICCIONES
+====================================================
+
+Crear sección:
+“Predicciones del partido”
+
+Mostrar:
+- probabilidades
+- forma reciente
+- historial
+- predicción IA visual
+
+Agregar:
+- barras
+- gráficos
+- porcentajes
+- UI moderna
+
+====================================================
+9. VIDEO / REELS SECTION
+====================================================
+
+Agregar sección de videos cortos estilo reels.
+
+Diseño:
+- vertical cards
+- autoplay preview
+- scroll horizontal
+- overlay moderno
+
+Compatible mobile-first.
+
+====================================================
+10. SEO PROFESIONAL
+====================================================
+
+Implementar SEO serio.
+
+Agregar:
+- metadata dinámica
+- OpenGraph
+- Twitter cards
+- sitemap
+- robots.txt
+- URLs amigables
+- schema.org sports markup
+
+Preparar páginas indexables:
+- ligas
+- equipos
+- jugadores
+- partidos
+- noticias
+
+Agregar:
+- breadcrumbs
+- canonical URLs
+- SEO titles dinámicos
+
+====================================================
+11. PERFORMANCE
+====================================================
+
+Optimizar:
+- Lighthouse score
+- carga mobile
+- imágenes
+- scripts
+- hydration
+- rendering
+
+Agregar:
+- skeleton loaders
+- lazy loading
+- code splitting
+
+====================================================
+12. EXPERIENCIA MOBILE
+====================================================
+
+La experiencia mobile debe sentirse como una app nativa.
+
+Agregar:
+- bottom navigation
+- gestos suaves
+- sticky sections
+- navegación rápida
+- cards táctiles
+
+====================================================
+13. SISTEMA DE NOTICIAS
+====================================================
+
+Mejorar completamente las noticias.
+
+Agregar:
+- categorías
+- tags
+- noticias relacionadas
+- trending
+- artículos destacados
+
+Diseño:
+- estilo ESPN moderno
+- cards premium
+- tipografía deportiva profesional
+
+====================================================
+14. SISTEMA DE COMUNIDAD
+====================================================
+
+SIN login todavía.
+
+Pero preparar:
+- comentarios
+- votaciones
+- encuestas
+- likes
+- jugador del partido
+
+Dejar arquitectura lista para futuro auth.
+
+====================================================
+15. SISTEMA DE FAVORITOS (SIN LOGIN)
+====================================================
+
+Implementar favoritos usando localStorage.
+
+Permitir:
+- seguir equipos
+- seguir ligas
+- seguir jugadores
+
+Mostrar feed personalizado local.
+
+====================================================
+16. MICROINTERACCIONES
+====================================================
+
+Agregar:
+- hover animations
+- loading states
+- animated counters
+- smooth transitions
+- animated tabs
+- live pulse indicators
+
+Debe sentirse premium.
+
+====================================================
+17. DARK MODE PREMIUM
+====================================================
+
+Mejorar el dark mode.
+
+Usar:
+- negros suaves
+- contrastes modernos
+- acentos deportivos
+- gradientes sutiles
+
+Inspiración:
+- OneFootball
+- SofaScore
+- Apple Sports UI
+
+====================================================
+18. COMPONENTES IMPORTANTES
+====================================================
+
+Crear componentes reutilizables:
+
+- MatchCard
+- TeamCard
+- PlayerCard
+- TransferCard
+- StatWidget
+- LeagueTable
+- NewsCard
+- PredictionCard
+- LiveIndicator
+- VideoCard
+
+====================================================
+19. MONETIZACION READY
+====================================================
+
+Preparar espacios para:
+- banners
+- ads inline
+- sponsors
+- widgets patrocinados
+
+Pero sin romper UX.
+
+====================================================
+20. STACK Y CALIDAD
+====================================================
+
+Mantener código:
+- limpio
+- modular
+- reusable
+- escalable
+
+Usar:
+- TypeScript
+- buenas prácticas
+- componentes reutilizables
+- estructura profesional
+
+Evitar:
+- código repetido
+- estilos desordenados
+- componentes gigantes
+
+====================================================
+21. RESULTADO FINAL
+====================================================
+
+La web debe sentirse:
+- moderna
+- adictiva
+- dinámica
+- profesional
+- rápida
+- tipo app deportiva premium
+
+Inspiraciones:
+- OneFootball
+- SofaScore
+- Flashscore
+- ESPN
+- Transfermarkt
+
+PRIORIDAD ABSOLUTA:
+1. UX moderna
+2. mobile-first
+3. live experience
+4. SEO
+5. retención
+6. performance
+7. escalabilidad
+
+NO quiero una simple web de noticias.
+Quiero una plataforma deportiva profesional preparada para crecer masivamente.
