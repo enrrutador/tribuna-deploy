@@ -1,8 +1,8 @@
 kind = "web"
 previewPath = "/"
-title = "Cancha Llena"
+title = "Red de Fútbol"
 version = "1.0.0"
-id = "artifacts/cancha-llena"
+id = "artifacts/red-de-futbol"
 router = "path"
 
 [[integratedSkills]]
@@ -15,11 +15,11 @@ paths = [ "/" ]
 localPort = 25639
 
 [services.development]
-run = "pnpm --filter @workspace/cancha-llena run dev"
+run = "pnpm --filter @workspace/red-de-futbol run dev"
 
 [services.production]
-build = [ "pnpm", "--filter", "@workspace/cancha-llena", "run", "build" ]
-publicDir = "artifacts/cancha-llena/dist/public"
+build = [ "pnpm", "--filter", "@workspace/red-de-futbol", "run", "build" ]
+publicDir = "artifacts/red-de-futbol/dist/public"
 serve = "static"
 
 [[services.production.rewrites]]

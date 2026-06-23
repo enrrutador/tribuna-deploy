@@ -3,7 +3,7 @@
 ## Overview
 
 pnpm workspace monorepo using TypeScript. Each package manages its own dependencies.
-This is a clone of https://canchallena.lanacion.com.ar/ — Argentine football scores/fixtures site.
+Argentine football scores/fixtures site.
 
 ## Stack
 
@@ -30,7 +30,7 @@ This is a clone of https://canchallena.lanacion.com.ar/ — Argentine football s
 
 ### Artifacts
 - `artifacts/api-server` — Express 5 API server, runs at `/api`, port 8080
-- `artifacts/cancha-llena` — React + Vite frontend, runs at `/`, port varies
+- `artifacts/red-de-futbol` — React + Vite frontend, runs at `/`, port varies
 
 ### Shared Libraries
 - `lib/db` — Drizzle ORM schema + database client

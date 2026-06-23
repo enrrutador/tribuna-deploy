@@ -19,8 +19,8 @@ services:
   - type: static_site
     name: can-challenge-web
     plan: free
-    buildCommand: pnpm install --frozen-lockfile && PORT=10000 BASE_PATH=/ pnpm --filter @workspace/cancha-llena build
-    staticPublishPath: artifacts/cancha-llena/dist/public
+    buildCommand: pnpm install --frozen-lockfile && PORT=10000 BASE_PATH=/ pnpm --filter @workspace/red-de-futbol build
+    staticPublishPath: artifacts/red-de-futbol/dist/public
     envVars:
       - key: VITE_API_URL
         sync: false

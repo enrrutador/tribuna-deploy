@@ -3,7 +3,7 @@ info:
   # Do not change the title, if the title changes, the import paths will be broken
   title: Api
   version: 0.1.0
-  description: API specification for Cancha Llena football scores app
+  description: API specification for Red de Fútbol football scores app
 servers:
   - url: /api
     description: Base API path

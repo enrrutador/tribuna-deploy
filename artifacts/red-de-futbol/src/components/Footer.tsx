@@ -28,7 +28,7 @@ export default function Footer() {
               <span className="text-[#1a9be6] text-xl font-bold tracking-tighter">lleña</span>
             </div>
             <p className="text-sm text-gray-500 leading-relaxed">
-              Cancha Llena es el sitio de referencia para resultados deportivos en tiempo real: datos en vivo, tablas, probabilidades y detalles de las competiciones de fútbol más importantes.
+              Red de Fútbol es el sitio de referencia para resultados deportivos en tiempo real: datos en vivo, tablas, probabilidades y detalles de las competiciones de fútbol más importantes.
             </p>
           </div>
 

@@ -12,7 +12,7 @@ export default function HeroSection({ liveCount }: Props) {
         <div className="flex items-center gap-2 mb-4">
           <span className="w-2 h-2 rounded-full bg-[#1a9be6] animate-pulse" />
           <span className="font-mono text-[10px] text-[#1a9be6] font-bold uppercase tracking-widest">
-            Cancha Llena
+            Red de Fútbol
           </span>
         </div>
         <div className="flex flex-col md:flex-row md:items-end md:justify-between gap-6">

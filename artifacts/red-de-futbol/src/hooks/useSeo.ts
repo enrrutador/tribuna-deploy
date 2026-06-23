@@ -10,7 +10,7 @@ export function useSeo({
   image?: string;
 }) {
   useEffect(() => {
-    const fullTitle = `${title} | Cancha Llena`;
+    const fullTitle = `${title} | Red de Fútbol`;
     const desc =
       description ??
       `${title} — Resultados, estadísticas y noticias de fútbol en tiempo real.`;
@@ -34,7 +34,7 @@ export function useSeo({
     setMeta('meta[property="og:title"]', "content", fullTitle);
     setMeta('meta[property="og:description"]', "content", desc);
     setMeta('meta[property="og:type"]', "content", "website");
-    setMeta('meta[property="og:site_name"]', "content", "Cancha Llena");
+    setMeta('meta[property="og:site_name"]', "content", "Red de Fútbol");
     setMeta('meta[name="twitter:card"]', "content", "summary");
     setMeta('meta[name="twitter:title"]', "content", fullTitle);
     setMeta('meta[name="twitter:description"]', "content", desc);
@@ -44,7 +44,7 @@ export function useSeo({
     }
 
     return () => {
-      document.title = "Cancha Llena — Fútbol en vivo";
+      document.title = "Red de Fútbol — Fútbol en vivo";
     };
   }, [title, description, image]);
 }
