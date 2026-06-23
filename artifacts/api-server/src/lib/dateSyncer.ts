@@ -1,5 +1,3 @@
-import { db } from "@workspace/db";
-import { matchesTable } from "@workspace/db";
 import { sql, max } from "drizzle-orm";
 import { logger } from "./logger";
 
@@ -10,6 +8,13 @@ import { logger } from "./logger";
  */
 export async function syncMatchDatesToToday(): Promise<void> {
   try {
+    const { db } = await import("@workspace/db");
+    if (!db) {
+      logger.warn("Database not configured — skipping date sync");
+      return;
+    }
+    const { matchesTable } = await import("@workspace/db");
+
     const todayStr = new Date().toISOString().split("T")[0]!;
 
     // Count how many matches are scheduled for today

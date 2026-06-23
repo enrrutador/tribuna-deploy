@@ -1,5 +1,21 @@
 import { Link } from "wouter";
 
+const COMPETENCIAS = [
+  { name: "Champions League", slug: "champions" },
+  { name: "Copa Libertadores", slug: "libertadores" },
+  { name: "Premier League", slug: "premier-league" },
+  { name: "La Liga", slug: "laliga" },
+  { name: "Serie A", slug: "seriea" },
+];
+
+const ARGENTINA = [
+  { name: "Liga Profesional", slug: "liga-profesional" },
+  { name: "Copa Argentina", slug: "copa-argentina" },
+  { name: "Primera Nacional", slug: "primera-nacional" },
+  { name: "Copa de la Liga", slug: "copa-de-la-liga" },
+  { name: "Trofeo de Campeones", slug: "trofeo-de-campeones" },
+];
+
 export default function Footer() {
   return (
     <footer className="bg-[#1a1a1a] text-gray-400 mt-8">
@@ -12,7 +28,7 @@ export default function Footer() {
               <span className="text-[#1a9be6] text-xl font-bold tracking-tighter">lleña</span>
             </div>
             <p className="text-sm text-gray-500 leading-relaxed">
-              canchallena es el sitio de referencia para resultados deportivos en tiempo real: datos en vivo, tablas, probabilidades y detalles de las competiciones de fútbol más importantes.
+              Cancha Llena es el sitio de referencia para resultados deportivos en tiempo real: datos en vivo, tablas, probabilidades y detalles de las competiciones de fútbol más importantes.
             </p>
           </div>
 
@@ -20,9 +36,11 @@ export default function Footer() {
           <div>
             <h4 className="text-gray-300 text-xs font-bold uppercase tracking-wider mb-3">Competencias</h4>
             <ul className="space-y-2 text-sm">
-              {["Champions League", "Copa Libertadores", "Premier League", "La Liga", "Serie A"].map((c) => (
-                <li key={c}>
-                  <span className="text-gray-500 hover:text-gray-300 cursor-pointer transition-colors">{c}</span>
+              {COMPETENCIAS.map((c) => (
+                <li key={c.slug}>
+                  <Link href={`/torneo/${c.slug}`} className="text-gray-500 hover:text-gray-300 transition-colors">
+                    {c.name}
+                  </Link>
                 </li>
               ))}
             </ul>
@@ -32,9 +50,11 @@ export default function Footer() {
           <div>
             <h4 className="text-gray-300 text-xs font-bold uppercase tracking-wider mb-3">Argentina</h4>
             <ul className="space-y-2 text-sm">
-              {["Torneo Apertura", "Torneo Clausura", "Copa Argentina", "Primera Nacional", "Liga Profesional"].map((c) => (
-                <li key={c}>
-                  <span className="text-gray-500 hover:text-gray-300 cursor-pointer transition-colors">{c}</span>
+              {ARGENTINA.map((c) => (
+                <li key={c.slug}>
+                  <Link href={`/torneo/${c.slug}`} className="text-gray-500 hover:text-gray-300 transition-colors">
+                    {c.name}
+                  </Link>
                 </li>
               ))}
             </ul>

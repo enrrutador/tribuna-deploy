@@ -1,9 +1,10 @@
 import { useParams, Link } from "wouter";
 import { useGetTeam } from "@workspace/api-client-react";
+import { useQuery } from "@tanstack/react-query";
 import { useSeo } from "@/hooks/useSeo";
 import { format } from "date-fns";
 import { es } from "date-fns/locale";
-import { ChevronRight, MapPin, Calendar, User, Star } from "lucide-react";
+import { ChevronRight, MapPin, Calendar, User, Star, Users } from "lucide-react";
 import { getTeamColor } from "@/utils/teamColors";
 import { useFavorites } from "@/hooks/useFavorites";
 
@@ -26,6 +27,17 @@ export default function TeamPage() {
   const { team, recentMatches } = data;
   const color = getTeamColor(team.name);
   const isFav = isTeamFavorite(String((team as any).id ?? teamId));
+
+  const { data: squadData } = useQuery({
+    queryKey: ["squad", teamId],
+    queryFn: async () => {
+      const res = await fetch(`/api/squads/${teamId}`);
+      if (!res.ok) return null;
+      return res.json();
+    },
+    enabled: !!teamId,
+    staleTime: 5 * 60_000,
+  });
 
   return (
     <div className="space-y-4">
@@ -134,6 +146,41 @@ export default function TeamPage() {
           <div>
             {recentMatches.slice(0, 12).map((match: any) => (
               <RecentMatchRow key={match.id} match={match} teamId={String(teamId)} />
+            ))}
+          </div>
+        </div>
+      )}
+
+      {/* Squad / Roster */}
+      {squadData && squadData.squad && squadData.squad.length > 0 && (
+        <div className="bg-white rounded-sm border border-gray-200 shadow-sm overflow-hidden">
+          <div className="px-4 py-2.5 border-b border-gray-100 flex items-center gap-2">
+            <Users className="w-4 h-4 text-gray-400" />
+            <span className="font-bold text-gray-900 text-[13px]">Plantel</span>
+            <span className="text-[11px] text-gray-400">({squadData.squad.length} jugadores · {squadData.source})</span>
+          </div>
+          <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 divide-x divide-gray-50">
+            {squadData.squad.map((player: any) => (
+              <div key={player.id} className="flex items-center gap-3 px-4 py-2.5 border-b border-gray-50">
+                <div className="w-10 h-10 rounded-full bg-gray-100 flex items-center justify-center overflow-hidden shrink-0">
+                  {player.imageUrl ? (
+                    <img src={player.imageUrl} alt="" className="w-full h-full object-cover" />
+                  ) : (
+                    <span className="text-[11px] font-bold text-gray-400">{player.shirtNumber ?? "?"}</span>
+                  )}
+                </div>
+                <div className="min-w-0">
+                  <div className="text-[13px] text-gray-800 font-medium truncate">{player.name}</div>
+                  <div className="text-[11px] text-gray-400">
+                    {player.position && <span>{player.position}</span>}
+                    {player.nationality && <span> · {player.nationality}</span>}
+                    {player.age && player.age > 0 && player.age < 50 && <span> · {player.age} años</span>}
+                  </div>
+                </div>
+                {player.marketValue && (
+                  <span className="text-[11px] text-gray-400 ml-auto shrink-0">{player.marketValue}</span>
+                )}
+              </div>
             ))}
           </div>
         </div>

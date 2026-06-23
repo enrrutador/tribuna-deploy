@@ -6,6 +6,7 @@ import {
   fetchStandings,
   fetchScorers,
   type EspnMatch,
+  type StandingEntry,
 } from "../lib/espnService";
 
 const router = Router();
@@ -101,7 +102,7 @@ router.get("/:id/standings", async (req, res) => {
 
     const rawGroups = await fetchStandings(leagueId);
 
-    const formatEntry = (e: ReturnType<typeof rawGroups>[0]["entries"][0], idx: number) => ({
+    const formatEntry = (e: StandingEntry, idx: number) => ({
       position: idx + 1,
       team: {
         id: e.teamId,
@@ -178,7 +179,8 @@ router.get("/:id/fixtures", async (req, res) => {
       return;
     }
 
-    const matches = await fetchLeagueMatches(leagueId);
+    const dates = req.query.dates as string | undefined;
+    const matches = await fetchLeagueMatches(leagueId, dates);
     const formatted = matches.map(formatMatch);
 
     // Group by round

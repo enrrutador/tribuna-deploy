@@ -3,17 +3,15 @@ import { fetchTodayMatches, ESPN_LEAGUES, type EspnMatch } from "../lib/espnServ
 
 const router = Router();
 
-// GET /teams — not used heavily but kept for compatibility
 router.get("/", async (_req, res) => {
   res.json({ teams: [] });
 });
 
-// GET /teams/:id — ESPN team ID (string like "5" for Boca)
 router.get("/:id", async (req, res) => {
   try {
     const teamId = req.params.id;
+    const season = (req.query.season as string) || undefined;
 
-    // Search across all leagues for this team's matches
     const allLeagues = Object.keys(ESPN_LEAGUES);
     const { fetchLeagueMatches } = await import("../lib/espnService");
 
@@ -26,7 +24,6 @@ router.get("/:id", async (req, res) => {
       if (r.status === "fulfilled") allMatches.push(...r.value);
     }
 
-    // Find team info from any match involving this team
     let teamInfo: { id: string; name: string; shortName: string; abbreviation: string; logoUrl: string; color: string } | null = null;
     const teamMatches: EspnMatch[] = [];
 
@@ -40,11 +37,42 @@ router.get("/:id", async (req, res) => {
     }
 
     if (!teamInfo) {
+      // Fallback: try Transfermarkt directly
+      try {
+        const { fetchTeamInfoTM } = await import("../lib/transfermarktService");
+        const tmInfo = await fetchTeamInfoTM(teamId, season);
+        if (tmInfo) {
+          res.json({
+            team: {
+              id: teamId,
+              name: tmInfo.name ?? `Team ${teamId}`,
+              shortName: tmInfo.name ?? `Team ${teamId}`,
+              logoUrl: tmInfo.imageUrl ?? null,
+              slug: tmInfo.slug ?? `team-${teamId}`,
+              stadium: tmInfo.stadium ?? null,
+              capacity: tmInfo.capacity ?? null,
+              city: null,
+              country: tmInfo.country ?? null,
+              founded: tmInfo.founded ?? null,
+              coach: tmInfo.coach ?? null,
+              description: null,
+              marketValue: tmInfo.marketValue ?? null,
+              squadSize: tmInfo.squadSize ?? null,
+              averageAge: tmInfo.averageAge ?? null,
+              foreigners: tmInfo.foreigners ?? null,
+            },
+            recentMatches: [],
+          });
+          return;
+        }
+      } catch {
+        // TM also failed
+      }
+
       res.status(404).json({ error: "Team not found" });
       return;
     }
 
-    // Sort by kickoff time descending
     teamMatches.sort((a, b) => new Date(b.kickoffTime).getTime() - new Date(a.kickoffTime).getTime());
 
     const recentMatches = teamMatches.slice(0, 10).map((m) => ({
@@ -62,21 +90,36 @@ router.get("/:id", async (req, res) => {
       round: m.round,
       date: m.kickoffTime.split("T")[0],
       broadcastChannel: m.broadcastChannel,
+      venue: m.venue,
     }));
+
+    // Try Transfermarkt for rich team info
+    let tmInfo: any = null;
+    try {
+      const { fetchTeamInfoTM } = await import("../lib/transfermarktService");
+      tmInfo = await fetchTeamInfoTM(teamId, season);
+    } catch (_e) {
+      // TM fallback failed, that's fine
+    }
 
     res.json({
       team: {
         id: teamInfo.id,
         name: teamInfo.name,
         shortName: teamInfo.shortName,
-        logoUrl: teamInfo.logoUrl,
+        logoUrl: tmInfo?.imageUrl ?? teamInfo.logoUrl,
         slug: teamInfo.abbreviation.toLowerCase(),
-        stadium: null,
+        stadium: tmInfo?.stadium ?? null,
+        capacity: tmInfo?.capacity ?? null,
         city: null,
-        country: null,
-        founded: null,
-        coach: null,
+        country: tmInfo?.country ?? null,
+        founded: tmInfo?.founded ?? null,
+        coach: tmInfo?.coach ?? null,
         description: null,
+        marketValue: tmInfo?.marketValue ?? null,
+        squadSize: tmInfo?.squadSize ?? null,
+        averageAge: tmInfo?.averageAge ?? null,
+        foreigners: tmInfo?.foreigners ?? null,
       },
       recentMatches,
     });

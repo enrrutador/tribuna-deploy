@@ -16,6 +16,16 @@ tags:
     description: Match operations
   - name: teams
     description: Team operations
+  - name: players
+    description: Player operations (Sofascore + Transfermarkt)
+  - name: squads
+    description: Squad operations
+  - name: lineups
+    description: Match lineups and H2H
+  - name: news
+    description: News from Argentine sports media
+  - name: transfers
+    description: Transfer market data
 paths:
   /healthz:
     get:
@@ -49,11 +59,11 @@ paths:
       tags: [tournaments]
       summary: Get a tournament by ID
       parameters:
-        - name: id
-          in: path
-          required: true
-          schema:
-            type: integer
+      - name: id
+        in: path
+        required: true
+        schema:
+          type: integer
       responses:
         "200":
           description: Tournament detail
@@ -70,11 +80,11 @@ paths:
       tags: [tournaments]
       summary: Get a tournament by slug
       parameters:
-        - name: slug
-          in: path
-          required: true
-          schema:
-            type: string
+      - name: slug
+        in: path
+        required: true
+        schema:
+          type: string
       responses:
         "200":
           description: Tournament detail
@@ -91,11 +101,11 @@ paths:
       tags: [tournaments]
       summary: Get standings table for a tournament
       parameters:
-        - name: id
-          in: path
-          required: true
-          schema:
-            type: integer
+      - name: id
+        in: path
+        required: true
+        schema:
+          type: string
       responses:
         "200":
           description: Standings table
@@ -110,11 +120,11 @@ paths:
       tags: [tournaments]
       summary: Get top scorers for a tournament
       parameters:
-        - name: id
-          in: path
-          required: true
-          schema:
-            type: integer
+      - name: id
+        in: path
+        required: true
+        schema:
+          type: integer
       responses:
         "200":
           description: Top scorers
@@ -129,16 +139,22 @@ paths:
       tags: [tournaments]
       summary: Get all fixtures/matches for a tournament
       parameters:
-        - name: id
-          in: path
-          required: true
-          schema:
-            type: integer
-        - name: round
-          in: query
-          required: false
-          schema:
-            type: string
+      - name: id
+        in: path
+        required: true
+        schema:
+          type: integer
+      - name: round
+        in: query
+        required: false
+        schema:
+          type: string
+      - name: dates
+        in: query
+        required: false
+        schema:
+          type: string
+        description: Date range (YYYYMMDD-YYYYMMDD) or single date
       responses:
         "200":
           description: Matches for the tournament
@@ -153,22 +169,22 @@ paths:
       tags: [matches]
       summary: List matches with optional filters
       parameters:
-        - name: date
-          in: query
-          required: false
-          schema:
-            type: string
-        - name: status
-          in: query
-          required: false
-          schema:
-            type: string
-            enum: [upcoming, live, finished]
-        - name: tournamentId
-          in: query
-          required: false
-          schema:
-            type: integer
+      - name: date
+        in: query
+        required: false
+        schema:
+          type: string
+      - name: status
+        in: query
+        required: false
+        schema:
+          type: string
+          enum: [upcoming, live, finished]
+      - name: tournamentId
+        in: query
+        required: false
+        schema:
+          type: integer
       responses:
         "200":
           description: List of matches grouped by tournament
@@ -209,11 +225,11 @@ paths:
       tags: [matches]
       summary: Get a single match by ID with events
       parameters:
-        - name: id
-          in: path
-          required: true
-          schema:
-            type: integer
+      - name: id
+        in: path
+        required: true
+        schema:
+          type: integer
       responses:
         "200":
           description: Match detail with events
@@ -243,11 +259,11 @@ paths:
       tags: [teams]
       summary: Get a team by ID with recent matches
       parameters:
-        - name: id
-          in: path
-          required: true
-          schema:
-            type: integer
+      - name: id
+        in: path
+        required: true
+        schema:
+          type: integer
       responses:
         "200":
           description: Team detail with recent matches
@@ -257,6 +273,227 @@ paths:
                 $ref: "#/components/schemas/TeamDetailResponse"
         "404":
           description: Not found
+
+  /players/search:
+    get:
+      operationId: searchPlayers
+      tags: [players]
+      summary: Search for players by name
+      parameters:
+      - name: q
+        in: query
+        required: true
+        schema:
+          type: string
+      responses:
+        "200":
+          description: Search results
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/PlayerSearchResponse"
+
+  /players/{id}:
+    get:
+      operationId: getPlayer
+      tags: [players]
+      summary: Get player profile with stats
+      parameters:
+      - name: id
+        in: path
+        required: true
+        schema:
+          type: integer
+      responses:
+        "200":
+          description: Player detail
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/PlayerDetailResponse"
+        "404":
+          description: Not found
+
+  /players/{id}/stats:
+    get:
+      operationId: getPlayerStats
+      tags: [players]
+      summary: Get player statistics
+      parameters:
+      - name: id
+        in: path
+        required: true
+        schema:
+          type: integer
+      - name: seasonId
+        in: query
+        required: false
+        schema:
+          type: integer
+      responses:
+        "200":
+          description: Player stats
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  stats:
+                    $ref: "#/components/schemas/SofaPlayerStats"
+
+  /players/{id}/transfers:
+    get:
+      operationId: getPlayerTransfers
+      tags: [players]
+      summary: Get player transfer history from Transfermarkt
+      parameters:
+      - name: id
+        in: path
+        required: true
+        schema:
+          type: string
+      - name: slug
+        in: query
+        required: false
+        schema:
+          type: string
+      responses:
+        "200":
+          description: Player transfers
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  transfers:
+                    type: array
+                    items:
+                      $ref: "#/components/schemas/TmTransfer"
+
+  /squads/{teamId}:
+    get:
+      operationId: getTeamSquad
+      tags: [squads]
+      summary: Get team squad from Sofascore or Transfermarkt
+      parameters:
+      - name: teamId
+        in: path
+        required: true
+        schema:
+          type: string
+      - name: source
+        in: query
+        required: false
+        schema:
+          type: string
+          enum: [sofascore, transfermarkt]
+          default: sofascore
+      responses:
+        "200":
+          description: Squad
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/SquadResponse"
+
+  /lineups/{eventId}:
+    get:
+      operationId: getMatchLineups
+      tags: [lineups]
+      summary: Get match lineups from Sofascore
+      parameters:
+      - name: eventId
+        in: path
+        required: true
+        schema:
+          type: integer
+      responses:
+        "200":
+          description: Match lineups
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/MatchLineups"
+        "404":
+          description: Lineups not available
+
+  /lineups/h2h/{team1Id}/{team2Id}:
+    get:
+      operationId: getH2H
+      tags: [lineups]
+      summary: Get head-to-head between two teams
+      parameters:
+      - name: team1Id
+        in: path
+        required: true
+        schema:
+          type: integer
+      - name: team2Id
+        in: path
+        required: true
+        schema:
+          type: integer
+      responses:
+        "200":
+          description: H2H matches
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  matches:
+                    type: array
+                    items:
+                      $ref: "#/components/schemas/H2HMatch"
+                  total:
+                    type: integer
+
+  /news:
+    get:
+      operationId: getNews
+      tags: [news]
+      summary: Get football news from Argentine sports media
+      parameters:
+      - name: source
+        in: query
+        required: false
+        schema:
+          type: string
+          enum: [all, rss, tyc, ole]
+          default: all
+      responses:
+        "200":
+          description: News articles
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/NewsResponse"
+
+  /transfers:
+    get:
+      operationId: getTransfers
+      tags: [transfers]
+      summary: Get transfer market data from Transfermarkt
+      parameters:
+      - name: league
+        in: query
+        required: false
+        schema:
+          type: string
+          default: argentina
+      - name: season
+        in: query
+        required: false
+        schema:
+          type: string
+          default: "2025"
+      responses:
+        "200":
+          description: Transfers
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/TransfersResponse"
 
 components:
   schemas:
@@ -661,3 +898,415 @@ components:
       required:
         - tournament
         - scorers
+
+    SofaPlayer:
+      type: object
+      properties:
+        id:
+          type: integer
+        name:
+          type: string
+        slug:
+          type: string
+        firstName:
+          type: string
+        lastName:
+          type: string
+        nationality:
+          type: string
+        nationalityCode:
+          type: string
+        position:
+          type: string
+          enum: [GK, DEF, MID, FWD]
+        dateOfBirth:
+          type: string
+          nullable: true
+        height:
+          type: number
+          nullable: true
+        preferredFoot:
+          type: string
+          nullable: true
+        imageUrl:
+          type: string
+          nullable: true
+        team:
+          $ref: "#/components/schemas/SofaTeamRef"
+        marketValue:
+          type: number
+          nullable: true
+      required:
+        - id
+        - name
+        - slug
+        - position
+
+    SofaTeamRef:
+      type: object
+      properties:
+        id:
+          type: integer
+        name:
+          type: string
+        slug:
+          type: string
+        imageUrl:
+          type: string
+          nullable: true
+      required:
+        - id
+        - name
+
+    SofaPlayerStats:
+      type: object
+      properties:
+        rating:
+          type: number
+          nullable: true
+        appearances:
+          type: integer
+        goals:
+          type: integer
+        assists:
+          type: integer
+        yellowCards:
+          type: integer
+        redCards:
+          type: integer
+        minutesPlayed:
+          type: integer
+        averageRating:
+          type: number
+          nullable: true
+        cleanSheets:
+          type: integer
+          nullable: true
+        saves:
+          type: integer
+          nullable: true
+        tackles:
+          type: integer
+          nullable: true
+        interceptions:
+          type: integer
+          nullable: true
+        passes:
+          type: integer
+          nullable: true
+        passAccuracy:
+          type: number
+          nullable: true
+        keyPasses:
+          type: integer
+          nullable: true
+        shots:
+          type: integer
+          nullable: true
+        shotsOnTarget:
+          type: integer
+          nullable: true
+        dribbles:
+          type: integer
+          nullable: true
+      required:
+        - appearances
+        - goals
+        - assists
+
+    PlayerSearchResponse:
+      type: object
+      properties:
+        players:
+          type: array
+          items:
+            $ref: "#/components/schemas/SofaPlayer"
+      required:
+        - players
+
+    PlayerDetailResponse:
+      type: object
+      properties:
+        player:
+          $ref: "#/components/schemas/SofaPlayer"
+        stats:
+          $ref: "#/components/schemas/SofaPlayerStats"
+      required:
+        - player
+
+    LineupPlayer:
+      type: object
+      properties:
+        id:
+          type: integer
+        name:
+          type: string
+        slug:
+          type: string
+        position:
+          type: string
+        rating:
+          type: number
+          nullable: true
+        shirtNumber:
+          type: integer
+          nullable: true
+        imageUrl:
+          type: string
+          nullable: true
+      required:
+        - id
+        - name
+        - position
+
+    Lineup:
+      type: object
+      properties:
+        formation:
+          type: string
+          nullable: true
+        players:
+          type: array
+          items:
+            $ref: "#/components/schemas/LineupPlayer"
+      required:
+        - players
+
+    MatchLineups:
+      type: object
+      properties:
+        home:
+          $ref: "#/components/schemas/Lineup"
+        away:
+          $ref: "#/components/schemas/Lineup"
+      required:
+        - home
+        - away
+
+    H2HMatch:
+      type: object
+      properties:
+        id:
+          type: integer
+        homeTeam:
+          $ref: "#/components/schemas/SofaTeamRef"
+        awayTeam:
+          $ref: "#/components/schemas/SofaTeamRef"
+        homeScore:
+          type: integer
+          nullable: true
+        awayScore:
+          type: integer
+          nullable: true
+        tournament:
+          type: object
+          properties:
+            id:
+              type: integer
+            name:
+              type: string
+          nullable: true
+        startTime:
+          type: string
+      required:
+        - id
+        - homeTeam
+        - awayTeam
+        - startTime
+
+    NewsArticle:
+      type: object
+      properties:
+        id:
+          type: string
+        title:
+          type: string
+        summary:
+          type: string
+        url:
+          type: string
+        imageUrl:
+          type: string
+          nullable: true
+        source:
+          type: string
+        sourceIcon:
+          type: string
+          nullable: true
+        publishedAt:
+          type: string
+        category:
+          type: string
+        isFeatured:
+          type: boolean
+      required:
+        - id
+        - title
+        - url
+        - source
+        - publishedAt
+
+    NewsResponse:
+      type: object
+      properties:
+        articles:
+          type: array
+          items:
+            $ref: "#/components/schemas/NewsArticle"
+        total:
+          type: integer
+      required:
+        - articles
+        - total
+
+    TmSquadPlayer:
+      type: object
+      properties:
+        id:
+          type: string
+        name:
+          type: string
+        slug:
+          type: string
+        position:
+          type: string
+        age:
+          type: integer
+          nullable: true
+        nationality:
+          type: string
+        marketValue:
+          type: string
+        marketValueNum:
+          type: number
+          nullable: true
+        imageUrl:
+          type: string
+          nullable: true
+        shirtNumber:
+          type: integer
+          nullable: true
+      required:
+        - id
+        - name
+        - position
+
+    TmTeamInfo:
+      type: object
+      properties:
+        id:
+          type: string
+        name:
+          type: string
+        slug:
+          type: string
+        country:
+          type: string
+          nullable: true
+        marketValue:
+          type: string
+          nullable: true
+        squadSize:
+          type: integer
+          nullable: true
+        averageAge:
+          type: number
+          nullable: true
+        foreigners:
+          type: integer
+          nullable: true
+        stadium:
+          type: string
+          nullable: true
+        capacity:
+          type: integer
+          nullable: true
+        founded:
+          type: integer
+          nullable: true
+        coach:
+          type: string
+          nullable: true
+        imageUrl:
+          type: string
+          nullable: true
+      required:
+        - id
+        - name
+
+TmTransfer:
+  type: object
+  properties:
+    id:
+      type: string
+    playerName:
+      type: string
+    playerSlug:
+      type: string
+    playerImageUrl:
+      type: string
+      nullable: true
+    fromTeam:
+      type: string
+    fromTeamId:
+      type: string
+      nullable: true
+    toTeam:
+      type: string
+    toTeamId:
+      type: string
+      nullable: true
+    fee:
+      type: string
+    feeNum:
+      type: number
+      nullable: true
+    transferType:
+      type: string
+      enum: [transfer, loan, free]
+    date:
+      type: string
+    season:
+      type: string
+    position:
+      type: string
+    nationality:
+      type: string
+  required:
+    - id
+    - playerName
+    - fromTeam
+    - toTeam
+    - fee
+    - transferType
+
+    SquadResponse:
+      type: object
+      properties:
+        squad:
+          type: array
+          items:
+            $ref: "#/components/schemas/TmSquadPlayer"
+        teamInfo:
+          $ref: "#/components/schemas/TmTeamInfo"
+        source:
+          type: string
+      required:
+        - squad
+        - source
+
+    TransfersResponse:
+      type: object
+      properties:
+        transfers:
+          type: array
+          items:
+            $ref: "#/components/schemas/TmTransfer"
+        league:
+          type: string
+        season:
+          type: string
+      required:
+        - transfers
+        - league
+        - season

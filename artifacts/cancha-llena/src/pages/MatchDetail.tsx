@@ -1,9 +1,10 @@
 import { useParams, Link } from "wouter";
 import { useGetMatch, getGetMatchQueryKey } from "@workspace/api-client-react";
+import { useQuery } from "@tanstack/react-query";
 import { useSeo } from "@/hooks/useSeo";
 import { format, formatDistanceToNow } from "date-fns";
 import { es } from "date-fns/locale";
-import { ChevronRight, Tv, RefreshCw, Star } from "lucide-react";
+import { ChevronRight, Tv, RefreshCw, Star, Users, History } from "lucide-react";
 import { getTeamColor, getBroadcasterStyle } from "@/utils/teamColors";
 import { useFavorites } from "@/hooks/useFavorites";
 
@@ -67,6 +68,31 @@ export default function MatchDetail() {
   const awayWins = hasScore && match.awayScore! > match.homeScore!;
   const homeColor = getTeamColor(match.homeTeam.name);
   const awayColor = getTeamColor(match.awayTeam.name);
+
+  const { data: lineups } = useQuery({
+    queryKey: ["lineups", matchId],
+    queryFn: async () => {
+      const res = await fetch(`/api/lineups/${matchId}`);
+      if (!res.ok) return null;
+      return res.json();
+    },
+    enabled: !!matchId && (isFinished || isLive),
+    staleTime: 5 * 60_000,
+  });
+
+  const homeTeamId = (match.homeTeam as any).id;
+  const awayTeamId = (match.awayTeam as any).id;
+
+  const { data: h2h } = useQuery({
+    queryKey: ["h2h", homeTeamId, awayTeamId],
+    queryFn: async () => {
+      const res = await fetch(`/api/lineups/h2h/${homeTeamId}/${awayTeamId}`);
+      if (!res.ok) return null;
+      return res.json();
+    },
+    enabled: !!homeTeamId && !!awayTeamId,
+    staleTime: 5 * 60_000,
+  });
   const broadcaster = getBroadcasterStyle(match.broadcastChannel ?? null);
 
   const events = (match as any).events ?? [];
@@ -299,6 +325,84 @@ export default function MatchDetail() {
                   </div>
                 );
               })}
+          </div>
+        </div>
+      )}
+
+      {/* Lineups */}
+      {lineups && !lineups.error && (
+        <div className="bg-white rounded-sm border border-gray-200 shadow-sm overflow-hidden">
+          <div className="px-4 py-2.5 border-b border-gray-100 flex items-center gap-2">
+            <Users className="w-4 h-4 text-gray-400" />
+            <span className="font-bold text-gray-900 text-[13px]">Alineaciones</span>
+          </div>
+          <div className="p-4">
+            <div className="grid grid-cols-2 gap-4">
+              {/* Home lineup */}
+              {lineups.home && (
+                <div>
+                  <div className="text-[12px] font-bold text-gray-700 mb-2 flex items-center gap-2">
+                    <div className="w-3 h-3 rounded-full" style={{ backgroundColor: homeColor.bg }} />
+                    {match.homeTeam.shortName ?? match.homeTeam.name}
+                  </div>
+                  {lineups.home.formation && (
+                    <div className="text-[11px] text-gray-400 mb-2">Formación: {lineups.home.formation}</div>
+                  )}
+                  <div className="space-y-1">
+                    {lineups.home.starters?.map((p: any, i: number) => (
+                      <div key={i} className="flex items-center gap-2 text-[12px]">
+                        <span className="text-gray-400 w-4 text-right">{p.shirtNumber ?? ""}</span>
+                        <span className="text-gray-800">{p.name}</span>
+                        <span className="text-gray-400 text-[10px]">{p.position}</span>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              )}
+              {/* Away lineup */}
+              {lineups.away && (
+                <div>
+                  <div className="text-[12px] font-bold text-gray-700 mb-2 flex items-center gap-2">
+                    <div className="w-3 h-3 rounded-full" style={{ backgroundColor: awayColor.bg }} />
+                    {match.awayTeam.shortName ?? match.awayTeam.name}
+                  </div>
+                  {lineups.away.formation && (
+                    <div className="text-[11px] text-gray-400 mb-2">Formación: {lineups.away.formation}</div>
+                  )}
+                  <div className="space-y-1">
+                    {lineups.away.starters?.map((p: any, i: number) => (
+                      <div key={i} className="flex items-center gap-2 text-[12px]">
+                        <span className="text-gray-400 w-4 text-right">{p.shirtNumber ?? ""}</span>
+                        <span className="text-gray-800">{p.name}</span>
+                        <span className="text-gray-400 text-[10px]">{p.position}</span>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              )}
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Head to Head */}
+      {h2h && h2h.matches && h2h.matches.length > 0 && (
+        <div className="bg-white rounded-sm border border-gray-200 shadow-sm overflow-hidden">
+          <div className="px-4 py-2.5 border-b border-gray-100 flex items-center gap-2">
+            <History className="w-4 h-4 text-gray-400" />
+            <span className="font-bold text-gray-900 text-[13px]">Historial de enfrentamientos</span>
+          </div>
+          <div>
+            {h2h.matches.slice(0, 5).map((m: any) => (
+              <Link key={m.id} href={`/partido/${m.id}`} className="flex items-center px-4 py-2.5 border-b border-gray-50 last:border-0 hover:bg-gray-50 transition-colors">
+                <span className="text-[11px] text-gray-400 w-20 shrink-0">{format(new Date(m.kickoffTime), "d MMM yyyy", { locale: es })}</span>
+                <div className="flex-1 flex items-center justify-between">
+                  <span className="text-[12px] text-gray-700 font-medium">{m.homeTeam?.shortName ?? m.homeTeam?.name ?? "Local"}</span>
+                  <span className="text-[13px] font-bold text-gray-900 mx-2">{m.homeScore ?? 0} - {m.awayScore ?? 0}</span>
+                  <span className="text-[12px] text-gray-700 font-medium">{m.awayTeam?.shortName ?? m.awayTeam?.name ?? "Visitante"}</span>
+                </div>
+              </Link>
+            ))}
           </div>
         </div>
       )}
