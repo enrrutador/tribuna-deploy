@@ -55,9 +55,13 @@ export function useLiveMatches() {
   });
 }
 
-export function useMatches(params?: { status?: MatchStatus; date?: string }) {
+export function useMatches(
+  params?: { status?: MatchStatus; date?: string },
+  options?: { enabled?: boolean }
+) {
   return useQuery({
     queryKey: qk.matches(params),
+    enabled: options?.enabled ?? true,
     queryFn: () => api.listMatches(params),
     refetchInterval: params?.status === "live" ? 15_000 : 60_000,
     placeholderData: keepPreviousData,
@@ -102,5 +106,14 @@ export function useTournamentScorers(slug: string | undefined) {
     enabled: !!slug,
     queryFn: () => api.getTournamentScorers(slug!),
     staleTime: 10 * 60_000,
+  });
+}
+
+// ---------- News ----------
+export function useNews() {
+  return useQuery({
+    queryKey: ["news"],
+    queryFn: api.getNews,
+    staleTime: 5 * 60_000,
   });
 }

@@ -222,7 +222,7 @@ const EVENT_TYPES: Record<string, MatchEvent["type"]> = {
   substitution: "substitution",
   penalty: "penalty",
   owngoal: "owngoal",
-  penalty-miss: "penalty_miss",
+  "penalty-miss": "penalty_miss",
   var: "var_review",
 };
 

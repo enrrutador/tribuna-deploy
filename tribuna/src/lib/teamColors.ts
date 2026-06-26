@@ -1,5 +1,5 @@
 /**
- * Default team colors when ESPN doesn't supply a brand color.
+ * Default team colors when no brand color is provided.
  * Falls back to a deterministic color derived from the team name.
  */
 

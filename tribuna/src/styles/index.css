@@ -208,9 +208,8 @@ h1, h2, h3, h4, h5, h6 {
 /* Borde con gradiente animado */
 @utility border-glow {
   position: relative;
-}
-@utility border-glow::before {
-  /* placeholder — real implementation in component */
+  border: 1px solid transparent;
+  background-clip: padding-box;
 }
 
 /* ============================================================

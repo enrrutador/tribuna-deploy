@@ -1,10 +1,9 @@
-import { useParams } from "wouter";
 import { Trophy, CalendarDays, BarChart3, Target } from "lucide-react";
 import { Tabs } from "@/components/ui/Tabs";
 import { PageLoader } from "@/components/ui/PageLoader";
 import { ErrorState } from "@/components/ui/ErrorState";
 import { SectionTitle } from "@/components/ui/SectionTitle";
-import { MatchGroupCard } from "@/components/domain/MatchGroupCard";
+import MatchGroupCard from "@/components/domain/MatchGroupCard";
 import StandingsTable from "@/components/domain/StandingsTable";
 import ScorersList from "@/components/domain/ScorersList";
 import {
@@ -14,8 +13,7 @@ import {
   useTournamentScorers,
 } from "@/lib/hooks";
 
-export default function Tournament() {
-  const { slug } = useParams<{ slug: string }>();
+export default function Tournament({ slug }: { slug: string }) {
   const { data: tournament, isLoading: loadingT } = useTournament(slug);
   const { data: fixtures, isLoading: loadingF, error: errorF, refetch: refetchF } = useTournamentFixtures(slug);
   const { data: standings, isLoading: loadingS } = useTournamentStandings(slug);

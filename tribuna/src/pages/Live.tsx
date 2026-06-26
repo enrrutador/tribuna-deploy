@@ -7,7 +7,7 @@ import { Button } from "@/components/ui/Button";
 import { ErrorState } from "@/components/ui/ErrorState";
 import { EmptyState } from "@/components/ui/EmptyState";
 import { CardSkeleton } from "@/components/ui/Skeleton";
-import { MatchGroupCard } from "@/components/domain/MatchGroupCard";
+import MatchGroupCard from "@/components/domain/MatchGroupCard";
 
 export default function Live() {
   const {

@@ -1,4 +1,4 @@
-import { useParams, Link } from "wouter";
+import { Link } from "wouter";
 import { motion } from "framer-motion";
 import {
   ArrowLeft, MapPin, Radio, Tv, Clock,
@@ -18,9 +18,7 @@ import EventTimeline from "@/components/domain/EventTimeline";
 import StatsChart from "@/components/domain/StatsChart";
 import PredictionWidget from "@/components/domain/PredictionWidget";
 
-export default function MatchDetail() {
-  const params = useParams<{ id: string }>();
-  const matchId = params.id ?? "";
+export default function MatchDetail({ id: matchId }: { id: string }) {
   const {
     data: match,
     isLoading,

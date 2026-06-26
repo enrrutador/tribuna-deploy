@@ -4,18 +4,20 @@ import { Link } from "wouter";
 import { cn } from "@/lib/utils";
 import { GlassCard } from "@/components/ui/GlassCard";
 import { Badge } from "@/components/ui/Badge";
-import { MatchRow } from "./MatchRow";
+import MatchRow from "./MatchRow";
 import type { MatchGroup } from "@/lib/types";
 
 interface MatchGroupCardProps {
   group: MatchGroup;
   showLink?: boolean;
   index?: number;
+  glow?: "none" | "lime" | "cyan" | "magenta";
 }
 
-export default function MatchGroupCard({ group, showLink, index = 0 }: MatchGroupCardProps) {
+export default function MatchGroupCard({ group, showLink, index = 0, glow: glowOverride }: MatchGroupCardProps) {
   const liveCount = group.matches.filter((m) => m.status === "live").length;
   const hasLive = liveCount > 0;
+  const activeGlow = glowOverride ?? (hasLive ? "magenta" : "none");
 
   return (
     <motion.div
@@ -29,7 +31,7 @@ export default function MatchGroupCard({ group, showLink, index = 0 }: MatchGrou
           "overflow-hidden",
           hasLive && "border-[var(--color-live)]/20"
         )}
-        glow={hasLive ? "magenta" : "none"}
+        glow={activeGlow}
       >
         {/* Tournament header */}
         <div className="flex items-center justify-between px-4 py-3 border-b border-white/5">

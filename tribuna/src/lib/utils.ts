@@ -56,7 +56,7 @@ export function timeAgo(ts: number): string {
   return `hace ${days} d`;
 }
 
-/** Extract minute number from ESPN "minute" string like "45' +2" or "73'". */
+/** Extract minute number from a minute string like "45' +2" or "73'". */
 export function parseMinute(minute: string | null): number {
   if (!minute) return 0;
   const m = minute.match(/(\d+)/);

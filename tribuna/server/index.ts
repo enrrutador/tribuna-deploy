@@ -15,6 +15,7 @@ import {
   cacheStats,
   type CategoryId,
 } from "./lib/espn";
+import { fetchNews } from "./lib/news";
 
 const app = express();
 const PORT = Number(process.env.PORT ?? 8787);
@@ -25,15 +26,31 @@ app.use((req, _res, next) => {
 });
 
 // ---------- Tournaments ----------
+type TournamentEntry = {
+  id: string;
+  slug: string;
+  name: string;
+  flag: string;
+  category: CategoryId;
+  country: string;
+};
+
 app.get("/api/tournaments", (_req, res) => {
-  const byCategory: Record<CategoryId, typeof LEAGUES[keyof typeof LEAGUES][]> = {
+  const byCategory: Record<CategoryId, TournamentEntry[]> = {
     destacados: [],
     argentina: [],
     sudamerica: [],
     world: [],
   };
   for (const [id, info] of Object.entries(LEAGUES)) {
-    byCategory[info.category].push({ id, ...info });
+    byCategory[info.category].push({
+      id,
+      slug: info.slug,
+      name: info.name,
+      flag: info.flag,
+      category: info.category,
+      country: info.country,
+    });
   }
   res.json(byCategory);
 });
@@ -45,7 +62,14 @@ app.get("/api/tournaments/:slug", (req, res) => {
     return;
   }
   const info = LEAGUES[leagueId];
-  res.json({ id: leagueId, ...info });
+  res.json({
+    id: leagueId,
+    slug: info.slug,
+    name: info.name,
+    flag: info.flag,
+    category: info.category,
+    country: info.country,
+  });
 });
 
 // ---------- Matches ----------
@@ -225,6 +249,17 @@ app.get("/api/tournaments/:slug/scorers", async (req, res) => {
 // ---------- Health ----------
 app.get("/api/health", (_req, res) => {
   res.json({ status: "ok", cache: cacheStats(), timestamp: Date.now() });
+});
+
+// ---------- News ----------
+app.get("/api/news", async (_req, res) => {
+  try {
+    const news = await fetchNews();
+    res.json({ news, count: news.length });
+  } catch (err) {
+    console.error(err);
+    res.status(500).json({ error: "Error interno" });
+  }
 });
 
 // ---------- 404 + error handler ----------

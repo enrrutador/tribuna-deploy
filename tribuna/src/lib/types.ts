@@ -1,4 +1,4 @@
-/** Shared domain types — mirror of the server ESPN types. */
+/** Shared domain types — mirror of the server domain types. */
 
 export type MatchStatus = "upcoming" | "live" | "finished";
 export type CategoryId = "destacados" | "argentina" | "sudamerica" | "world";
@@ -148,3 +148,17 @@ export interface TournamentCategoryGroup {
 }
 
 export type TournamentsResponse = Record<CategoryId, TournamentCategoryGroup[]>;
+
+export interface NewsItem {
+  id: string;
+  title: string;
+  description: string;
+  summary: string;
+  imageUrl: string | null;
+  imageCredit: string | null;
+  publishedAt: string;
+  publishedAgo: string | null;
+  source: string;
+  url: string;
+  category: "mundial" | "argentina" | "general";
+}

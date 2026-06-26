@@ -3,6 +3,7 @@ import type {
   MatchWithDetails,
   StandingsGroup,
   ScorerEntry,
+  NewsItem,
   TournamentsResponse,
   TournamentInfo,
   MatchStatus,
@@ -54,6 +55,9 @@ export const api = {
     request<{ groups: StandingsGroup[] }>(`/tournaments/${slug}/standings`),
   getTournamentScorers: (slug: string) =>
     request<{ scorers: ScorerEntry[] }>(`/tournaments/${slug}/scorers`),
+
+  // News
+  getNews: () => request<{ news: NewsItem[]; count: number }>("/news"),
 };
 
 export { ApiError };

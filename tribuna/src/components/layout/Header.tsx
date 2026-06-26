@@ -12,9 +12,10 @@ import { useState } from "react";
 import { cn } from "@/lib/utils";
 import { useLiveMatches } from "@/lib/hooks";
 import { Badge } from "@/components/ui/Badge";
+import LeaguesDrawer from "./LeaguesDrawer";
 
 export default function Header() {
-  const [menuOpen, setMenuOpen] = useState(false);
+  const [drawerOpen, setDrawerOpen] = useState(false);
   const [searchOpen, setSearchOpen] = useState(false);
   const [searchQuery, setSearchQuery] = useState("");
   const [location] = useLocation();
@@ -148,13 +149,43 @@ export default function Header() {
               {searchOpen ? <X size={18} /> : <Search size={18} />}
             </button>
 
-            {/* Mobile menu toggle */}
-            <button
-              onClick={() => setMenuOpen(!menuOpen)}
-              className="flex h-9 w-9 items-center justify-center rounded-lg text-[var(--color-slate-400)] hover:bg-white/5 hover:text-[var(--color-slate-200)] md:hidden"
+            {/* Leagues menu toggle — always visible, opens the slide-in drawer */}
+            <motion.button
+              onClick={() => setDrawerOpen((v) => !v)}
+              whileTap={{ scale: 0.92 }}
+              aria-label="Ver torneos"
+              className={cn(
+                "relative flex h-9 w-9 items-center justify-center overflow-hidden rounded-lg transition-shadow",
+                "bg-gradient-to-br from-[var(--color-lime-500)] via-[var(--color-cyan-500)] to-[var(--color-magenta-500)] animate-gradient",
+                "shadow-[0_0_16px_var(--color-lime-glow)] hover:shadow-[0_0_22px_var(--color-cyan-glow)]"
+              )}
             >
-              {menuOpen ? <X size={18} /> : <Menu size={18} />}
-            </button>
+              <AnimatePresence mode="wait" initial={false}>
+                {drawerOpen ? (
+                  <motion.span
+                    key="x"
+                    initial={{ rotate: -90, opacity: 0 }}
+                    animate={{ rotate: 0, opacity: 1 }}
+                    exit={{ rotate: 90, opacity: 0 }}
+                    transition={{ duration: 0.15 }}
+                    className="text-[var(--color-void)]"
+                  >
+                    <X size={18} strokeWidth={2.5} />
+                  </motion.span>
+                ) : (
+                  <motion.span
+                    key="menu"
+                    initial={{ rotate: 90, opacity: 0 }}
+                    animate={{ rotate: 0, opacity: 1 }}
+                    exit={{ rotate: -90, opacity: 0 }}
+                    transition={{ duration: 0.15 }}
+                    className="text-[var(--color-void)]"
+                  >
+                    <Menu size={18} strokeWidth={2.5} />
+                  </motion.span>
+                )}
+              </AnimatePresence>
+            </motion.button>
           </div>
         </div>
 
@@ -189,42 +220,10 @@ export default function Header() {
             </motion.div>
           )}
         </AnimatePresence>
-
-        {/* Mobile nav dropdown */}
-        <AnimatePresence>
-          {menuOpen && (
-            <motion.div
-              initial={{ height: 0, opacity: 0 }}
-              animate={{ height: "auto", opacity: 1 }}
-              exit={{ height: 0, opacity: 0 }}
-              className="overflow-hidden border-t border-white/5 md:hidden"
-            >
-              <nav className="flex flex-col p-2 gap-0.5">
-                {navItems.map((item) => (
-                  <Link key={item.href} href={item.href} onClick={() => setMenuOpen(false)}>
-                    <div
-                      className={cn(
-                        "flex items-center gap-2.5 rounded-lg px-3 py-2.5 text-sm font-semibold transition-all",
-                        location === item.href
-                          ? "bg-[var(--color-lime-500)]/10 text-[var(--color-lime-400)]"
-                          : "text-[var(--color-slate-400)] hover:bg-white/5"
-                      )}
-                    >
-                      {item.icon}
-                      {item.label}
-                      {item.badge ? (
-                        <Badge tone="live" pulse className="ml-auto text-[9px] px-1.5 py-0">
-                          {item.badge}
-                        </Badge>
-                      ) : null}
-                    </div>
-                  </Link>
-                ))}
-              </nav>
-            </motion.div>
-          )}
-        </AnimatePresence>
       </header>
+
+      {/* Slide-in leagues drawer (closes on Escape, backdrop, and navigation) */}
+      <LeaguesDrawer open={drawerOpen} onClose={() => setDrawerOpen(false)} />
     </>
   );
 }
