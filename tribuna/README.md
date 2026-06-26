@@ -26,10 +26,14 @@ Plataforma de fútbol en vivo con estética **glassmorphism oscuro**. Resultados
 - 📅 **Navegación por fecha** (día anterior / hoy / día siguiente)
 - 🗂️ **Filtros** (Todos / Vivo / Finalizados / Próximos)
 - 📱 **PWA instalable** (manifest + iconos + theme color)
-- 🎬 **Transiciones de página** y micro-interacciones (Framer Motion)
+- 🎬 **Micro-interacciones** (Framer Motion) y transiciones de entrada
 - 🏟️ **Ticker de partidos en vivo** desplazándose en el header
 - 🌗 **Tema glassmorphism** completo con tokens de diseño
 - 🛡️ **Error boundary** + estados de carga/error/vacío en cada vista
+- 📰 **Panel de noticias** deportivas en el home
+- 🧭 **Drawer de ligas** — slide-in desde la izquierda con todas las ligas, accesible desde la hamburguesa del header (siempre visible, gradiente animado). Se cierra con Escape, click fuera o al navegar.
+- 📋 **Lista de ligas compartida** — componente `TournamentList` reutilizado entre sidebar y drawer (categorías plegables, acento neón por grupo, toggle de favoritos).
+- 🎨 **Tipografía mejorada** en la tabla de ligas: headers en Space Grotesk con acento neón por categoría (Destacados=lima, Argentina=cyan, Sudamérica=magenta, Mundo=cyan).
 
 ---
 
@@ -100,6 +104,7 @@ tribuna/
 │   ├── index.ts               # App Express + rutas REST
 │   └── lib/
 │       └── espn.ts            # Cliente de datos con tipado + caché TTL
+│       └── news.ts             # Cliente de noticias deportivas
 │
 ├── src/                       # Frontend React 19 + Vite
 │   ├── main.tsx               # Entry + providers (QueryClient, ErrorBoundary)
@@ -112,11 +117,12 @@ tribuna/
 │   │   ├── types.ts           # Tipos de dominio
 │   │   ├── utils.ts           # Helpers (fechas ART, cn, etc.)
 │   │   ├── favorites.ts       # Store Zustand (favoritos persistentes)
+│   │   ├── newsFallback.ts    # Fallback de noticias estáticas
 │   │   └── teamColors.ts      # Colores oficiales de clubes
 │   ├── components/
 │   │   ├── ui/                # Primitivos (GlassCard, Button, Badge…)
-│   │   ├── layout/            # Header, Sidebar, Footer, BottomNav
-│   │   └── domain/            # MatchRow, EventTimeline, StandingsTable…
+│   │   ├── layout/            # Header, Sidebar, Footer, BottomNav, LeaguesDrawer
+│   │   └── domain/            # MatchRow, EventTimeline, StandingsTable, TournamentList…
 │   └── pages/                 # Home, Live, Tournament, MatchDetail, Team…
 │
 └── public/                    # manifest, favicon, íconos PWA
@@ -142,6 +148,7 @@ tribuna/
 | GET | `/api/matches/today` | Partidos de hoy (hora argentina) |
 | GET | `/api/matches/live` | Partidos en vivo ahora |
 | GET | `/api/matches/:id` | Detalle del partido + eventos + estadísticas |
+| GET | `/api/news` | Noticias deportivas recientes |
 
 Los IDs de partido tienen formato `leagueId:matchId` (ej: `fifa.world:401865560`).
 
@@ -167,3 +174,26 @@ Los IDs de partido tienen formato `leagueId:matchId` (ej: `fifa.world:401865560`
 ---
 
 Hecho con ❤️ en Argentina
+
+---
+
+## 📋 Changelog
+
+### v1.1.0 — Fix navegación, drawer de ligas, tipografía
+
+**Fix crítico:**
+- Eliminado `AnimatePresence mode="wait"` del wrapper de rutas que bloqueaba el renderizado al navegar client-side (race condition framer-motion v11 + React 19). Las páginas ahora cargan al instante en cualquier click.
+
+**Nuevas funcionalidades:**
+- **LeaguesDrawer** — drawer deslizable desde la izquierda con todas las ligas. Se abre desde la hamburguesa del header (siempre visible, con gradiente animado lima→cyan→magenta). Se cierra con Escape, click en el backdrop, o al navegar. Scroll-lock del body mientras está abierto.
+- **TournamentList** — componente compartido de lista compacta de ligas (categorías plegables + toggle de favoritos). Usado por el Sidebar (desktop) y el LeaguesDrawer, eliminando lógica duplicada.
+- **Panel de noticias** deportivas en el home (sticky sidebar).
+
+**Mejoras visuales:**
+- Headers de categoría de ligas en **Space Grotesk** (fuente display) con **acento neón por grupo**: Destacados=lima, Argentina=cyan, Sudamérica=magenta, Mundo=cyan. Puntito indicador del mismo color.
+- Nombres de liga subidos a `slate-300` para mejor legibilidad sobre fondo oscuro.
+- Botón de menú con gradiente animado permanente + glow + rotación del ícono al abrir/cerrar.
+
+**Limpieza:**
+- Eliminado dropdown móvil de navegación del header (cubierta por BottomNav + LeaguesDrawer).
+- Eliminada referencia a GitHub del footer.
