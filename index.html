@@ -5,18 +5,84 @@
     <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
     <meta name="theme-color" content="#0a0a0f" />
-    <meta name="description" content="Tribuna — Resultados en vivo, fixture, tablas, estadísticas y fichajes del fútbol argentino y mundial." />
+
+    <!-- PRIMARY SEO -->
+    <title>Tribuna — Resultados en Vivo, Fixture y Tabla de Posiciones | Fútbol Argentino y Mundial</title>
+    <meta name="description" content="Seguí los resultados en vivo de la Liga Profesional, Copa Libertadores, Champions League y más. Fixture, tabla de posiciones, goleadores y estadísticas del fútbol argentino y mundial." />
+    <meta name="keywords" content="resultados en vivo, fútbol en vivo, liga profesional argentina, fixture, tabla de posiciones, goleadores, copa libertadores, champions league, premier league, la liga, mundiales" />
+    <link rel="canonical" href="https://tribuna-8b8r.onrender.com/" />
+
+    <!-- OPEN GRAPH -->
+    <meta property="og:title" content="Tribuna — Fútbol en Vivo | Resultados, Fixture y Tabla" />
+    <meta property="og:description" content="Resultados en vivo, fixture, tablas, estadísticas y favoritos del fútbol argentino y mundial. Datos en tiempo real." />
+    <meta property="og:type" content="website" />
+    <meta property="og:url" content="https://tribuna-8b8r.onrender.com/" />
+    <meta property="og:site_name" content="Tribuna — Fútbol en vivo" />
+    <meta property="og:image" content="https://tribuna-8b8r.onrender.com/og-image.svg" />
+    <meta property="og:image:width" content="1200" />
+    <meta property="og:image:height" content="630" />
+    <meta property="og:locale" content="es_AR" />
+
+    <!-- TWITTER CARD -->
+    <meta name="twitter:card" content="summary_large_image" />
+    <meta name="twitter:title" content="Tribuna — Fútbol en Vivo" />
+    <meta name="twitter:description" content="Resultados en vivo, fixture, tablas y estadísticas del fútbol argentino y mundial." />
+    <meta name="twitter:image" content="https://tribuna-8b8r.onrender.com/og-image.svg" />
+
+    <!-- MOBILE / PWA -->
     <meta name="apple-mobile-web-app-capable" content="yes" />
     <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
-    <meta property="og:title" content="Tribuna — Fútbol en vivo" />
-    <meta property="og:description" content="Resultados en vivo, fixture, tablas, estadísticas y fichajes del fútbol argentino y mundial." />
-    <meta property="og:type" content="website" />
     <link rel="apple-touch-icon" href="/icon-192.png" />
     <link rel="manifest" href="/manifest.webmanifest" />
-    <title>Tribuna — Fútbol en vivo</title>
+
+    <!-- STRUCTURED DATA (JSON-LD) -->
+    <script type="application/ld+json">
+    {
+      "@context": "https://schema.org",
+      "@type": "WebApplication",
+      "name": "Tribuna",
+      "url": "https://tribuna-8b8r.onrender.com",
+      "description": "Resultados en vivo, fixture, tablas, estadísticas y favoritos del fútbol argentino y mundial.",
+      "applicationCategory": "SportsApplication",
+      "operatingSystem": "Web",
+      "offers": {
+        "@type": "Offer",
+        "price": "0",
+        "priceCurrency": "ARS"
+      },
+      "inLanguage": "es",
+      "creator": {
+        "@type": "Organization",
+        "name": "Tribuna",
+        "url": "https://tribuna-8b8r.onrender.com"
+      }
+    }
+    </script>
+
+    <!-- GOOGLE SEARCH CONSOLE VERIFICATION (placeholder - replace with real code) -->
+    <!-- <meta name="google-site-verification" content="YOUR_CODE_HERE" /> -->
   </head>
   <body>
     <div id="root"></div>
+    <noscript>
+      <div style="padding: 2rem; text-align: center; font-family: sans-serif; background: #0a0a0f; color: #e2e8f0; min-height: 100vh;">
+        <h1 style="font-size: 2rem; margin-bottom: 1rem;">Tribuna — Fútbol en Vivo</h1>
+        <p style="font-size: 1.1rem; color: #94a3b8; margin-bottom: 2rem;">Resultados en vivo, fixture, tablas, estadísticas y favoritos del fútbol argentino y mundial.</p>
+        <p style="color: #64748b; margin-bottom: 2rem;">Para usar esta aplicación, necesitás habilitar JavaScript en tu navegador.</p>
+        <h2 style="font-size: 1.3rem; margin-bottom: 1rem;">Torneos disponibles:</h2>
+        <ul style="list-style: none; padding: 0; display: inline-block; text-align: left;">
+          <li style="margin: 0.5rem 0;"><a href="/tournament/liga-profesional" style="color: #a3e635; text-decoration: none;">🇦🇷 Liga Profesional Argentina</a></li>
+          <li style="margin: 0.5rem 0;"><a href="/tournament/mundial-2026" style="color: #a3e635; text-decoration: none;">🌍 Mundial 2026</a></li>
+          <li style="margin: 0.5rem 0;"><a href="/tournament/copa-libertadores" style="color: #a3e635; text-decoration: none;">🏆 Copa Libertadores</a></li>
+          <li style="margin: 0.5rem 0;"><a href="/tournament/copa-sudamericana" style="color: #a3e635; text-decoration: none;">🏆 Copa Sudamericana</a></li>
+          <li style="margin: 0.5rem 0;"><a href="/tournament/champions-league" style="color: #a3e635; text-decoration: none;">⭐ Champions League</a></li>
+          <li style="margin: 0.5rem 0;"><a href="/tournament/premier-league" style="color: #a3e635; text-decoration: none;">🏴󠁧󠁢󠁥󠁮󠁧󠁿 Premier League</a></li>
+          <li style="margin: 0.5rem 0;"><a href="/tournament/la-liga" style="color: #a3e635; text-decoration: none;">🇪🇸 La Liga</a></li>
+          <li style="margin: 0.5rem 0;"><a href="/tournament/brasileirao" style="color: #a3e635; text-decoration: none;">🇧🇷 Brasileirao</a></li>
+          <li style="margin: 0.5rem 0;"><a href="/tournament/eliminatorias" style="color: #a3e635; text-decoration: none;">🌎 Eliminatorias CONMEBOL</a></li>
+        </ul>
+      </div>
+    </noscript>
     <script type="module" src="/src/main.tsx"></script>
   </body>
 </html>

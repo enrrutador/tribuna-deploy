@@ -1,0 +1,6 @@
+User-agent: *
+Allow: /
+Disallow: /favorites
+Disallow: /api/
+
+Sitemap: https://tribuna-8b8r.onrender.com/sitemap.xml
