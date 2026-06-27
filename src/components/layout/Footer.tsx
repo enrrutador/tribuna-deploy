@@ -125,11 +125,11 @@ export default function Footer() {
               <ul className="space-y-2.5">
                 <li>
                   <a
-                    href="mailto:contacto@tribuna.com"
+                    href="mailto:tribunafutbolcontacto@gmail.com"
                     className="flex items-center gap-2 text-sm text-[var(--color-slate-500)] transition-colors hover:text-[var(--color-lime-400)]"
                   >
                     <Mail size={12} className="shrink-0 text-[var(--color-slate-600)]" />
-                    contacto@tribuna.com
+                    tribunafutbolcontacto@gmail.com
                   </a>
                 </li>
                 <li>
