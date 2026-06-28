@@ -751,74 +751,74 @@ function convertPromiedosScorers(groups: ScorersGroup[]): ScorerEntry[] {
 
 const ESPN_TO_PROMIEDOS: Record<string, string> = {
   // Liga Profesional Argentina
-  "5": "igg",    // Boca Juniors
-  "3": "ihb",    // Argentinos Juniors
-  "9739": "hccd", // Aldosivi
-  "9785": "gbfc", // Atletico Tucuman
-  "105": "ihi",  // Banfield
-  "10113": "jafb", // Barracas Central
-  "9776": "fhid", // Belgrano
-  "1010": "beafh", // Central Cordoba SdE
-  "1017": "hcbh", // Defensa y Justicia
-  "10114": "bbjea", // Deportivo Riestra
-  "2015": "bheaf", // Estudiantes RC
-  "8": "igh",    // Estudiantes de La Plata
-  "9": "iia",    // Gimnasia La Plata
-  "6756": "bbjbf", // Gimnasia de Mendoza
-  "12": "iie",   // Huracan
-  "11": "ihe",   // Independiente
-  "10107": "hcch", // Independiente Rivadavia
-  "1009": "hchc", // Instituto
-  "13": "igj",   // Lanus
-  "7": "ihh",    // Newell's Old Boys
-  "10100": "hcah", // Platense
-  "4": "ihg",    // Racing Club
-  "6": "igi",    // River Plate
-  "10": "ihf",   // Rosario Central
-  "2": "igf",    // San Lorenzo
-  "10112": "hbbh", // Sarmiento Junin
-  "1008": "jche", // Talleres de Cordoba
-  "14": "iid",   // Tigre
-  "10108": "hcag", // Union de Santa Fe
-  "1011": "ihc", // Velez Sarsfield
+  "9739": "hccd",    // Aldosivi
+  "3": "ihb",        // Argentinos Juniors
+  "9785": "gbfc",    // Atlético Tucumán
+  "235": "ihi",      // Banfield
+  "10060": "jafb",   // Barracas Central
+  "4": "fhid",       // Belgrano
+  "5": "igg",        // Boca Juniors
+  "11989": "beafh",  // Central Córdoba SdE
+  "8950": "hcbh",    // Defensa y Justicia
+  "17702": "bbjea",  // Deportivo Riestra
+  "8": "igh",        // Estudiantes de La Plata
+  "19685": "bheaf",  // Estudiantes RC
+  "9": "iia",        // Gimnasia La Plata
+  "11972": "bbjbf",  // Gimnasia de Mendoza
+  "10": "iie",       // Huracán
+  "11": "ihe",       // Independiente
+  "9744": "hcch",    // Independiente Rivadavia
+  "2975": "hchc",    // Instituto
+  "12": "igj",       // Lanús
+  "14": "ihh",       // Newell's Old Boys
+  "7764": "hcah",    // Platense
+  "15": "ihg",       // Racing Club
+  "16": "igi",       // River Plate
+  "17": "ihf",       // Rosario Central
+  "18": "igf",       // San Lorenzo
+  "10158": "hbbh",   // Sarmiento
+  "19": "jche",      // Talleres
+  "7767": "iid",     // Tigre
+  "20": "hcag",      // Unión
+  "21": "ihc",       // Vélez
 
-  // Primera Nacional (selected)
-  "9787": "hbba", // Almirante Brown
-  "6758": "hcbi", // Chacarita
-  "9793": "hbai", // Agropecuario
-  "6757": "iha",  // Ferro
-  "6759": "bbjbh", // Almagro
-  "9791": "ghjha", // Brown de Adrogue
-  "1007": "hbbc", // San Martin SJ
-  "9792": "hbbg", // Tristán Suárez
-  "6761": "ihd",  // Temperley
-  "6760": "bbiji", // Defensores de Belgrano
-  "1006": "hbbb", // Guillermo Brown
-  "9786": "hbid", // Quilmes
-  "9789": "jcih", // Nueva Chicago
-  "1004": "hhij", // San Telmo
-  "9788": "jiaj", // Colegiales
-  "6755": "hbbi", // All Boys
-  "1003": "bbjcd", // Deportivo Morón
-  "6754": "bdiha", // Los Andes
-  "1015": "iib",  // Atlanta
-  "1012": "hbae", // Chaco For Ever
-  "9790": "hbbd", // Sportivo Belgrano
-  "1016": "fjgi", // Gimnasia Mendoza (Nacional)
-  "1013": "hbac", // Mitre Santiago del Estero
-  "9794": "bbjcj", // San Carlos (Norte)
-  "6753": "hcai", // Dock Sud
-  "1014": "hbaf", // San Martin Tucuman
-  "9784": "hchb", // Central Norte
-  "1005": "jcid", // Estudiantes BA
-  "1002": "bcai", // Flandria
-  "1001": "hbag", // Sacachispas
-  "9795": "hccf", // UAI Urquiza
-  "6752": "jchi", // Villa Dalmine
-  "1018": "iche", // Deportivo Armenio
-  "9796": "gbjg", // San Miguel
-  "1019": "cijej", // Deportivo La Plata
-  "1020": "bbjce", // Liniers
+  // Primera Nacional
+  "10145": "hbbi",   // Acassuso
+  "13913": "bbjce",  // Agropecuario
+  "9786": "hhij",    // All Boys
+  "2": "hbag",       // Almagro
+  "9740": "hbbc",    // Almirante Brown
+  "10146": "hbae",   // Atlanta
+  "9747": "fjgi",    // Atlético Rafaela
+  "11993": "jiaj",   // Central Norte
+  "6": "gbjg",       // Chacarita
+  "11963": "bdiha",  // Chaco For Ever
+  "21799": "ghjha",  // Ciudad de Bolívar
+  "10149": "hbaf",   // Colegiales
+  "7": "iha",        // Colón
+  "10151": "hbid",   // Defensores de Belgrano
+  "18260": "bbjbh",  // Deportivo Madryn
+  "11978": "jcid",   // Deportivo Maipú
+  "10154": "hbba",   // Deportivo Morón
+  "17352": "hbbg",   // Estudiantes BA
+  "9743": "hcbi",    // Ferro
+  "5263": "iib",     // Gimnasia Jujuy
+  "10743": "jchi",   // Gimnasia y Tiro
+  "6756": "ihd",     // Godoy Cruz
+  "18284": "cijej",  // Güemes
+  "13": "hbai",      // Los Andes
+  "10109": "bbjcj",  // Midland
+  "11990": "bbjcd",  // Mitre SdE
+  "236": "bcai",     // Nueva Chicago
+  "10374": "iche",   // Patronato
+  "2741": "hccf",    // Quilmes
+  "19145": "jcih",   // Racing Córdoba
+  "7845": "hcai",    // San Martín SJ
+  "17814": "hchb",   // San Martín Tucumán
+  "10058": "bbiji",  // San Miguel
+  "10157": "hbbb",   // San Telmo
+  "10162": "hbac",   // Temperley
+  "10163": "hbbd",   // Tristán Suárez
 };
 
 function normalize(s: string): string {
