@@ -11,6 +11,8 @@ import {
   fetchPromiedosScorers as promiedosScorers,
   fetchPromiedosTeam as promiedosTeam,
   PROMIEDOS_LEAGUE_MAP,
+  PROMIEDOS_BASE,
+  PROMIEDOS_HEADERS,
   type PromiedosMatch,
   type StandingGroup,
   type ScorersGroup,
@@ -743,13 +745,186 @@ function convertPromiedosScorers(groups: ScorersGroup[]): ScorerEntry[] {
   return scorers;
 }
 
+// ---------- Team name → Promiedos ID resolver ----------
+// Hardcoded map of ESPN team IDs → Promiedos team IDs for Argentine football.
+// This ensures team pages always show full Promiedos data.
+
+const ESPN_TO_PROMIEDOS: Record<string, string> = {
+  // Liga Profesional Argentina
+  "5": "igg",    // Boca Juniors
+  "3": "ihb",    // Argentinos Juniors
+  "9739": "hccd", // Aldosivi
+  "9785": "gbfc", // Atletico Tucuman
+  "105": "ihi",  // Banfield
+  "10113": "jafb", // Barracas Central
+  "9776": "fhid", // Belgrano
+  "1010": "beafh", // Central Cordoba SdE
+  "1017": "hcbh", // Defensa y Justicia
+  "10114": "bbjea", // Deportivo Riestra
+  "2015": "bheaf", // Estudiantes RC
+  "8": "igh",    // Estudiantes de La Plata
+  "9": "iia",    // Gimnasia La Plata
+  "6756": "bbjbf", // Gimnasia de Mendoza
+  "12": "iie",   // Huracan
+  "11": "ihe",   // Independiente
+  "10107": "hcch", // Independiente Rivadavia
+  "1009": "hchc", // Instituto
+  "13": "igj",   // Lanus
+  "7": "ihh",    // Newell's Old Boys
+  "10100": "hcah", // Platense
+  "4": "ihg",    // Racing Club
+  "6": "igi",    // River Plate
+  "10": "ihf",   // Rosario Central
+  "2": "igf",    // San Lorenzo
+  "10112": "hbbh", // Sarmiento Junin
+  "1008": "jche", // Talleres de Cordoba
+  "14": "iid",   // Tigre
+  "10108": "hcag", // Union de Santa Fe
+  "1011": "ihc", // Velez Sarsfield
+
+  // Primera Nacional (selected)
+  "9787": "hbba", // Almirante Brown
+  "6758": "hcbi", // Chacarita
+  "9793": "hbai", // Agropecuario
+  "6757": "iha",  // Ferro
+  "6759": "bbjbh", // Almagro
+  "9791": "ghjha", // Brown de Adrogue
+  "1007": "hbbc", // San Martin SJ
+  "9792": "hbbg", // Tristán Suárez
+  "6761": "ihd",  // Temperley
+  "6760": "bbiji", // Defensores de Belgrano
+  "1006": "hbbb", // Guillermo Brown
+  "9786": "hbid", // Quilmes
+  "9789": "jcih", // Nueva Chicago
+  "1004": "hhij", // San Telmo
+  "9788": "jiaj", // Colegiales
+  "6755": "hbbi", // All Boys
+  "1003": "bbjcd", // Deportivo Morón
+  "6754": "bdiha", // Los Andes
+  "1015": "iib",  // Atlanta
+  "1012": "hbae", // Chaco For Ever
+  "9790": "hbbd", // Sportivo Belgrano
+  "1016": "fjgi", // Gimnasia Mendoza (Nacional)
+  "1013": "hbac", // Mitre Santiago del Estero
+  "9794": "bbjcj", // San Carlos (Norte)
+  "6753": "hcai", // Dock Sud
+  "1014": "hbaf", // San Martin Tucuman
+  "9784": "hchb", // Central Norte
+  "1005": "jcid", // Estudiantes BA
+  "1002": "bcai", // Flandria
+  "1001": "hbag", // Sacachispas
+  "9795": "hccf", // UAI Urquiza
+  "6752": "jchi", // Villa Dalmine
+  "1018": "iche", // Deportivo Armenio
+  "9796": "gbjg", // San Miguel
+  "1019": "cijej", // Deportivo La Plata
+  "1020": "bbjce", // Liniers
+};
+
+function normalize(s: string): string {
+  return s.toLowerCase().normalize("NFD").replace(/[\u0300-\u036f]/g, "").trim();
+}
+
+async function resolvePromiedosTeamId(espnTeamId: string): Promise<string | null> {
+  // Direct lookup in hardcoded map
+  const direct = ESPN_TO_PROMIEDOS[espnTeamId];
+  if (direct) return direct;
+
+  // Fallback: get team name from ESPN and search name map
+  const leagues = ["arg.1", "arg.2"];
+  let teamName = "";
+  for (const league of leagues) {
+    try {
+      const url = `${ESPN_SCOREBOARD}/${league}/teams/${espnTeamId}`;
+      const res = await fetch(url);
+      if (!res.ok) continue;
+      const data = await res.json();
+      if (data?.team?.displayName) {
+        teamName = data.team.displayName;
+        break;
+      }
+    } catch { /* continue */ }
+  }
+  if (!teamName) return null;
+
+  const map = await buildTeamNameMap();
+  const key = normalize(teamName);
+  return map.get(key) ?? null;
+}
+
+async function buildTeamNameMap(): Promise<Map<string, string>> {
+  if (teamNameMap) return teamNameMap;
+  if (teamNameMapBuilding) {
+    while (teamNameMapBuilding) await new Promise((r) => setTimeout(r, 100));
+    return teamNameMap!;
+  }
+  teamNameMapBuilding = true;
+  const map = new Map<string, string>();
+
+  // Fetch games for today and yesterday to find teams
+  const dates: string[] = [];
+  for (let offset = 0; offset <= 1; offset++) {
+    const d = new Date();
+    d.setDate(d.getDate() - offset);
+    const dd = String(d.getDate()).padStart(2, "0");
+    const mm = String(d.getMonth() + 1).padStart(2, "0");
+    const yyyy = d.getFullYear();
+    dates.push(`${dd}-${mm}-${yyyy}`);
+  }
+
+  for (const dateStr of dates) {
+    try {
+      const res = await fetch(`${PROMIEDOS_BASE}/games/${dateStr}`, { headers: PROMIEDOS_HEADERS });
+      if (!res.ok) continue;
+      const data = await res.json();
+      for (const league of data.leagues ?? []) {
+        for (const game of league.games ?? []) {
+          for (const team of game.teams ?? []) {
+            if (team.id && team.name) {
+              const key = team.name.toLowerCase().normalize("NFD").replace(/[\u0300-\u036f]/g, "");
+              if (!map.has(key)) map.set(key, team.id);
+              if (team.short_name) {
+                const skey = team.short_name.toLowerCase().normalize("NFD").replace(/[\u0300-\u036f]/g, "");
+                if (!map.has(skey)) map.set(skey, team.id);
+              }
+            }
+          }
+        }
+      }
+    } catch (e) {
+      console.error(`[espn] Failed to build team map from games ${dateStr}`, e);
+    }
+  }
+
+  teamNameMap = map;
+  teamNameMapBuilding = false;
+  console.log(`[espn] Built fallback team name map: ${map.size} entries`);
+  return map;
+}
+
+let teamNameMap: Map<string, string> | null = null;
+let teamNameMapBuilding = false;
+
 /**
- * Build a TeamInfo from ESPN API (for numeric ESPN team IDs).
- * ESPN has basic data: name, logo, color, abbreviation — but no squad/stadium.
+ * Fetch team data: always try to use Promiedos data.
+ * - If ID is a Promiedos ID (alphanumeric), use directly
+ * - If ID is numeric (ESPN), resolve to Promiedos ID first
  */
-async function fetchEsportTeam(teamId: string): Promise<TeamInfo | null> {
+async function fetchTeamDataComposite(teamId: string): Promise<TeamInfo | null> {
+  // Non-numeric IDs are likely Promiedos IDs — try directly
+  if (!/^\d+$/.test(teamId)) {
+    return promiedosTeam(teamId);
+  }
+
+  // Numeric ID = ESPN ID — resolve to Promiedos
+  const promiedosId = await resolvePromiedosTeamId(teamId);
+  if (promiedosId) {
+    const result = await promiedosTeam(promiedosId);
+    if (result) return result;
+  }
+
+  // Last resort: return basic info from ESPN
   try {
-    // Try all known league prefixes for ESPN
     const leagues = ["arg.1", "arg.2"];
     for (const league of leagues) {
       const url = `${ESPN_SCOREBOARD}/${league}/teams/${teamId}`;
@@ -758,7 +933,6 @@ async function fetchEsportTeam(teamId: string): Promise<TeamInfo | null> {
       const data = await res.json();
       const t = data?.team;
       if (!t) continue;
-
       return {
         id: t.id,
         name: t.displayName,
@@ -767,11 +941,7 @@ async function fetchEsportTeam(teamId: string): Promise<TeamInfo | null> {
         color: (t.color || "334155").replace("#", ""),
         mainLeague: { name: league === "arg.1" ? "Liga Profesional" : "Primera Nacional", id: league },
         info: [],
-        stadium: t.venue ? {
-          name: t.venue.fullName || "",
-          capacity: t.venue.capacity ? String(t.venue.capacity) : undefined,
-          city: t.venue.address?.city || undefined,
-        } : null,
+        stadium: null,
         squad: [],
         nextMatches: (t.nextEvent || []).map((e: any) => ({
           date: e.date ? new Date(e.date).toLocaleDateString("es-AR") : "",
@@ -783,25 +953,12 @@ async function fetchEsportTeam(teamId: string): Promise<TeamInfo | null> {
         topScorers: [],
       };
     }
-    return null;
-  } catch {
-    return null;
-  }
+  } catch { /* ignore */ }
+  return null;
 }
 
-/**
- * Fetch team data: try Promiedos first (works with Promiedos IDs),
- * fall back to ESPN for numeric IDs.
- */
-async function fetchTeamDataComposite(teamId: string): Promise<TeamInfo | null> {
-  // If the ID is purely numeric, it's an ESPN ID — try ESPN first
-  if (/^\d+$/.test(teamId)) {
-    const espn = await fetchEsportTeam(teamId);
-    if (espn) return espn;
-    // If ESPN fails, still try Promiedos (maybe it works)
-  }
-  return promiedosTeam(teamId);
-}
+// Pre-build the map on startup
+buildTeamNameMap().catch(() => {});
 
 export { fetchTeamDataComposite as fetchTeamData };
 export type { TeamInfo } from "./promiedos.js";

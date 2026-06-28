@@ -9,8 +9,8 @@
  *  - Team info, squad, stadium (/team/{team_id})
  */
 
-const PROMIEDOS_BASE = "https://api.promiedos.com.ar";
-const PROMIEDOS_HEADERS = { "X-VER": "1.11.7.5" };
+export const PROMIEDOS_BASE = "https://api.promiedos.com.ar";
+export const PROMIEDOS_HEADERS = { "X-VER": "1.11.7.5" };
 
 // ---------- Types ----------
 interface PromiedosTeam {
@@ -732,7 +732,7 @@ export async function fetchPromiedosTeam(teamId: string): Promise<TeamInfo | nul
     setCache(cacheKey, result, 10 * 60_000);
     return result;
   } catch (err) {
-    console.error("[promiedos] fetchTeam failed", teamId, err);
+    console.error(`[promiedos] fetchTeam failed ${teamId}:`, err instanceof Error ? err.message : err);
     return null;
   }
 }
