@@ -6,6 +6,7 @@
 
 import {
   fetchPromiedosToday as promiedosToday,
+  fetchPromiedosWeek as promiedosWeek,
   PROMIEDOS_LEAGUE_MAP,
   type PromiedosMatch,
 } from "./promiedos.js";
@@ -287,7 +288,7 @@ export async function fetchLeagueMatches(leagueId: string, utcDateStr?: string):
     if (!leagueInfo) return [];
 
     try {
-      const promiedosMatches = await promiedosToday(
+      const promiedosMatches = await promiedosWeek(
         leagueId,
         leagueInfo.name,
         leagueInfo.slug,
@@ -297,7 +298,7 @@ export async function fetchLeagueMatches(leagueId: string, utcDateStr?: string):
       setCache(cacheKey, promiedosMatches, 60_000);
       return promiedosMatches;
     } catch (err) {
-      console.error("[promiedos] fetchPromiedosToday failed", leagueId, err);
+      console.error("[promiedos] fetchPromiedosWeek failed", leagueId, err);
       return [];
     }
   }
@@ -375,7 +376,7 @@ export async function fetchLeagueMatches(leagueId: string, utcDateStr?: string):
     if (matches.length === 0 && PROMIEDOS_LEAGUE_MAP[leagueId]) {
       const leagueInfo = LEAGUES[leagueId as LeagueId];
       if (leagueInfo) {
-        const promiedosMatches = await promiedosToday(
+        const promiedosMatches = await promiedosWeek(
           leagueId,
           leagueInfo.name,
           leagueInfo.slug,
@@ -398,7 +399,7 @@ export async function fetchLeagueMatches(leagueId: string, utcDateStr?: string):
       const leagueInfo = LEAGUES[leagueId as LeagueId];
       if (leagueInfo) {
         try {
-          const promiedosMatches = await promiedosToday(
+          const promiedosMatches = await promiedosWeek(
             leagueId,
             leagueInfo.name,
             leagueInfo.slug,

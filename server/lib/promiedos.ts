@@ -238,6 +238,53 @@ export async function fetchPromiedosToday(
 }
 
 /**
+ * Get matches for the whole week (±3 days) from Promiedos
+ */
+export async function fetchPromiedosWeek(
+  leagueId: string,
+  leagueName: string,
+  leagueSlug: string,
+  category: string,
+  flag: string,
+): Promise<PromiedosMatch[]> {
+  const cacheKey = `promiedos:week:${leagueId}`;
+  const cached = getCache<PromiedosMatch[]>(cacheKey);
+  if (cached) return cached;
+
+  const now = new Date();
+  const argNow = new Date(now.getTime() - 3 * 60 * 60 * 1000);
+  const allMatches: PromiedosMatch[] = [];
+  const seen = new Set<string>();
+
+  // Check 7 days: 3 before, today, 3 after
+  for (let offset = -3; offset <= 3; offset++) {
+    const d = new Date(argNow.getTime() + offset * 24 * 60 * 60 * 1000);
+    const day = String(d.getUTCDate()).padStart(2, "0");
+    const month = String(d.getUTCMonth() + 1).padStart(2, "0");
+    const year = d.getUTCFullYear();
+    const dateStr = `${day}-${month}-${year}`;
+
+    try {
+      const matches = await fetchPromiedosMatchesByDate(dateStr, leagueId, leagueName, leagueSlug, category, flag);
+      for (const m of matches) {
+        if (!seen.has(m.id)) {
+          seen.add(m.id);
+          allMatches.push(m);
+        }
+      }
+    } catch {
+      // Skip failed dates
+    }
+  }
+
+  // Sort by kickoff time
+  allMatches.sort((a, b) => new Date(a.kickoffTime).getTime() - new Date(b.kickoffTime).getTime());
+
+  setCache(cacheKey, allMatches, 60_000);
+  return allMatches;
+}
+
+/**
  * Get ALL matches for a specific league from Promiedos (today's date)
  */
 export async function fetchPromiedosLeague(
