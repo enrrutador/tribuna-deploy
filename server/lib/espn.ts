@@ -1,7 +1,14 @@
 /**
  * ESPN public API client (no key required).
  * Wraps site.api.espn.com endpoints with caching + typed responses.
+ * Falls back to Promiedos API for Argentine leagues not covered by ESPN.
  */
+
+import {
+  fetchPromiedosToday as promiedosToday,
+  PROMIEDOS_LEAGUE_MAP,
+  type PromiedosMatch,
+} from "./promiedos.js";
 
 const ESPN_SCOREBOARD = "https://site.api.espn.com/apis/site/v2/sports/soccer";
 const ESPN_STANDINGS = "https://site.api.espn.com/apis/v2/sports/soccer";
@@ -19,6 +26,9 @@ export const LEAGUES = {
   // Argentina
   "arg.1":                    { slug: "liga-profesional",    name: "Liga Profesional",       flag: "🇦🇷", category: "argentina", country: "Argentina" },
   "arg.2":                    { slug: "primera-nacional",    name: "Primera Nacional",       flag: "🇦🇷", category: "argentina", country: "Argentina" },
+  "pm.federal-a":             { slug: "federal-a",           name: "Federal A",              flag: "🇦🇷", category: "argentina", country: "Argentina" },
+  "pm.primera-b":             { slug: "primera-b-metropolitana", name: "Primera B Metropolitana", flag: "🇦🇷", category: "argentina", country: "Argentina" },
+  "pm.primera-c":             { slug: "primera-c-metropolitana", name: "Primera C Metropolitana", flag: "🇦🇷", category: "argentina", country: "Argentina" },
   // Sudamérica
   "bra.1":                    { slug: "brasileirao",         name: "Brasileirao",            flag: "🇧🇷", category: "sudamerica", country: "Brasil" },
   "uru.1":                    { slug: "uruguay-primera",     name: "Uruguay — Primera",      flag: "🇺🇾", category: "sudamerica", country: "Uruguay" },
@@ -271,6 +281,28 @@ export async function fetchLeagueMatches(leagueId: string, utcDateStr?: string):
   const cached = getCache<Match[]>(cacheKey);
   if (cached) return cached;
 
+  // Handle Promiedos-only leagues (start with "pm.")
+  if (leagueId.startsWith("pm.") && PROMIEDOS_LEAGUE_MAP[leagueId]) {
+    const leagueInfo = LEAGUES[leagueId as LeagueId];
+    if (!leagueInfo) return [];
+
+    try {
+      const promiedosMatches = await promiedosToday(
+        leagueId,
+        leagueInfo.name,
+        leagueInfo.slug,
+        leagueInfo.category,
+        leagueInfo.flag,
+      );
+      setCache(cacheKey, promiedosMatches, 60_000);
+      return promiedosMatches;
+    } catch (err) {
+      console.error("[promiedos] fetchPromiedosToday failed", leagueId, err);
+      return [];
+    }
+  }
+
+  // ESPN leagues - try ESPN first, fallback to Promiedos
   let url: string;
   if (utcDateStr) {
     url = `${ESPN_SCOREBOARD}/${leagueId}/scoreboard?dates=${utcDateStr}`;
@@ -338,9 +370,47 @@ export async function fetchLeagueMatches(leagueId: string, utcDateStr?: string):
 
     const ttl = matches.some((m) => m.status === "live") ? 15_000 : 60_000;
     setCache(cacheKey, matches, ttl);
+
+    // If ESPN returned no matches and this league has a Promiedos mapping, fallback
+    if (matches.length === 0 && PROMIEDOS_LEAGUE_MAP[leagueId]) {
+      const leagueInfo = LEAGUES[leagueId as LeagueId];
+      if (leagueInfo) {
+        const promiedosMatches = await promiedosToday(
+          leagueId,
+          leagueInfo.name,
+          leagueInfo.slug,
+          leagueInfo.category,
+          leagueInfo.flag,
+        );
+        if (promiedosMatches.length > 0) {
+          setCache(cacheKey, promiedosMatches, 60_000);
+          return promiedosMatches;
+        }
+      }
+    }
+
     return matches;
   } catch (err) {
     console.error("[espn] fetchLeagueMatches failed", leagueId, err);
+
+    // Fallback to Promiedos on error
+    if (PROMIEDOS_LEAGUE_MAP[leagueId]) {
+      const leagueInfo = LEAGUES[leagueId as LeagueId];
+      if (leagueInfo) {
+        try {
+          const promiedosMatches = await promiedosToday(
+            leagueId,
+            leagueInfo.name,
+            leagueInfo.slug,
+            leagueInfo.category,
+            leagueInfo.flag,
+          );
+          if (promiedosMatches.length > 0) return promiedosMatches;
+        } catch (pe) {
+          console.error("[promiedos] fallback also failed", leagueId, pe);
+        }
+      }
+    }
     return [];
   }
 }
