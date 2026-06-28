@@ -1,6 +1,12 @@
 /**
  * Promiedos API client (no key required).
  * Wraps api.promiedos.com.ar endpoints with caching + typed responses.
+ *
+ * Available data:
+ *  - Matches by date (/games/{DD-MM-YYYY})
+ *  - Standings + fixtures (/league/tables_and_fixtures/{id})
+ *  - Player statistics (goleadores, asistencias, tarjetas)
+ *  - Team info, squad, stadium (/team/{team_id})
  */
 
 const PROMIEDOS_BASE = "https://api.promiedos.com.ar";
@@ -44,6 +50,16 @@ interface PromiedosResponse {
 interface PromiedosStandingRow {
   num: number;
   values: { key: string; value: string | number }[];
+  entity?: {
+    type: number;
+    object: {
+      name: string;
+      short_name?: string;
+      url_name?: string;
+      id?: string;
+      colors?: { color: string; text_color: string };
+    };
+  };
 }
 
 interface PromiedosStandingTable {
@@ -54,9 +70,100 @@ interface PromiedosStandingTable {
   };
 }
 
+interface PromiedosPlayerRow {
+  num: number;
+  entity?: {
+    type: number;
+    object: {
+      name: string;
+      sname?: string;
+      short_name?: string;
+      position?: string;
+      age?: string;
+      height?: string;
+      weight?: string;
+      team_id?: string;
+      birthdate?: string;
+      num?: string;
+    };
+  };
+  values: { key: string; value: string | number }[];
+}
+
 interface PromiedosTablesResponse {
   league: { name: string; id: string; url_name: string };
   tables_groups: { name: string; tables: PromiedosStandingTable[] }[];
+  players_statistics?: {
+    preview_rows_num: number;
+    tables: {
+      name: string;
+      columns: { key: string; title: string }[];
+      rows: PromiedosPlayerRow[];
+    }[];
+  };
+}
+
+interface PromiedosTeamData {
+  competitor: {
+    name: string;
+    short_name: string;
+    url_name: string;
+    id: string;
+    country_id: string;
+    colors?: { color: string; text_color: string };
+  };
+  main_league: {
+    name: string;
+    id: string;
+    url_name: string;
+    country_id: string;
+  };
+  team_info?: { name: string; value: string }[];
+  stadium?: {
+    name: string;
+    coordinates?: string;
+    info?: { name: string; value: string }[];
+  };
+  squad?: {
+    columns: { name: string; key: string }[];
+    groups: {
+      name: string;
+      rows: {
+        values: { key: string; value: string }[];
+        entity?: {
+          type: number;
+          object: {
+            name: string;
+            short_name?: string;
+            id?: string;
+            url_name?: string;
+            num?: string;
+            position?: string;
+            age?: string;
+            height?: string;
+            birthdate?: string;
+          };
+        };
+      }[];
+    }[];
+  };
+  games?: {
+    next?: { name: string; rows: { num: number; values: { key: string; value: string }[]; entity?: { type: number; object: PromiedosTeam }; game?: { id: string } }[] };
+    last?: { name: string; rows: { num: number; result_status?: number; values: { key: string; value: string }[]; entity?: { type: number; object: PromiedosTeam }; game?: { id: string } }[] };
+  };
+  stats?: {
+    preview_rows_num: number;
+    filters: {
+      name: string;
+      key: string;
+      selected?: boolean;
+      tables: {
+        name: string;
+        columns: { key: string; title: string }[];
+        rows: PromiedosPlayerRow[];
+      }[];
+    }[];
+  };
 }
 
 // ---------- Cache ----------
@@ -172,10 +279,9 @@ function parseGame(game: PromiedosGame, leagueId: string, leagueName: string, le
   // Build kickoff time
   let kickoffTime = new Date().toISOString();
   if (game.date && game.time) {
-    kickoffTime = `${game.date}T${game.time}:00-03:00`; // Argentina timezone
+    kickoffTime = `${game.date}T${game.time}:00-03:00`;
   }
 
-  // Try to get score from game.score, or try from winning team
   const homeScore = game.score?.local ?? null;
   const awayScore = game.score?.visit ?? null;
 
@@ -226,7 +332,7 @@ export async function fetchPromiedosMatchesByDate(
       parseGame(g, leagueId, leagueName, leagueSlug, category, flag)
     );
 
-    setCache(cacheKey, matches, 60_000); // 1 min cache for live data
+    setCache(cacheKey, matches, 60_000);
     return matches;
   } catch (err) {
     console.error("[promiedos] fetchMatchesByDate failed", leagueId, date, err);
@@ -245,7 +351,6 @@ export async function fetchPromiedosToday(
   flag: string,
 ): Promise<PromiedosMatch[]> {
   const now = new Date();
-  // Argentina timezone is UTC-3
   const argDate = new Date(now.getTime() - 3 * 60 * 60 * 1000);
   const day = String(argDate.getUTCDate()).padStart(2, "0");
   const month = String(argDate.getUTCMonth() + 1).padStart(2, "0");
@@ -274,7 +379,6 @@ export async function fetchPromiedosWeek(
   const allMatches: PromiedosMatch[] = [];
   const seen = new Set<string>();
 
-  // Check 7 days: 3 before, today, 3 after
   for (let offset = -3; offset <= 3; offset++) {
     const d = new Date(argNow.getTime() + offset * 24 * 60 * 60 * 1000);
     const day = String(d.getUTCDate()).padStart(2, "0");
@@ -295,39 +399,43 @@ export async function fetchPromiedosWeek(
     }
   }
 
-  // Sort by kickoff time
   allMatches.sort((a, b) => new Date(a.kickoffTime).getTime() - new Date(b.kickoffTime).getTime());
 
   setCache(cacheKey, allMatches, 60_000);
   return allMatches;
 }
 
-/**
- * Get ALL matches for a specific league from Promiedos (today's date)
- */
-export async function fetchPromiedosLeague(
-  leagueId: string,
-): Promise<PromiedosMatch[]> {
-  const leagueInfo = LEAGUES[leagueId as keyof typeof LEAGUES];
-  if (!leagueInfo) return [];
+// ========== STANDINGS ==========
 
-  return fetchPromiedosToday(
-    leagueId,
-    leagueInfo.name,
-    leagueInfo.slug,
-    leagueInfo.category,
-    leagueInfo.flag,
-  );
+export interface StandingEntry {
+  position: number;
+  teamId: string;
+  teamName: string;
+  teamShortName: string;
+  teamLogoUrl: string;
+  played: number;
+  won: number;
+  drawn: number;
+  lost: number;
+  goalsFor: number;
+  goalsAgainst: number;
+  goalDiff: string;
+  points: number;
+  form?: string[];
+}
+
+export interface StandingGroup {
+  name: string;
+  entries: StandingEntry[];
 }
 
 /**
- * Get standings for a league from Promiedos
+ * Get standings for a league from Promiedos.
+ * Uses entity.object for team names (not values).
  */
-export async function fetchPromiedosStandings(
-  leagueId: string,
-): Promise<{ name: string; entries: { position: number; teamId: string; teamName: string; teamShortName: string; teamLogoUrl: string; played: number; won: number; drawn: number; lost: number; goalsFor: number; goalsAgainst: number; goalDiff: string; points: number; form?: string[] }[] }[]> {
+export async function fetchPromiedosStandings(leagueId: string): Promise<StandingGroup[]> {
   const cacheKey = `promiedos:standings:${leagueId}`;
-  const cached = getCache<ReturnType<typeof fetchPromiedosStandings> extends Promise<infer R> ? R : never>(cacheKey);
+  const cached = getCache<StandingGroup[]>(cacheKey);
   if (cached) return cached;
 
   const promiedosId = PROMIEDOS_LEAGUE_MAP[leagueId];
@@ -335,11 +443,11 @@ export async function fetchPromiedosStandings(
 
   try {
     const data = (await promiedosFetch(`/league/tables_and_fixtures/${promiedosId}`)) as PromiedosTablesResponse;
-    const groups: { name: string; entries: { position: number; teamId: string; teamName: string; teamShortName: string; teamLogoUrl: string; played: number; won: number; drawn: number; lost: number; goalsFor: number; goalsAgainst: number; goalDiff: string; points: number; form?: string[] }[] }[] = [];
+    const groups: StandingGroup[] = [];
 
     for (const tg of data.tables_groups ?? []) {
       for (const table of tg.tables ?? []) {
-        const entries = table.table.rows.map((row) => {
+        const entries: StandingEntry[] = table.table.rows.map((row) => {
           const getValue = (key: string) => {
             const v = row.values.find((v) => v.key === key);
             return v ? String(v.value) : "0";
@@ -353,12 +461,19 @@ export async function fetchPromiedosStandings(
           const goals = getValue("Goals"); // "19:7" format
           const [gf, ga] = goals.includes(":") ? goals.split(":").map(Number) : [0, 0];
 
+          // Team name from entity.object (the real source)
+          const teamObj = row.entity?.object;
+          const teamName = teamObj?.name || `Equipo ${row.num}`;
+          const teamShortName = teamObj?.short_name || teamName;
+          const teamId = teamObj?.id || `pm-row-${row.num}`;
+          const teamLogoUrl = teamObj?.id ? `https://img.promiedos.com.ar/${teamObj.id}.png` : "";
+
           return {
             position: row.num,
-            teamId: `pm-row-${row.num}`,
-            teamName: getValue("Team") || `Equipo ${row.num}`,
-            teamShortName: getValue("Team") || `Eq ${row.num}`,
-            teamLogoUrl: "",
+            teamId,
+            teamName,
+            teamShortName,
+            teamLogoUrl,
             played: Number(getValue("GamePlayed")) || 0,
             won: Number(getValue("GamesWon")) || 0,
             drawn: Number(getValue("GamesEven")) || 0,
@@ -378,10 +493,232 @@ export async function fetchPromiedosStandings(
       }
     }
 
-    setCache(cacheKey, groups, 5 * 60_000); // 5 min cache
+    setCache(cacheKey, groups, 5 * 60_000);
     return groups;
   } catch (err) {
     console.error("[promiedos] fetchStandings failed", leagueId, err);
     return [];
+  }
+}
+
+// ========== SCORERS / PLAYER STATISTICS ==========
+
+export interface ScorerEntry {
+  position: number;
+  name: string;
+  shortName: string;
+  position_label: string;
+  teamId: string;
+  teamName: string;
+  teamLogoUrl: string;
+  value: number;
+}
+
+export interface ScorersGroup {
+  name: string;
+  entries: ScorerEntry[];
+}
+
+/**
+ * Get player statistics (scorers, assists, cards) from Promiedos.
+ * Only available for some leagues (hc, ebj, fahh, ea, fjda).
+ */
+export async function fetchPromiedosScorers(leagueId: string): Promise<ScorersGroup[]> {
+  const cacheKey = `promiedos:scorers:${leagueId}`;
+  const cached = getCache<ScorersGroup[]>(cacheKey);
+  if (cached) return cached;
+
+  const promiedosId = PROMIEDOS_LEAGUE_MAP[leagueId];
+  if (!promiedosId) return [];
+
+  try {
+    const data = (await promiedosFetch(`/league/tables_and_fixtures/${promiedosId}`)) as PromiedosTablesResponse;
+    const ps = data.players_statistics;
+    if (!ps) return [];
+
+    const groups: ScorersGroup[] = ps.tables.map((table) => {
+      const entries: ScorerEntry[] = table.rows.map((row) => {
+        const playerObj = row.entity?.object;
+        const name = playerObj?.name || "Desconocido";
+        const teamId = playerObj?.team_id || "";
+        const goalsVal = row.values.find((v) => v.key === table.columns[0]?.key);
+        const value = goalsVal ? Number(goalsVal.value) || 0 : 0;
+
+        return {
+          position: row.num,
+          name,
+          shortName: playerObj?.sname || name,
+          position_label: playerObj?.position || "",
+          teamId,
+          teamName: "",  // Would need separate lookup
+          teamLogoUrl: teamId ? `https://img.promiedos.com.ar/${teamId}.png` : "",
+          value,
+        };
+      });
+
+      return {
+        name: table.name,
+        entries,
+      };
+    });
+
+    setCache(cacheKey, groups, 5 * 60_000);
+    return groups;
+  } catch (err) {
+    console.error("[promiedos] fetchScorers failed", leagueId, err);
+    return [];
+  }
+}
+
+// ========== TEAM DATA ==========
+
+export interface TeamInfo {
+  id: string;
+  name: string;
+  shortName: string;
+  logoUrl: string;
+  color: string;
+  mainLeague: { name: string; id: string };
+  info: { label: string; value: string }[];
+  stadium: {
+    name: string;
+    capacity?: string;
+    address?: string;
+    city?: string;
+    coordinates?: string;
+  } | null;
+  squad: {
+    position: string;
+    players: {
+      name: string;
+      shortName?: string;
+      number?: string;
+      age?: string;
+      height?: string;
+    }[];
+  }[];
+  nextMatches: {
+    date: string;
+    homeAway: string;
+    opponent: string;
+    time: string;
+    gameId?: string;
+  }[];
+  lastMatches: {
+    date: string;
+    homeAway: string;
+    opponent: string;
+    result: string;
+    gameId?: string;
+  }[];
+  topScorers: {
+    name: string;
+    goals: number;
+  }[];
+}
+
+/**
+ * Get detailed team info from Promiedos
+ */
+export async function fetchPromiedosTeam(teamId: string): Promise<TeamInfo | null> {
+  const cacheKey = `promiedos:team:${teamId}`;
+  const cached = getCache<TeamInfo | null>(cacheKey);
+  if (cached !== undefined) return cached;
+
+  try {
+    const data = (await promiedosFetch(`/team/${teamId}`)) as PromiedosTeamData;
+    const comp = data.competitor;
+
+    // Parse team_info
+    const info = (data.team_info ?? []).map((i) => ({ label: i.name, value: i.value }));
+
+    // Parse stadium
+    let stadium: TeamInfo["stadium"] = null;
+    if (data.stadium) {
+      const stInfo = data.stadium.info ?? [];
+      stadium = {
+        name: data.stadium.name,
+        capacity: stInfo.find((i) => i.name === "Capacidad")?.value,
+        address: stInfo.find((i) => i.name === "Dirección")?.value,
+        city: stInfo.find((i) => i.name === "Ciudad")?.value,
+        coordinates: data.stadium.coordinates,
+      };
+    }
+
+    // Parse squad
+    const squad: TeamInfo["squad"] = (data.squad?.groups ?? [])
+      .filter((g) => g.name !== "Dirección")
+      .map((g) => ({
+        position: g.name,
+        players: g.rows.map((r) => {
+          const vals = Object.fromEntries(r.values.map((v) => [v.key, v.value]));
+          return {
+            name: r.entity?.object?.name || vals["player"] || "Desconocido",
+            shortName: r.entity?.object?.short_name,
+            number: r.entity?.object?.num,
+            age: r.entity?.object?.age || vals["age"],
+            height: vals["height"],
+          };
+        }),
+      }));
+
+    // Parse next matches
+    const nextMatches: TeamInfo["nextMatches"] = (data.games?.next?.rows ?? []).map((r) => {
+      const vals = Object.fromEntries(r.values.map((v) => [v.key, v.value]));
+      return {
+        date: vals["date"] || "",
+        homeAway: vals["home_away"] || "",
+        opponent: r.entity?.object?.name || "",
+        time: vals["time"] || "",
+        gameId: r.game?.id,
+      };
+    });
+
+    // Parse last matches
+    const lastMatches: TeamInfo["lastMatches"] = (data.games?.last?.rows ?? []).map((r) => {
+      const vals = Object.fromEntries(r.values.map((v) => [v.key, v.value]));
+      return {
+        date: vals["date"] || "",
+        homeAway: vals["home_away"] || "",
+        opponent: r.entity?.object?.name || "",
+        result: vals["result"] || "",
+        gameId: r.game?.id,
+      };
+    });
+
+    // Parse top scorers from stats
+    const topScorers: TeamInfo["topScorers"] = [];
+    const statsFilter = data.stats?.filters?.find((f) => f.selected);
+    const goalsTable = statsFilter?.tables?.find((t) => t.name === "Goles");
+    if (goalsTable) {
+      for (const row of goalsTable.rows.slice(0, 10)) {
+        const goalsVal = row.values.find((v) => v.key === "Goals");
+        topScorers.push({
+          name: row.entity?.object?.name || "Desconocido",
+          goals: goalsVal ? Number(goalsVal.value) || 0 : 0,
+        });
+      }
+    }
+
+    const result: TeamInfo = {
+      id: comp.id,
+      name: comp.name,
+      shortName: comp.short_name,
+      logoUrl: `https://img.promiedos.com.ar/${comp.id}.png`,
+      color: comp.colors?.color?.replace("#", "") || "334155",
+      mainLeague: data.main_league,
+      info,
+      stadium,
+      squad,
+      nextMatches,
+      lastMatches,
+      topScorers,
+    };
+
+    setCache(cacheKey, result, 10 * 60_000);
+    return result;
+  } catch (err) {
+    console.error("[promiedos] fetchTeam failed", teamId, err);
+    return null;
   }
 }

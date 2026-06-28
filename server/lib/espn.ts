@@ -7,8 +7,14 @@
 import {
   fetchPromiedosToday as promiedosToday,
   fetchPromiedosWeek as promiedosWeek,
+  fetchPromiedosStandings as promiedosStandings,
+  fetchPromiedosScorers as promiedosScorers,
+  fetchPromiedosTeam as promiedosTeam,
   PROMIEDOS_LEAGUE_MAP,
   type PromiedosMatch,
+  type StandingGroup,
+  type ScorersGroup,
+  type TeamInfo,
 } from "./promiedos.js";
 
 const ESPN_SCOREBOARD = "https://site.api.espn.com/apis/site/v2/sports/soccer";
@@ -549,6 +555,20 @@ export async function fetchStandings(leagueId: string): Promise<StandingsGroup[]
   const cached = getCache<StandingsGroup[]>(cacheKey);
   if (cached) return cached;
 
+  // Promiedos-only leagues (start with "pm.") go directly to Promiedos
+  if (leagueId.startsWith("pm.") && PROMIEDOS_LEAGUE_MAP[leagueId]) {
+    try {
+      const groups = await promiedosStandings(leagueId);
+      if (groups.length > 0) {
+        setCache(cacheKey, groups, 5 * 60_000);
+        return groups;
+      }
+    } catch (err) {
+      console.error("[promiedos] standings fallback failed", leagueId, err);
+    }
+    return [];
+  }
+
   try {
     const data = (await espnFetch(`${ESPN_STANDINGS}/${leagueId}/standings`)) as Record<string, unknown>;
     const children = (data.children as Record<string, unknown>[]) ?? [data];
@@ -588,10 +608,33 @@ export async function fetchStandings(leagueId: string): Promise<StandingsGroup[]
       groups.push({ name: groupName, entries: parsed });
     }
 
+    // Fallback to Promiedos if ESPN returns no data
+    if (groups.length === 0 && PROMIEDOS_LEAGUE_MAP[leagueId]) {
+      try {
+        const promiedosGroups = await promiedosStandings(leagueId);
+        if (promiedosGroups.length > 0) {
+          setCache(cacheKey, promiedosGroups, 5 * 60_000);
+          return promiedosGroups;
+        }
+      } catch (pe) {
+        console.error("[promiedos] standings fallback failed", leagueId, pe);
+      }
+    }
+
     setCache(cacheKey, groups, 5 * 60_000);
     return groups;
   } catch (err) {
     console.error("[espn] fetchStandings failed", leagueId, err);
+
+    // Fallback to Promiedos on error
+    if (PROMIEDOS_LEAGUE_MAP[leagueId]) {
+      try {
+        const groups = await promiedosStandings(leagueId);
+        if (groups.length > 0) return groups;
+      } catch (pe) {
+        console.error("[promiedos] standings fallback also failed", leagueId, pe);
+      }
+    }
     return [];
   }
 }
@@ -600,6 +643,21 @@ export async function fetchScorers(leagueId: string): Promise<ScorerEntry[]> {
   const cacheKey = `scorers:${leagueId}`;
   const cached = getCache<ScorerEntry[]>(cacheKey);
   if (cached) return cached;
+
+  // Promiedos-only leagues go directly to Promiedos
+  if (leagueId.startsWith("pm.") && PROMIEDOS_LEAGUE_MAP[leagueId]) {
+    try {
+      const groups = await promiedosScorers(leagueId);
+      const scorers = convertPromiedosScorers(groups);
+      if (scorers.length > 0) {
+        setCache(cacheKey, scorers, 10 * 60_000);
+        return scorers;
+      }
+    } catch (err) {
+      console.error("[promiedos] scorers fallback failed", leagueId, err);
+    }
+    return [];
+  }
 
   try {
     const data = (await espnFetch(`${ESPN_SCOREBOARD}/${leagueId}/scoreboard`)) as Record<string, unknown>;
@@ -631,10 +689,59 @@ export async function fetchScorers(leagueId: string): Promise<ScorerEntry[]> {
       if (scorers.length > 0) break;
     }
 
+    // Fallback to Promiedos if ESPN returns no data
+    if (scorers.length === 0 && PROMIEDOS_LEAGUE_MAP[leagueId]) {
+      try {
+        const groups = await promiedosScorers(leagueId);
+        const promiedosScorers = convertPromiedosScorers(groups);
+        if (promiedosScorers.length > 0) {
+          setCache(cacheKey, promiedosScorers, 10 * 60_000);
+          return promiedosScorers;
+        }
+      } catch (pe) {
+        console.error("[promiedos] scorers fallback failed", leagueId, pe);
+      }
+    }
+
     setCache(cacheKey, scorers, 10 * 60_000);
     return scorers;
   } catch (err) {
     console.error("[espn] fetchScorers failed", leagueId, err);
+
+    // Fallback to Promiedos on error
+    if (PROMIEDOS_LEAGUE_MAP[leagueId]) {
+      try {
+        const groups = await promiedosScorers(leagueId);
+        const scorers = convertPromiedosScorers(groups);
+        if (scorers.length > 0) return scorers;
+      } catch (pe) {
+        console.error("[promiedos] scorers fallback also failed", leagueId, pe);
+      }
+    }
     return [];
   }
 }
+
+function convertPromiedosScorers(groups: ScorersGroup[]): ScorerEntry[] {
+  const scorers: ScorerEntry[] = [];
+  for (const g of groups) {
+    if (g.name.toLowerCase() !== "goles") continue;
+    for (const e of g.entries) {
+      scorers.push({
+        rank: e.position,
+        playerName: e.name,
+        teamId: e.teamId,
+        teamName: e.teamName,
+        teamLogoUrl: e.teamLogoUrl,
+        goals: e.value,
+        assists: 0,
+        played: 0,
+      });
+    }
+    break;
+  }
+  return scorers;
+}
+
+export { promiedosTeam as fetchTeamData };
+export type { TeamInfo } from "./promiedos.js";

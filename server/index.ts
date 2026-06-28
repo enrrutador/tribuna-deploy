@@ -14,6 +14,7 @@ import {
   fetchMatchStats,
   fetchStandings,
   fetchScorers,
+  fetchTeamData,
   cacheStats,
   type CategoryId,
 } from "./lib/espn.js";
@@ -250,6 +251,21 @@ app.get("/api/tournaments/:slug/scorers", async (req, res) => {
     }
     const scorers = await fetchScorers(leagueId);
     res.json({ scorers });
+  } catch (err) {
+    console.error(err);
+    res.status(500).json({ error: "Error interno" });
+  }
+});
+
+// ---------- Team data (Promiedos) ----------
+app.get("/api/teams/:teamId", async (req, res) => {
+  try {
+    const teamData = await fetchTeamData(req.params.teamId);
+    if (!teamData) {
+      res.status(404).json({ error: "Equipo no encontrado" });
+      return;
+    }
+    res.json(teamData);
   } catch (err) {
     console.error(err);
     res.status(500).json({ error: "Error interno" });
