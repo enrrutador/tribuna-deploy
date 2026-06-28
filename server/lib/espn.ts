@@ -743,5 +743,65 @@ function convertPromiedosScorers(groups: ScorersGroup[]): ScorerEntry[] {
   return scorers;
 }
 
-export { promiedosTeam as fetchTeamData };
+/**
+ * Build a TeamInfo from ESPN API (for numeric ESPN team IDs).
+ * ESPN has basic data: name, logo, color, abbreviation — but no squad/stadium.
+ */
+async function fetchEsportTeam(teamId: string): Promise<TeamInfo | null> {
+  try {
+    // Try all known league prefixes for ESPN
+    const leagues = ["arg.1", "arg.2"];
+    for (const league of leagues) {
+      const url = `${ESPN_SCOREBOARD}/${league}/teams/${teamId}`;
+      const res = await fetch(url);
+      if (!res.ok) continue;
+      const data = await res.json();
+      const t = data?.team;
+      if (!t) continue;
+
+      return {
+        id: t.id,
+        name: t.displayName,
+        shortName: t.shortDisplayName?.trim() || t.abbreviation,
+        logoUrl: t.logos?.[0]?.href || `https://a.espncdn.com/i/teamlogos/soccer/500/${t.id}.png`,
+        color: (t.color || "334155").replace("#", ""),
+        mainLeague: { name: league === "arg.1" ? "Liga Profesional" : "Primera Nacional", id: league },
+        info: [],
+        stadium: t.venue ? {
+          name: t.venue.fullName || "",
+          capacity: t.venue.capacity ? String(t.venue.capacity) : undefined,
+          city: t.venue.address?.city || undefined,
+        } : null,
+        squad: [],
+        nextMatches: (t.nextEvent || []).map((e: any) => ({
+          date: e.date ? new Date(e.date).toLocaleDateString("es-AR") : "",
+          homeAway: "",
+          opponent: e.shortName || "",
+          time: e.date ? new Date(e.date).toLocaleTimeString("es-AR", { hour: "2-digit", minute: "2-digit" }) : "",
+        })),
+        lastMatches: [],
+        topScorers: [],
+      };
+    }
+    return null;
+  } catch {
+    return null;
+  }
+}
+
+/**
+ * Fetch team data: try Promiedos first (works with Promiedos IDs),
+ * fall back to ESPN for numeric IDs.
+ */
+async function fetchTeamDataComposite(teamId: string): Promise<TeamInfo | null> {
+  // If the ID is purely numeric, it's an ESPN ID — try ESPN first
+  if (/^\d+$/.test(teamId)) {
+    const espn = await fetchEsportTeam(teamId);
+    if (espn) return espn;
+    // If ESPN fails, still try Promiedos (maybe it works)
+  }
+  return promiedosTeam(teamId);
+}
+
+export { fetchTeamDataComposite as fetchTeamData };
 export type { TeamInfo } from "./promiedos.js";
