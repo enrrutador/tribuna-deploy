@@ -1,4 +1,6 @@
 import express from "express";
+import path from "path";
+import { fileURLToPath } from "url";
 import type { Request, Response, NextFunction } from "express";
 import {
   LEAGUES,
@@ -17,6 +19,8 @@ import {
 } from "./lib/espn";
 import { fetchNews } from "./lib/news";
 
+const __dirname = path.dirname(fileURLToPath(import.meta.url));
+
 const app = express();
 const PORT = Number(process.env.PORT ?? 8787);
 
@@ -24,6 +28,8 @@ app.use((req, _res, next) => {
   console.log(`[${new Date().toISOString()}] ${req.method} ${req.url}`);
   next();
 });
+
+app.use(express.static(path.join(__dirname, "..", "dist")));
 
 // ---------- Tournaments ----------
 type TournamentEntry = {
@@ -260,6 +266,11 @@ app.get("/api/news", async (_req, res) => {
     console.error(err);
     res.status(500).json({ error: "Error interno" });
   }
+});
+
+// ---------- SPA fallback ----------
+app.get("*", (_req, res) => {
+  res.sendFile(path.join(__dirname, "..", "dist", "index.html"));
 });
 
 // ---------- 404 + error handler ----------
