@@ -693,10 +693,10 @@ export async function fetchScorers(leagueId: string): Promise<ScorerEntry[]> {
     if (scorers.length === 0 && PROMIEDOS_LEAGUE_MAP[leagueId]) {
       try {
         const groups = await promiedosScorers(leagueId);
-        const promiedosScorers = convertPromiedosScorers(groups);
-        if (promiedosScorers.length > 0) {
-          setCache(cacheKey, promiedosScorers, 10 * 60_000);
-          return promiedosScorers;
+        const converted = convertPromiedosScorers(groups);
+        if (converted.length > 0) {
+          setCache(cacheKey, converted, 10 * 60_000);
+          return converted;
         }
       } catch (pe) {
         console.error("[promiedos] scorers fallback failed", leagueId, pe);
@@ -712,8 +712,8 @@ export async function fetchScorers(leagueId: string): Promise<ScorerEntry[]> {
     if (PROMIEDOS_LEAGUE_MAP[leagueId]) {
       try {
         const groups = await promiedosScorers(leagueId);
-        const scorers = convertPromiedosScorers(groups);
-        if (scorers.length > 0) return scorers;
+        const converted = convertPromiedosScorers(groups);
+        if (converted.length > 0) return converted;
       } catch (pe) {
         console.error("[promiedos] scorers fallback also failed", leagueId, pe);
       }
