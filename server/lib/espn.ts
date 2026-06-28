@@ -271,9 +271,21 @@ export async function fetchLeagueMatches(leagueId: string, utcDateStr?: string):
   const cached = getCache<Match[]>(cacheKey);
   if (cached) return cached;
 
-  const url = utcDateStr
-    ? `${ESPN_SCOREBOARD}/${leagueId}/scoreboard?dates=${utcDateStr}`
-    : `${ESPN_SCOREBOARD}/${leagueId}/scoreboard?dates=${getWeekRange()}`;
+  let url: string;
+  if (utcDateStr) {
+    url = `${ESPN_SCOREBOARD}/${leagueId}/scoreboard?dates=${utcDateStr}`;
+  } else {
+    // Try current week first, fallback to next upcoming matches
+    const weekUrl = `${ESPN_SCOREBOARD}/${leagueId}/scoreboard?dates=${getWeekRange()}`;
+    const weekData = (await espnFetch(weekUrl).catch(() => null)) as Record<string, unknown> | null;
+    const weekEvents = (weekData?.events as Record<string, unknown>[]) ?? [];
+    if (weekEvents.length > 0) {
+      url = weekUrl;
+    } else {
+      // No matches this week, show next upcoming
+      url = `${ESPN_SCOREBOARD}/${leagueId}/scoreboard`;
+    }
+  }
 
   try {
     const data = (await espnFetch(url)) as Record<string, unknown>;
