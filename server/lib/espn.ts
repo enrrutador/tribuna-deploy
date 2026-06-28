@@ -255,14 +255,25 @@ function parseEvent(ev: Record<string, unknown>): MatchEvent | null {
 }
 
 // ---------- Public API ----------
+
+function getWeekRange(): string {
+  const now = new Date();
+  const start = new Date(now);
+  start.setDate(start.getDate() - 3);
+  const end = new Date(now);
+  end.setDate(end.getDate() + 4);
+  const fmt = (d: Date) => d.toISOString().slice(0, 10).replace(/-/g, "");
+  return `${fmt(start)}-${fmt(end)}`;
+}
+
 export async function fetchLeagueMatches(leagueId: string, utcDateStr?: string): Promise<Match[]> {
-  const cacheKey = `matches:${leagueId}:${utcDateStr ?? "current"}`;
+  const cacheKey = `matches:${leagueId}:${utcDateStr ?? "week"}`;
   const cached = getCache<Match[]>(cacheKey);
   if (cached) return cached;
 
   const url = utcDateStr
     ? `${ESPN_SCOREBOARD}/${leagueId}/scoreboard?dates=${utcDateStr}`
-    : `${ESPN_SCOREBOARD}/${leagueId}/scoreboard`;
+    : `${ESPN_SCOREBOARD}/${leagueId}/scoreboard?dates=${getWeekRange()}`;
 
   try {
     const data = (await espnFetch(url)) as Record<string, unknown>;
