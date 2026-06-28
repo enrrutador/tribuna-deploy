@@ -268,6 +268,11 @@ app.get("/api/news", async (_req, res) => {
   }
 });
 
+// ---------- ads.txt ----------
+app.get("/ads.txt", (_req, res) => {
+  res.type("text/plain").send("google.com, pub-3701366832739992, DIRECT, f08c47fec0942fa0\n");
+});
+
 // ---------- SPA fallback ----------
 app.get("*", (_req, res) => {
   res.sendFile(path.join(__dirname, "..", "dist", "index.html"));
