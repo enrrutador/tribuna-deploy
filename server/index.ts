@@ -272,19 +272,6 @@ app.get("/api/teams/:teamId", async (req, res) => {
   }
 });
 
-// ---------- Debug: test promiedos scorers ----------
-app.get("/api/debug/scorers/:leagueId", async (req, res) => {
-  try {
-    const leagueId = req.params.leagueId;
-    const { PROMIEDOS_LEAGUE_MAP, fetchPromiedosScorers } = await import("./lib/promiedos.js");
-    const promiedosId = PROMIEDOS_LEAGUE_MAP[leagueId];
-    const groups = await fetchPromiedosScorers(leagueId);
-    res.json({ leagueId, promiedosId, groupsCount: groups.length, groups: groups.map(g => ({ name: g.name, count: g.entries.length })) });
-  } catch (err: any) {
-    res.status(500).json({ error: err.message });
-  }
-});
-
 // ---------- Health ----------
 app.get("/api/health", (_req, res) => {
   res.json({ status: "ok", cache: cacheStats(), timestamp: Date.now() });

@@ -536,11 +536,25 @@ export async function fetchPromiedosScorers(leagueId: string): Promise<ScorersGr
     const ps = data.players_statistics;
     if (!ps) return [];
 
+    // Build team name lookup from standings (entity.object in table rows)
+    const teamNameMap = new Map<string, string>();
+    for (const tg of data.tables_groups ?? []) {
+      for (const table of tg.tables ?? []) {
+        for (const row of table.table.rows) {
+          const obj = row.entity?.object;
+          if (obj?.id && obj?.name) {
+            teamNameMap.set(obj.id, obj.name);
+          }
+        }
+      }
+    }
+
     const groups: ScorersGroup[] = ps.tables.map((table) => {
       const entries: ScorerEntry[] = table.rows.map((row) => {
         const playerObj = row.entity?.object;
         const name = playerObj?.name || "Desconocido";
         const teamId = playerObj?.team_id || "";
+        const teamName = teamNameMap.get(teamId) || "";
         const goalsVal = row.values.find((v) => v.key === table.columns[0]?.key);
         const value = goalsVal ? Number(goalsVal.value) || 0 : 0;
 
@@ -550,7 +564,7 @@ export async function fetchPromiedosScorers(leagueId: string): Promise<ScorersGr
           shortName: playerObj?.sname || name,
           position_label: playerObj?.position || "",
           teamId,
-          teamName: "",  // Would need separate lookup
+          teamName,
           teamLogoUrl: teamId ? `https://img.promiedos.com.ar/${teamId}.png` : "",
           value,
         };
