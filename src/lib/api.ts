@@ -7,6 +7,7 @@ import type {
   TournamentsResponse,
   TournamentInfo,
   MatchStatus,
+  TeamDetail,
 } from "./types";
 
 /** Base API URL — proxied to Express in dev, same-origin in prod. */
@@ -55,6 +56,9 @@ export const api = {
     request<{ groups: StandingsGroup[] }>(`/tournaments/${slug}/standings`),
   getTournamentScorers: (slug: string) =>
     request<{ scorers: ScorerEntry[] }>(`/tournaments/${slug}/scorers`),
+
+  // Teams
+  getTeam: (id: string) => request<TeamDetail>(`/teams/${id}`),
 
   // News
   getNews: () => request<{ news: NewsItem[]; count: number }>("/news"),

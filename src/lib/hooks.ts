@@ -14,6 +14,7 @@ export const qk = {
   fixtures: (slug: string) => ["fixtures", slug] as const,
   standings: (slug: string) => ["standings", slug] as const,
   scorers: (slug: string) => ["scorers", slug] as const,
+  team: (id: string) => ["team", id] as const,
 };
 
 // ---------- Tournaments ----------
@@ -105,6 +106,16 @@ export function useTournamentScorers(slug: string | undefined) {
     queryKey: qk.scorers(slug ?? ""),
     enabled: !!slug,
     queryFn: () => api.getTournamentScorers(slug!),
+    staleTime: 10 * 60_000,
+  });
+}
+
+// ---------- Team ----------
+export function useTeam(id: string | undefined) {
+  return useQuery({
+    queryKey: qk.team(id ?? ""),
+    enabled: !!id,
+    queryFn: () => api.getTeam(id!),
     staleTime: 10 * 60_000,
   });
 }

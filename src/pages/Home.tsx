@@ -58,7 +58,13 @@ export default function Home() {
   const refetch = isDefaultView ? refetchToday : refetchFiltered;
 
   const liveCount = liveData?.totalMatches ?? 0;
-  const groups = data?.groups ?? [];
+  const sortedGroups = useMemo(() => {
+    const g = [...(data?.groups ?? [])];
+    return g.sort((a, b) =>
+      a.tournament.slug === "mundial-2026" ? -1 :
+      b.tournament.slug === "mundial-2026" ? 1 : 0
+    );
+  }, [data]);
   const totalMatches = data?.totalMatches ?? 0;
   const updatedAgo = dataUpdatedAt && !isLoading ? timeAgo(dataUpdatedAt) : null;
 
@@ -121,7 +127,7 @@ export default function Home() {
           {/* Refresh + meta */}
           <div className="flex items-center justify-between">
             <span className="text-xs text-[var(--color-slate-500)]">
-              {isLoading ? "" : `${groups.length} torneo${groups.length !== 1 ? "s" : ""}`}
+              {isLoading ? "" : `${sortedGroups.length} torneo${sortedGroups.length !== 1 ? "s" : ""}`}
             </span>
             <div className="flex items-center gap-3">
               {updatedAgo && (
@@ -154,7 +160,7 @@ export default function Home() {
             <div className="space-y-3">
               {[1, 2, 3].map((i) => <CardSkeleton key={i} />)}
             </div>
-          ) : groups.length === 0 ? (
+          ) : sortedGroups.length === 0 ? (
             <EmptyState
               icon="⚽"
               title="Sin partidos"
@@ -162,7 +168,7 @@ export default function Home() {
             />
           ) : (
             <div className="space-y-3">
-              {groups.map((group, i) => (
+              {sortedGroups.map((group, i) => (
                 <MatchGroupCard
                   key={group.tournament.id}
                   group={group}

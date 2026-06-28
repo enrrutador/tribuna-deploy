@@ -162,3 +162,42 @@ export interface NewsItem {
   url: string;
   category: "mundial" | "argentina" | "general";
 }
+
+export interface TeamMatch {
+  date: string;
+  homeAway: string;
+  opponent: string;
+  time?: string;
+  result?: string;
+  gameId?: string;
+}
+
+export interface TeamDetail {
+  id: string;
+  name: string;
+  shortName: string;
+  logoUrl: string;
+  color: string;
+  mainLeague: { name: string; id: string };
+  info: { label: string; value: string }[];
+  stadium: {
+    name: string;
+    capacity?: string;
+    address?: string;
+    city?: string;
+    coordinates?: string;
+  } | null;
+  squad: {
+    position: string;
+    players: {
+      name: string;
+      shortName?: string;
+      number?: string;
+      age?: string;
+      height?: string;
+    }[];
+  }[];
+  nextMatches: TeamMatch[];
+  lastMatches: TeamMatch[];
+  topScorers: { name: string; goals: number }[];
+}

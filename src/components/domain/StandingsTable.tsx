@@ -1,4 +1,5 @@
 import { motion } from "framer-motion";
+import { Link } from "wouter";
 import { cn } from "@/lib/utils";
 import { GlassCard } from "@/components/ui/GlassCard";
 import { Badge } from "@/components/ui/Badge";
@@ -78,19 +79,21 @@ function GroupTable({ group, maxRows }: { group: StandingsGroup; maxRows?: numbe
                     {entry.position}
                   </td>
                   <td className="py-2.5 pl-3">
-                    <div className="flex items-center gap-2">
-                      {entry.teamLogoUrl && (
-                        <img
-                          src={entry.teamLogoUrl}
-                          alt={entry.teamName}
-                          className="h-5 w-5 object-contain"
-                          loading="lazy"
-                        />
-                      )}
-                      <span className="font-semibold text-[var(--color-slate-200)] group-hover:text-white truncate max-w-[140px]">
-                        {entry.teamShortName ?? entry.teamName}
-                      </span>
-                    </div>
+                    <Link href={`/team/${entry.teamId}`}>
+                      <div className="flex items-center gap-2 no-underline">
+                        {entry.teamLogoUrl && (
+                          <img
+                            src={entry.teamLogoUrl}
+                            alt={entry.teamName}
+                            className="h-5 w-5 object-contain"
+                            loading="lazy"
+                          />
+                        )}
+                        <span className="font-semibold text-[var(--color-slate-200)] group-hover:text-white truncate max-w-[140px]">
+                          {entry.teamShortName ?? entry.teamName}
+                        </span>
+                      </div>
+                    </Link>
                   </td>
                   <td className="py-2.5 text-center text-[var(--color-slate-400)] tabular-nums hidden sm:table-cell">{entry.played}</td>
                   <td className="py-2.5 text-center text-[var(--color-success)] tabular-nums hidden sm:table-cell">{entry.won}</td>
