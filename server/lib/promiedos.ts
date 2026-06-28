@@ -22,7 +22,7 @@ interface PromiedosGame {
   stage_round_name?: string;
   date?: string;
   time?: string;
-  status?: string;
+  status?: string | { enum?: number; name?: string; short_name?: string };
   winner?: number;
   teams: PromiedosTeam[];
   score?: { local: number; visit: number };
@@ -156,13 +156,28 @@ function parseGame(game: PromiedosGame, leagueId: string, leagueName: string, le
   const teams = game.teams || [];
   const home = teams[0] ? parseTeam(teams[0], 0) : null;
   const away = teams[1] ? parseTeam(teams[1], 1) : null;
-  const status = mapStatus(game.status, game.winner);
+
+  // Normalize status: can be string or object
+  let statusStr: string | undefined;
+  let statusLabel: string | null = null;
+  if (typeof game.status === "string") {
+    statusStr = game.status;
+  } else if (game.status && typeof game.status === "object") {
+    statusStr = game.status.name ?? game.status.short_name;
+    statusLabel = statusStr ?? null;
+  }
+
+  const status = mapStatus(statusStr, game.winner);
 
   // Build kickoff time
   let kickoffTime = new Date().toISOString();
   if (game.date && game.time) {
     kickoffTime = `${game.date}T${game.time}:00-03:00`; // Argentina timezone
   }
+
+  // Try to get score from game.score, or try from winning team
+  const homeScore = game.score?.local ?? null;
+  const awayScore = game.score?.visit ?? null;
 
   return {
     id: `pm-${game.id}`,
@@ -173,11 +188,11 @@ function parseGame(game: PromiedosGame, leagueId: string, leagueName: string, le
     tournamentCategory: category,
     kickoffTime,
     status,
-    minute: status === "live" ? game.status : null,
+    minute: status === "live" ? statusLabel : null,
     homeTeam: home ?? { id: "?", name: "?", shortName: "?", abbreviation: "?", logoUrl: "", color: "334155" },
     awayTeam: away ?? { id: "?", name: "?", shortName: "?", abbreviation: "?", logoUrl: "", color: "334155" },
-    homeScore: game.score?.local ?? null,
-    awayScore: game.score?.visit ?? null,
+    homeScore: status !== "upcoming" ? homeScore : null,
+    awayScore: status !== "upcoming" ? awayScore : null,
     venue: null,
     round: game.stage_round_name ?? null,
     broadcastChannel: null,
