@@ -30,6 +30,9 @@ export const LEAGUES = {
   "pm.federal-a":             { slug: "federal-a",           name: "Federal A",              flag: "🇦🇷", category: "argentina", country: "Argentina" },
   "pm.primera-b":             { slug: "primera-b-metropolitana", name: "Primera B Metropolitana", flag: "🇦🇷", category: "argentina", country: "Argentina" },
   "pm.primera-c":             { slug: "primera-c-metropolitana", name: "Primera C Metropolitana", flag: "🇦🇷", category: "argentina", country: "Argentina" },
+  "pm.promocional-amateur":   { slug: "torneo-promocional-amateur", name: "Torneo Promocional Amateur", flag: "🇦🇷", category: "argentina", country: "Argentina" },
+  "pm.liga-profesional-reserva": { slug: "liga-profesional-reserva", name: "Liga Profesional Reserva", flag: "🇦🇷", category: "argentina", country: "Argentina" },
+  "pm.campeonato-femenino":   { slug: "campeonato-femenino", name: "Campeonato Femenino", flag: "🇦🇷", category: "argentina", country: "Argentina" },
   // Sudamérica
   "bra.1":                    { slug: "brasileirao",         name: "Brasileirao",            flag: "🇧🇷", category: "sudamerica", country: "Brasil" },
   "uru.1":                    { slug: "uruguay-primera",     name: "Uruguay — Primera",      flag: "🇺🇾", category: "sudamerica", country: "Uruguay" },

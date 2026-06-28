@@ -88,9 +88,12 @@ export const PROMIEDOS_LEAGUE_MAP: Record<string, string> = {
   "arg.2": "ebj",             // Primera Nacional
   "fifa.world": "fjda",       // Mundial
   "bra.1": "ea",              // Brasileirao
-  "pm.federal-a": "ecae",     // Federal A
-  "pm.primera-b": "ebm",     // Primera B Metropolitana
-  "pm.primera-c": "ecm",     // Primera C Metropolitana
+  "pm.federal-a": "fahi",     // Federal A
+  "pm.primera-b": "fahh",    // Primera B Metropolitana
+  "pm.primera-c": "ffjb",    // Primera C Metropolitana
+  "pm.promocional-amateur": "iage", // Torneo Promocional Amateur
+  "pm.liga-profesional-reserva": "hhbc", // Liga Profesional Reserva
+  "pm.campeonato-femenino": "gcce", // Campeonato Femenino
 };
 
 // ---------- Public API ----------
