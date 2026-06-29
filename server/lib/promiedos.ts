@@ -28,6 +28,7 @@ interface PromiedosGame {
   stage_round_name?: string;
   date?: string;
   time?: string;
+  start_time?: string; // "DD-MM-YYYY HH:MM"
   status?: string | { enum?: number; name?: string; short_name?: string };
   winner?: number;
   teams: PromiedosTeam[];
@@ -280,6 +281,13 @@ function parseGame(game: PromiedosGame, leagueId: string, leagueName: string, le
   let kickoffTime = new Date().toISOString();
   if (game.date && game.time) {
     kickoffTime = `${game.date}T${game.time}:00-03:00`;
+  } else if (game.start_time) {
+    // Format: "DD-MM-YYYY HH:MM" → ISO with Argentina timezone
+    const [datePart, timePart] = game.start_time.split(" ");
+    if (datePart && timePart) {
+      const [dd, mm, yyyy] = datePart.split("-");
+      kickoffTime = `${yyyy}-${mm}-${dd}T${timePart}:00-03:00`;
+    }
   }
 
   const homeScore = game.score?.local ?? null;

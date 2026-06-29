@@ -33,7 +33,6 @@ export const LEAGUES = {
   "fifa.worldq.conmebol":     { slug: "eliminatorias",       name: "Eliminatorias CONMEBOL", flag: "🌎", category: "destacados", country: "Sudamérica" },
   "uefa.champions":           { slug: "champions-league",    name: "Champions League",       flag: "⭐", category: "destacados", country: "Europa" },
   "uefa.europa":              { slug: "europa-league",       name: "Europa League",          flag: "⭐", category: "destacados", country: "Europa" },
-  "uefa.conference":          { slug: "conference-league",   name: "Conference League",      flag: "⭐", category: "destacados", country: "Europa" },
   // Argentina
   "arg.1":                    { slug: "liga-profesional",    name: "Liga Profesional",       flag: "🇦🇷", category: "argentina", country: "Argentina" },
   "arg.2":                    { slug: "primera-nacional",    name: "Primera Nacional",       flag: "🇦🇷", category: "argentina", country: "Argentina" },
@@ -393,13 +392,12 @@ export async function fetchLeagueMatches(leagueId: string, utcDateStr?: string, 
 
     const ttl = matches.some((m) => m.status === "live") ? 15_000 : 60_000;
 
-    // Merge with Promiedos data for leagues that have both sources
-    // This ensures multi-zone leagues (Primera Nacional, Federal A, etc.) show all matches
-    if (PROMIEDOS_LEAGUE_MAP[leagueId]) {
+    // Merge with Promiedos only for week view (no specific date)
+    // This ensures multi-zone leagues show all matches, but doesn't slow down daily queries
+    if (!utcDateStr && PROMIEDOS_LEAGUE_MAP[leagueId]) {
       const leagueInfo = LEAGUES[leagueId as LeagueId];
       if (leagueInfo) {
         try {
-          // Use extended window (±7 days) to catch both zones playing on different days
           const promiedosMatches = await promiedosWeekExtended(
             leagueId,
             leagueInfo.name,
@@ -408,17 +406,14 @@ export async function fetchLeagueMatches(leagueId: string, utcDateStr?: string, 
             leagueInfo.flag,
           );
           if (promiedosMatches.length > 0) {
-            // Build normalized signatures for dedup (remove accents, normalize spaces)
             const normalize = (s: string) =>
               s.normalize("NFD").replace(/[\u0300-\u036f]/g, "").toLowerCase().replace(/[^a-z0-9]/g, "").trim();
             const existing = new Set(
               matches.map((m) => `${normalize(m.homeTeam.name)}|${normalize(m.awayTeam.name)}`),
             );
             for (const pm of promiedosMatches) {
-              const hNorm = normalize(pm.homeTeam.name);
-              const aNorm = normalize(pm.awayTeam.name);
-              const sig = `${hNorm}|${aNorm}`;
-              const sigReverse = `${aNorm}|${hNorm}`;
+              const sig = `${normalize(pm.homeTeam.name)}|${normalize(pm.awayTeam.name)}`;
+              const sigReverse = `${normalize(pm.awayTeam.name)}|${normalize(pm.homeTeam.name)}`;
               if (!existing.has(sig) && !existing.has(sigReverse)) {
                 matches.push(pm);
               }
