@@ -405,6 +405,111 @@ export async function fetchPromiedosWeek(
   return allMatches;
 }
 
+/**
+ * Get matches for a specific round/fecha from Promiedos.
+ * Fetches all matches for the league across ±7 days and filters by dedup.
+ */
+export async function fetchPromiedosRound(
+  leagueId: string,
+  roundKey: string,
+): Promise<PromiedosMatch[]> {
+  const cacheKey = `promiedos:round:${leagueId}:${roundKey}`;
+  const cached = getCache<PromiedosMatch[]>(cacheKey);
+  if (cached) return cached;
+
+  const leagueInfo = LEAGUES[leagueId as keyof typeof LEAGUES];
+  if (!leagueInfo) return [];
+
+  try {
+    // Fetch ±7 days to cover the full round
+    const now = new Date();
+    const argNow = new Date(now.getTime() - 3 * 60 * 60 * 1000);
+    const allMatches: PromiedosMatch[] = [];
+    const seen = new Set<string>();
+
+    for (let offset = -7; offset <= 7; offset++) {
+      const d = new Date(argNow.getTime() + offset * 24 * 60 * 60 * 1000);
+      const day = String(d.getUTCDate()).padStart(2, "0");
+      const month = String(d.getUTCMonth() + 1).padStart(2, "0");
+      const year = d.getUTCFullYear();
+      const dateStr = `${day}-${month}-${year}`;
+
+      try {
+        const matches = await fetchPromiedosMatchesByDate(
+          dateStr,
+          leagueId,
+          leagueInfo.name,
+          leagueInfo.slug,
+          leagueInfo.category,
+          leagueInfo.flag,
+        );
+        for (const m of matches) {
+          if (!seen.has(m.id)) {
+            seen.add(m.id);
+            allMatches.push(m);
+          }
+        }
+      } catch {
+        // Skip failed dates
+      }
+    }
+
+    allMatches.sort((a, b) => new Date(a.kickoffTime).getTime() - new Date(b.kickoffTime).getTime());
+
+    setCache(cacheKey, allMatches, 60_000);
+    return allMatches;
+  } catch (err) {
+    console.error("[promiedos] fetchPromiedosRound failed", leagueId, roundKey, err);
+    return [];
+  }
+}
+
+/**
+ * Extended week fetch (±7 days) for merging with ESPN.
+ * Used to catch multi-zone leagues that play on different days.
+ */
+export async function promiedosWeekExtended(
+  leagueId: string,
+  leagueName: string,
+  leagueSlug: string,
+  category: string,
+  flag: string,
+): Promise<PromiedosMatch[]> {
+  const cacheKey = `promiedos:weekExt:${leagueId}`;
+  const cached = getCache<PromiedosMatch[]>(cacheKey);
+  if (cached) return cached;
+
+  const now = new Date();
+  const argNow = new Date(now.getTime() - 3 * 60 * 60 * 1000);
+  const allMatches: PromiedosMatch[] = [];
+  const seen = new Set<string>();
+
+  for (let offset = -7; offset <= 7; offset++) {
+    const d = new Date(argNow.getTime() + offset * 24 * 60 * 60 * 1000);
+    const day = String(d.getUTCDate()).padStart(2, "0");
+    const month = String(d.getUTCMonth() + 1).padStart(2, "0");
+    const year = d.getUTCFullYear();
+    const dateStr = `${day}-${month}-${year}`;
+
+    try {
+      const matches = await fetchPromiedosMatchesByDate(dateStr, leagueId, leagueName, leagueSlug, category, flag);
+      for (const m of matches) {
+        if (!seen.has(m.id)) {
+          seen.add(m.id);
+          allMatches.push(m);
+        }
+      }
+    } catch {
+      // Skip failed dates
+    }
+  }
+
+  allMatches.sort((a, b) => new Date(a.kickoffTime).getTime() - new Date(b.kickoffTime).getTime());
+
+  setCache(cacheKey, allMatches, 60_000);
+  return allMatches;
+}
+
 // ========== STANDINGS ==========
 
 export interface StandingEntry {

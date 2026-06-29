@@ -23,7 +23,7 @@ export default function Tournament({ slug }: { slug: string }) {
   const [selectedRound, setSelectedRound] = useState<string | null>(null);
 
   const { data: tournament, isLoading: loadingT } = useTournament(slug);
-  const { data: fixtures, isLoading: loadingF, error: errorF, refetch: refetchF } = useTournamentFixtures(slug);
+  const { data: fixtures, isLoading: loadingF, error: errorF, refetch: refetchF } = useTournamentFixtures(slug, selectedRound);
   const { data: standings, isLoading: loadingS } = useTournamentStandings(slug);
   const { data: scorersData, isLoading: loadingSc } = useTournamentScorers(slug);
   const { data: roundsData } = useTournamentRounds(slug);
@@ -40,10 +40,20 @@ export default function Tournament({ slug }: { slug: string }) {
   // Filter fixtures by selected round if available
   const filteredGroups = (() => {
     if (!fixtures?.groups) return [];
-    if (!selectedRound || rounds.length === 0) return fixtures.groups;
+    if (!selectedRound || selectedRound === "latest" || rounds.length === 0) return fixtures.groups;
 
-    // If the round key matches a group's tournament round, filter
-    return fixtures.groups;
+    // Filter matches by round name (e.g., "Fecha 1")
+    const selectedRoundObj = rounds.find((r) => r.key === selectedRound);
+    if (!selectedRoundObj) return fixtures.groups;
+
+    return fixtures.groups.map((group) => ({
+      ...group,
+      matches: group.matches.filter((m) => {
+        const matchRound = m.round?.toLowerCase() ?? "";
+        const roundName = selectedRoundObj.name.toLowerCase();
+        return matchRound.includes(roundName) || matchRound.includes(selectedRound);
+      }),
+    })).filter((group) => group.matches.length > 0);
   })();
 
   const tabs = [
@@ -104,9 +114,9 @@ export default function Tournament({ slug }: { slug: string }) {
       icon: <Users size={16} />,
       content: loadingS ? (
         <PageLoader label="Cargando equipos" />
-      ) : standings?.groups?.[0]?.entries ? (
+      ) : standings?.groups ? (
         <div className="space-y-4">
-          <TeamGrid entries={standings.groups[0].entries} />
+          <TeamGrid groups={standings.groups} />
           {teamStatsData?.stats && teamStatsData.stats.length > 0 && (
             <div className="mt-6">
               <h3 className="mb-3 text-sm font-bold uppercase tracking-wider text-[var(--color-slate-400)]">

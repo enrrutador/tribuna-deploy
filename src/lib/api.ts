@@ -52,8 +52,8 @@ export const api = {
   getMatch: (id: string) => request<MatchWithDetails>(`/matches/${id}`),
 
   // Tournament detail
-  getTournamentFixtures: (slug: string) =>
-    request<MatchesResponse>(`/tournaments/${slug}/fixtures`),
+  getTournamentFixtures: (slug: string, round?: string) =>
+    request<MatchesResponse>(`/tournaments/${slug}/fixtures${round ? `?round=${encodeURIComponent(round)}` : ""}`),
   getTournamentStandings: (slug: string) =>
     request<{ groups: StandingsGroup[] }>(`/tournaments/${slug}/standings`),
   getTournamentScorers: (slug: string) =>

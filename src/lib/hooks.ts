@@ -84,11 +84,11 @@ export function useMatch(id: string | undefined) {
 }
 
 // ---------- Tournament detail ----------
-export function useTournamentFixtures(slug: string | undefined) {
+export function useTournamentFixtures(slug: string | undefined, round?: string | null) {
   return useQuery({
-    queryKey: qk.fixtures(slug ?? ""),
+    queryKey: [...qk.fixtures(slug ?? ""), round ?? "default"],
     enabled: !!slug,
-    queryFn: () => api.getTournamentFixtures(slug!),
+    queryFn: () => api.getTournamentFixtures(slug!, round ?? undefined),
     refetchInterval: 30_000,
     placeholderData: keepPreviousData,
   });

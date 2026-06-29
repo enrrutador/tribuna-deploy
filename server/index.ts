@@ -215,7 +215,8 @@ app.get("/api/tournaments/:slug/fixtures", async (req, res) => {
       res.status(404).json({ error: "Torneo no encontrado" });
       return;
     }
-    const matches = await fetchLeagueMatches(leagueId);
+    const round = req.query.round as string | undefined;
+    const matches = await fetchLeagueMatches(leagueId, undefined, round);
     res.json({
       groups: groupByTournament(matches),
       totalMatches: matches.length,

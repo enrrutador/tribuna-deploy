@@ -7,6 +7,8 @@
 import {
   fetchPromiedosToday as promiedosToday,
   fetchPromiedosWeek as promiedosWeek,
+  promiedosWeekExtended,
+  fetchPromiedosRound as promiedosRound,
   fetchPromiedosStandings as promiedosStandings,
   fetchPromiedosScorers as promiedosScorers,
   fetchPromiedosTeam as promiedosTeam,
@@ -288,8 +290,8 @@ function getWeekRange(): string {
   return `${fmt(start)}-${fmt(end)}`;
 }
 
-export async function fetchLeagueMatches(leagueId: string, utcDateStr?: string): Promise<Match[]> {
-  const cacheKey = `matches:${leagueId}:${utcDateStr ?? "week"}`;
+export async function fetchLeagueMatches(leagueId: string, utcDateStr?: string, roundKey?: string): Promise<Match[]> {
+  const cacheKey = `matches:${leagueId}:${roundKey ?? utcDateStr ?? "week"}`;
   const cached = getCache<Match[]>(cacheKey);
   if (cached) return cached;
 
@@ -297,6 +299,15 @@ export async function fetchLeagueMatches(leagueId: string, utcDateStr?: string):
   if (leagueId.startsWith("pm.") && PROMIEDOS_LEAGUE_MAP[leagueId]) {
     const leagueInfo = LEAGUES[leagueId as LeagueId];
     if (!leagueInfo) return [];
+
+    // If a round key is provided, try to fetch that specific round from Promiedos
+    if (roundKey && roundKey !== "latest") {
+      const roundMatches = await promiedosRound(leagueId, roundKey);
+      if (roundMatches.length > 0) {
+        setCache(cacheKey, roundMatches, 60_000);
+        return roundMatches;
+      }
+    }
 
     try {
       const promiedosMatches = await promiedosWeek(
@@ -381,6 +392,44 @@ export async function fetchLeagueMatches(leagueId: string, utcDateStr?: string):
     });
 
     const ttl = matches.some((m) => m.status === "live") ? 15_000 : 60_000;
+
+    // Merge with Promiedos data for leagues that have both sources
+    // This ensures multi-zone leagues (Primera Nacional, Federal A, etc.) show all matches
+    if (PROMIEDOS_LEAGUE_MAP[leagueId]) {
+      const leagueInfo = LEAGUES[leagueId as LeagueId];
+      if (leagueInfo) {
+        try {
+          // Use extended window (±7 days) to catch both zones playing on different days
+          const promiedosMatches = await promiedosWeekExtended(
+            leagueId,
+            leagueInfo.name,
+            leagueInfo.slug,
+            leagueInfo.category,
+            leagueInfo.flag,
+          );
+          if (promiedosMatches.length > 0) {
+            // Build normalized signatures for dedup (remove accents, normalize spaces)
+            const normalize = (s: string) =>
+              s.normalize("NFD").replace(/[\u0300-\u036f]/g, "").toLowerCase().replace(/[^a-z0-9]/g, "").trim();
+            const existing = new Set(
+              matches.map((m) => `${normalize(m.homeTeam.name)}|${normalize(m.awayTeam.name)}`),
+            );
+            for (const pm of promiedosMatches) {
+              const hNorm = normalize(pm.homeTeam.name);
+              const aNorm = normalize(pm.awayTeam.name);
+              const sig = `${hNorm}|${aNorm}`;
+              const sigReverse = `${aNorm}|${hNorm}`;
+              if (!existing.has(sig) && !existing.has(sigReverse)) {
+                matches.push(pm);
+              }
+            }
+          }
+        } catch (pe) {
+          console.error("[promiedos] merge failed for", leagueId, pe);
+        }
+      }
+    }
+
     setCache(cacheKey, matches, ttl);
 
     // If ESPN returned no matches and this league has a Promiedos mapping, fallback
