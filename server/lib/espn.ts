@@ -857,10 +857,10 @@ export async function fetchTeamStats(leagueId: string): Promise<TeamStatsRespons
   if (cached) return cached;
 
   const standings = await fetchStandings(leagueId);
-  const firstGroup = standings[0];
-  if (!firstGroup) return { stats: [] };
+  if (standings.length === 0) return { stats: [] };
 
-  const stats: TeamStatEntry[] = firstGroup.entries.map((e) => ({
+  const allEntries = standings.flatMap((g) => g.entries);
+  const stats: TeamStatEntry[] = allEntries.map((e) => ({
     teamId: e.teamId,
     teamName: e.teamName,
     teamShortName: e.teamShortName,
