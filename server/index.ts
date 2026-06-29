@@ -387,9 +387,13 @@ app.get("/api/health", (_req, res) => {
 });
 
 // ---------- News ----------
-app.get("/api/news", async (_req, res) => {
+app.get("/api/news", async (req, res) => {
   try {
-    const news = await fetchNews();
+    const category = req.query.category as string | undefined;
+    const allNews = await fetchNews();
+    const news = category && category !== "general"
+      ? allNews.filter((n) => n.category === category)
+      : allNews;
     res.json({ news, count: news.length });
   } catch (err) {
     console.error(err);

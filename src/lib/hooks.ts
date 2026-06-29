@@ -142,10 +142,10 @@ export function useTeam(id: string | undefined) {
 }
 
 // ---------- News ----------
-export function useNews() {
+export function useNews(category?: string) {
   return useQuery({
-    queryKey: ["news"],
-    queryFn: api.getNews,
+    queryKey: ["news", category ?? ""],
+    queryFn: () => api.getNews(category),
     staleTime: 5 * 60_000,
   });
 }

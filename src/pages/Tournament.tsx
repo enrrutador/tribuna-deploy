@@ -176,8 +176,8 @@ export default function Tournament({ slug }: { slug: string }) {
                 <span className="ml-2 text-[var(--color-slate-400)]">{tournament.id}</span>
               </div>
               <div>
-                <span className="font-semibold text-[var(--color-slate-300)]">Tipo:</span>
-                <span className="ml-2 text-[var(--color-slate-400)]">{tournament.type}</span>
+                <span className="font-semibold text-[var(--color-slate-300)]">País:</span>
+                <span className="ml-2 text-[var(--color-slate-400)]">{tournament.country}</span>
               </div>
               {tournament.slug && (
                 <div>

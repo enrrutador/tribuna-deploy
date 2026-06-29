@@ -53,6 +53,7 @@ function GroupTable({ group, maxRows }: { group: StandingsGroup; maxRows?: numbe
               <th className="py-2.5 text-center hidden md:table-cell">GF</th>
               <th className="py-2.5 text-center hidden md:table-cell">GC</th>
               <th className="py-2.5 text-center hidden md:table-cell">DG</th>
+              <th className="py-2.5 text-center hidden lg:table-cell">Forma</th>
               <th className="py-2.5 text-center font-bold text-[var(--color-lime-400)]">Pts</th>
             </tr>
           </thead>
@@ -107,6 +108,13 @@ function GroupTable({ group, maxRows }: { group: StandingsGroup; maxRows?: numbe
                     )}>
                       {entry.goalDiff}
                     </span>
+                  </td>
+                  <td className="py-2.5 text-center hidden lg:table-cell">
+                    <div className="flex items-center justify-center gap-0.5">
+                      {entry.form?.slice(-5).map((result, fi) => (
+                        <FormBadge key={fi} result={result} />
+                      ))}
+                    </div>
                   </td>
                   <td className="py-2.5 text-center text-sm font-black tabular-nums text-[var(--color-lime-400)]">
                     {entry.points}

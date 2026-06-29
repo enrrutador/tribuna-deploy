@@ -80,7 +80,8 @@ export const api = {
     request<BracketData>(`/tournaments/${slug}/brackets`),
 
   // News
-  getNews: () => request<{ news: NewsItem[]; count: number }>("/news"),
+  getNews: (category?: string) =>
+    request<{ news: NewsItem[]; count: number }>(`/news${category ? `?category=${encodeURIComponent(category)}` : ""}`),
 };
 
 export { ApiError };
