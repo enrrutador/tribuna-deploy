@@ -1095,5 +1095,263 @@ async function fetchTeamDataComposite(teamId: string): Promise<TeamInfo | null> 
 // Pre-build the map on startup
 buildTeamNameMap().catch(() => {});
 
+// ========== MATCH SUMMARY (ESPN /summary) ==========
+
+export interface MatchSummaryEvent {
+  id: string;
+  type: string;
+  typeText: string;
+  minute: number;
+  teamId: string;
+  teamName: string;
+  playerName: string | null;
+  assistName: string | null;
+  text: string;
+}
+
+export interface MatchSummaryRoster {
+  teamId: string;
+  teamName: string;
+  teamShortName: string;
+  teamLogoUrl: string;
+  formation: string | null;
+  players: {
+    athleteId: string;
+    name: string;
+    jerseyNumber: string | null;
+    position: string | null;
+    starter: boolean;
+    stats: Record<string, number>;
+  }[];
+}
+
+export interface MatchSummaryStats {
+  name: string;
+  home: string;
+  away: string;
+}
+
+export interface HeadToHeadGame {
+  id: string;
+  date: string;
+  homeTeam: string;
+  awayTeam: string;
+  homeScore: number;
+  awayScore: number;
+  result: string;
+  competition: string;
+}
+
+export interface MatchSummaryData {
+  events: MatchSummaryEvent[];
+  rosters: MatchSummaryRoster[];
+  stats: MatchSummaryStats[];
+  headToHead: HeadToHeadGame[];
+  boxscore: {
+    home: { possession: string; shots: string; shotsOnTarget: string; passes: string; fouls: string; corners: string; offsides: string; yellowCards: string; redCards: string };
+    away: { possession: string; shots: string; shotsOnTarget: string; passes: string; fouls: string; corners: string; offsides: string; yellowCards: string; redCards: string };
+  } | null;
+}
+
+export async function fetchMatchSummary(matchId: string, leagueId: string): Promise<MatchSummaryData | null> {
+  const cacheKey = `summary:${matchId}:${leagueId}`;
+  const cached = getCache<MatchSummaryData>(cacheKey);
+  if (cached) return cached;
+
+  try {
+    const data = (await espnFetch(`${ESPN_SCOREBOARD}/${leagueId}/summary?event=${matchId}`)) as Record<string, unknown>;
+
+    // Key events (goals, cards, subs)
+    const keyEvents = (data.keyEvents as Record<string, unknown>[]) ?? [];
+    const events: MatchSummaryEvent[] = keyEvents.map((ev) => {
+      const type = ev.type as Record<string, unknown>;
+      const team = ev.team as Record<string, unknown>;
+      const athletes = (ev.athletes as Record<string, unknown>[]) ?? [];
+      const scorer = athletes[0]?.athlete as Record<string, unknown> | undefined;
+      const assister = athletes[1]?.athlete as Record<string, unknown> | undefined;
+      const clock = ev.clock as Record<string, unknown>;
+      const minuteStr = String(clock?.displayValue ?? "0");
+      const minute = parseInt(minuteStr.replace(/\D/g, "")) || 0;
+      return {
+        id: String(ev.id ?? Math.random().toString(36).slice(2)),
+        type: String(type?.type ?? ""),
+        typeText: String(type?.text ?? ""),
+        minute,
+        teamId: String(team?.id ?? ""),
+        teamName: String(team?.displayName ?? ""),
+        playerName: scorer ? String(scorer.displayName ?? "") : null,
+        assistName: assister ? String(assister.displayName ?? "") : null,
+        text: String(ev.text ?? ev.shortText ?? ""),
+      };
+    });
+
+    // Rosters (lineups)
+    const boxscore = data.boxscore as Record<string, unknown> | undefined;
+    const teams = (boxscore?.teams as Record<string, unknown>[]) ?? [];
+    const rosters: MatchSummaryRoster[] = [];
+    const rostersData = (data.rosters as Record<string, unknown>[]) ?? [];
+
+    for (const roster of rostersData) {
+      const teamInfo = roster.team as Record<string, unknown>;
+      const rosterEntries = (roster.roster as Record<string, unknown>[]) ?? [];
+      rosters.push({
+        teamId: String(teamInfo?.id ?? ""),
+        teamName: String(teamInfo?.displayName ?? ""),
+        teamShortName: String(teamInfo?.shortDisplayName ?? ""),
+        teamLogoUrl: String((teamInfo?.logos as Record<string, unknown>[])?.[0]?.href ?? ""),
+        formation: null,
+        players: rosterEntries.map((p) => {
+          const athlete = p.athlete as Record<string, unknown>;
+          const stats = (p.stats as Record<string, unknown>[]) ?? [];
+          const statsMap: Record<string, number> = {};
+          for (const s of stats) {
+            statsMap[String(s.name ?? "")] = Number(s.value ?? 0);
+          }
+          return {
+            athleteId: String(athlete?.id ?? ""),
+            name: String(athlete?.displayName ?? ""),
+            jerseyNumber: athlete?.jersey ? String(athlete.jersey) : null,
+            position: athlete?.position?.displayName ? String(athlete.position.displayName) : null,
+            starter: Boolean(p.starter),
+            stats: statsMap,
+          };
+        }),
+      });
+    }
+
+    // Team stats
+    const teamStats: MatchSummaryStats[] = [];
+    for (const t of teams) {
+      const statsArr = (t.statistics as Record<string, unknown>[]) ?? [];
+      for (const s of statsArr) {
+        const name = String(s.name ?? s.abbreviation ?? "");
+        const displayValue = String(s.displayValue ?? s.value ?? "");
+        const existing = teamStats.find((ts) => ts.name === name);
+        if (existing) {
+          existing.away = displayValue;
+        } else {
+          teamStats.push({ name, home: displayValue, away: "" });
+        }
+      }
+    }
+
+    // Head to head
+    const h2hData = (data.headToHeadGames as Record<string, unknown>[]) ?? [];
+    const headToHead: HeadToHeadGame[] = [];
+    for (const entry of h2hData) {
+      const events = (entry.events as Record<string, unknown>[]) ?? [];
+      for (const ev of events) {
+        headToHead.push({
+          id: String(ev.id ?? ""),
+          date: String(ev.gameDate ?? ""),
+          homeTeam: String(entry.team?.displayName ?? ""),
+          awayTeam: String(ev.opponent?.displayName ?? ""),
+          homeScore: Number(ev.homeTeamScore ?? 0),
+          awayScore: Number(ev.awayTeamScore ?? 0),
+          result: String(ev.gameResult ?? ""),
+          competition: String(ev.competitionName ?? ""),
+        });
+      }
+    }
+
+    // Boxscore summary
+    let boxscoreSummary: MatchSummaryData["boxscore"] = null;
+    if (teams.length >= 2) {
+      const homeTeam = teams.find((t) => (t as Record<string, unknown>).homeAway === "home") ?? teams[0];
+      const awayTeam = teams.find((t) => (t as Record<string, unknown>).homeAway === "away") ?? teams[1];
+      const getStat = (team: Record<string, unknown>, name: string): string => {
+        const stats = (team.statistics as Record<string, unknown>[]) ?? [];
+        const found = stats.find((s) => String(s.name ?? "") === name);
+        return String(found?.displayValue ?? found?.value ?? "0");
+      };
+      boxscoreSummary = {
+        home: {
+          possession: getStat(homeTeam as Record<string, unknown>, "possession"),
+          shots: getStat(homeTeam as Record<string, unknown>, "totalShots"),
+          shotsOnTarget: getStat(homeTeam as Record<string, unknown>, "shotsOnTarget"),
+          passes: getStat(homeTeam as Record<string, unknown>, "passes"),
+          fouls: getStat(homeTeam as Record<string, unknown>, "fouls"),
+          corners: getStat(homeTeam as Record<string, unknown>, "corners"),
+          offsides: getStat(homeTeam as Record<string, unknown>, "offsides"),
+          yellowCards: getStat(homeTeam as Record<string, unknown>, "yellowCards"),
+          redCards: getStat(homeTeam as Record<string, unknown>, "redCards"),
+        },
+        away: {
+          possession: getStat(awayTeam as Record<string, unknown>, "possession"),
+          shots: getStat(awayTeam as Record<string, unknown>, "totalShots"),
+          shotsOnTarget: getStat(awayTeam as Record<string, unknown>, "shotsOnTarget"),
+          passes: getStat(awayTeam as Record<string, unknown>, "passes"),
+          fouls: getStat(awayTeam as Record<string, unknown>, "fouls"),
+          corners: getStat(awayTeam as Record<string, unknown>, "corners"),
+          offsides: getStat(awayTeam as Record<string, unknown>, "offsides"),
+          yellowCards: getStat(awayTeam as Record<string, unknown>, "yellowCards"),
+          redCards: getStat(awayTeam as Record<string, unknown>, "redCards"),
+        },
+      };
+    }
+
+    const result: MatchSummaryData = { events, rosters, stats: teamStats, headToHead, boxscore: boxscoreSummary };
+    setCache(cacheKey, result, 5 * 60_000);
+    return result;
+  } catch (err) {
+    console.error("[espn] fetchMatchSummary failed", matchId, leagueId, err);
+    return null;
+  }
+}
+
+// ========== TEAM SCHEDULE ==========
+
+export interface TeamScheduleEvent {
+  id: string;
+  date: string;
+  name: string;
+  homeTeam: string;
+  homeTeamId: string;
+  awayTeam: string;
+  awayTeamId: string;
+  venue: string | null;
+  status: string;
+  completed: boolean;
+  score: string | null;
+}
+
+export async function fetchTeamSchedule(teamId: string, leagueId: string): Promise<TeamScheduleEvent[]> {
+  const cacheKey = `schedule:${teamId}:${leagueId}`;
+  const cached = getCache<TeamScheduleEvent[]>(cacheKey);
+  if (cached) return cached;
+
+  const year = new Date().getFullYear();
+  try {
+    const data = (await espnFetch(`${ESPN_SCOREBOARD}/${leagueId}/teams/${teamId}/schedule?season=${year}`)) as Record<string, unknown>;
+    const events = (data.events as Record<string, unknown>[]) ?? [];
+    const result: TeamScheduleEvent[] = events.map((ev) => {
+      const comp = (ev.competitions as Record<string, unknown>[])?.[0] ?? {};
+      const competitors = (comp.competitors as Record<string, unknown>[]) ?? [];
+      const home = competitors.find((c) => c.homeAway === "home") ?? competitors[0] ?? {};
+      const away = competitors.find((c) => c.homeAway === "away") ?? competitors[1] ?? {};
+      const status = comp.status as Record<string, unknown>;
+      const statusType = status?.type as Record<string, unknown>;
+      return {
+        id: String(ev.id ?? ""),
+        date: String(ev.date ?? ""),
+        name: String(ev.name ?? ""),
+        homeTeam: String((home as Record<string, unknown>)?.team?.displayName ?? ""),
+        homeTeamId: String((home as Record<string, unknown>)?.team?.id ?? ""),
+        awayTeam: String((away as Record<string, unknown>)?.team?.displayName ?? ""),
+        awayTeamId: String((away as Record<string, unknown>)?.team?.id ?? ""),
+        venue: comp.venue?.fullName ? String(comp.venue.fullName) : null,
+        status: String(statusType?.state ?? "pre"),
+        completed: Boolean(statusType?.completed ?? false),
+        score: statusType?.completed ? `${home.score ?? 0} - ${away.score ?? 0}` : null,
+      };
+    });
+    setCache(cacheKey, result, 10 * 60_000);
+    return result;
+  } catch (err) {
+    console.error("[espn] fetchTeamSchedule failed", teamId, leagueId, err);
+    return [];
+  }
+}
+
 export { fetchTeamDataComposite as fetchTeamData };
 export type { TeamInfo } from "./promiedos.js";

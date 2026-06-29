@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { Trophy, CalendarDays, BarChart3, Target, Users, Info } from "lucide-react";
+import { Trophy, CalendarDays, BarChart3, Target, Users, Info, Swords } from "lucide-react";
 import { Tabs } from "@/components/ui/Tabs";
 import { PageLoader } from "@/components/ui/PageLoader";
 import { ErrorState } from "@/components/ui/ErrorState";
@@ -10,6 +10,7 @@ import ScorersList from "@/components/domain/ScorersList";
 import RoundSelector from "@/components/domain/RoundSelector";
 import TeamGrid from "@/components/domain/TeamGrid";
 import TeamStats from "@/components/domain/TeamStats";
+import BracketView from "@/components/domain/BracketView";
 import {
   useTournament,
   useTournamentFixtures,
@@ -17,6 +18,7 @@ import {
   useTournamentScorers,
   useTournamentRounds,
   useTournamentTeamStats,
+  useTournamentBrackets,
 } from "@/lib/hooks";
 
 export default function Tournament({ slug }: { slug: string }) {
@@ -28,6 +30,7 @@ export default function Tournament({ slug }: { slug: string }) {
   const { data: scorersData, isLoading: loadingSc } = useTournamentScorers(slug);
   const { data: roundsData } = useTournamentRounds(slug);
   const { data: teamStatsData, isLoading: loadingTS } = useTournamentTeamStats(slug);
+  const { data: bracketsData, isLoading: loadingBr } = useTournamentBrackets(slug);
 
   if (loadingT) return <PageLoader label="Cargando torneo" />;
   if (!tournament) {
@@ -146,6 +149,16 @@ export default function Tournament({ slug }: { slug: string }) {
         </div>
       ),
     },
+    ...(bracketsData?.stages && bracketsData.stages.length > 0 ? [{
+      id: "brackets",
+      label: "Llaves",
+      icon: <Swords size={16} />,
+      content: loadingBr ? (
+        <PageLoader label="Cargando llaves" />
+      ) : (
+        <BracketView data={bracketsData} />
+      ),
+    }] : []),
     {
       id: "info",
       label: "Info",

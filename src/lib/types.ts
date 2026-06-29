@@ -227,3 +227,113 @@ export interface TeamDetail {
   lastMatches: TeamMatch[];
   topScorers: { name: string; goals: number }[];
 }
+
+// ========== Match Summary (expanded detail) ==========
+
+export interface MatchSummaryEvent {
+  id: string;
+  type: string;
+  typeText: string;
+  minute: number;
+  teamId: string;
+  teamName: string;
+  playerName: string | null;
+  assistName: string | null;
+  text: string;
+}
+
+export interface MatchSummaryRosterPlayer {
+  athleteId: string;
+  name: string;
+  jerseyNumber: string | null;
+  position: string | null;
+  starter: boolean;
+  stats: Record<string, number>;
+}
+
+export interface MatchSummaryRoster {
+  teamId: string;
+  teamName: string;
+  teamShortName: string;
+  teamLogoUrl: string;
+  formation: string | null;
+  players: MatchSummaryRosterPlayer[];
+}
+
+export interface MatchSummaryStats {
+  name: string;
+  home: string;
+  away: string;
+}
+
+export interface HeadToHeadGame {
+  id: string;
+  date: string;
+  homeTeam: string;
+  awayTeam: string;
+  homeScore: number;
+  awayScore: number;
+  result: string;
+  competition: string;
+}
+
+export interface MatchSummaryBoxscore {
+  home: { possession: string; shots: string; shotsOnTarget: string; passes: string; fouls: string; corners: string; offsides: string; yellowCards: string; redCards: string };
+  away: { possession: string; shots: string; shotsOnTarget: string; passes: string; fouls: string; corners: string; offsides: string; yellowCards: string; redCards: string };
+}
+
+export interface MatchSummaryData {
+  events: MatchSummaryEvent[];
+  rosters: MatchSummaryRoster[];
+  stats: MatchSummaryStats[];
+  headToHead: HeadToHeadGame[];
+  boxscore: MatchSummaryBoxscore | null;
+}
+
+// ========== Team Schedule ==========
+
+export interface TeamScheduleEvent {
+  id: string;
+  date: string;
+  name: string;
+  homeTeam: string;
+  homeTeamId: string;
+  awayTeam: string;
+  awayTeamId: string;
+  venue: string | null;
+  status: string;
+  completed: boolean;
+  score: string | null;
+}
+
+// ========== Brackets (knockout rounds) ==========
+
+export interface BracketTeam {
+  name: string;
+  shortName: string;
+  symbolName: string;
+  id: string;
+  color: string;
+  textColor: string;
+}
+
+export interface BracketMatch {
+  id: string;
+  homeTeam: BracketTeam;
+  awayTeam: BracketTeam;
+  status: "upcoming" | "live" | "finished";
+  statusText: string;
+  startTime: string | null;
+  homeScore: number | null;
+  awayScore: number | null;
+  winner: number;
+}
+
+export interface BracketStage {
+  name: string;
+  matches: BracketMatch[];
+}
+
+export interface BracketData {
+  stages: BracketStage[];
+}

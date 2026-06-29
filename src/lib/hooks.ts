@@ -16,6 +16,7 @@ export const qk = {
   scorers: (slug: string) => ["scorers", slug] as const,
   rounds: (slug: string) => ["rounds", slug] as const,
   teamStats: (slug: string) => ["teamStats", slug] as const,
+  brackets: (slug: string) => ["brackets", slug] as const,
   team: (id: string) => ["team", id] as const,
 };
 
@@ -145,6 +146,36 @@ export function useNews() {
   return useQuery({
     queryKey: ["news"],
     queryFn: api.getNews,
+    staleTime: 5 * 60_000,
+  });
+}
+
+// ---------- Match Summary ----------
+export function useMatchSummary(id: string | undefined) {
+  return useQuery({
+    queryKey: ["matchSummary", id ?? ""],
+    enabled: !!id,
+    queryFn: () => api.getMatchSummary(id!),
+    staleTime: 5 * 60_000,
+  });
+}
+
+// ---------- Team Schedule ----------
+export function useTeamSchedule(teamId: string | undefined, league?: string) {
+  return useQuery({
+    queryKey: ["teamSchedule", teamId ?? "", league ?? ""],
+    enabled: !!teamId,
+    queryFn: () => api.getTeamSchedule(teamId!, league),
+    staleTime: 10 * 60_000,
+  });
+}
+
+// ---------- Brackets ----------
+export function useTournamentBrackets(slug: string | undefined) {
+  return useQuery({
+    queryKey: qk.brackets(slug ?? ""),
+    enabled: !!slug,
+    queryFn: () => api.getTournamentBrackets(slug!),
     staleTime: 5 * 60_000,
   });
 }

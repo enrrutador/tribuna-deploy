@@ -849,3 +849,107 @@ export async function fetchPromiedosTeam(teamId: string): Promise<TeamInfo | nul
     return null;
   }
 }
+
+// ========== BRACKETS (tournament knockout rounds) ==========
+
+export interface BracketTeam {
+  name: string;
+  shortName: string;
+  symbolName: string;
+  id: string;
+  color: string;
+  textColor: string;
+}
+
+export interface BracketMatch {
+  id: string;
+  homeTeam: BracketTeam;
+  awayTeam: BracketTeam;
+  status: "upcoming" | "live" | "finished";
+  statusText: string;
+  startTime: string | null;
+  homeScore: number | null;
+  awayScore: number | null;
+  winner: number; // 0=none, 1=home, 2=away
+}
+
+export interface BracketStage {
+  name: string;
+  matches: BracketMatch[];
+}
+
+export interface BracketData {
+  stages: BracketStage[];
+}
+
+export async function fetchBrackets(leagueId: string): Promise<BracketData | null> {
+  const cacheKey = `promiedos:brackets:${leagueId}`;
+  const cached = getCache<BracketData>(cacheKey);
+  if (cached) return cached;
+
+  const promiedosId = PROMIEDOS_LEAGUE_MAP[leagueId];
+  if (!promiedosId) return null;
+
+  try {
+    const data = (await promiedosFetch(`/league/tables_and_fixtures/${promiedosId}`)) as Record<string, unknown>;
+    const brackets = data.brackets as Record<string, unknown>;
+    if (!brackets?.stages) return null;
+
+    const stages = (brackets.stages as Record<string, unknown>[]).map((stage) => {
+      const groups = (stage.groups as Record<string, unknown>[]) ?? [];
+      const matches: BracketMatch[] = groups.map((g) => {
+        const games = (g.games as Record<string, unknown>[]) ?? [];
+        const game = games[0] ?? {};
+        const teams = (game.teams as Record<string, unknown>[]) ?? [];
+        const participants = (g.participants as Record<string, unknown>[]) ?? [];
+        const score = (g.score as number[]) ?? [];
+
+        const parseTeam = (t: Record<string, unknown>, p?: Record<string, unknown>): BracketTeam => ({
+          name: String(t?.name ?? p?.name ?? "?"),
+          shortName: String(t?.short_name ?? p?.short_name ?? "?"),
+          symbolName: String(p?.symbol_name ?? "?"),
+          id: String(t?.id ?? p?.id ?? ""),
+          color: String((t?.colors as Record<string, unknown>)?.color ?? "#334155").replace("#", ""),
+          textColor: String((t?.colors as Record<string, unknown>)?.text_color ?? "#FFFFFF").replace("#", ""),
+        });
+
+        const homeTeam = teams[0]
+          ? parseTeam(teams[0], participants[0] as Record<string, unknown> | undefined)
+          : { name: "?", shortName: "?", symbolName: "?", id: "", color: "334155", textColor: "FFFFFF" };
+        const awayTeam = teams[1]
+          ? parseTeam(teams[1], participants[1] as Record<string, unknown> | undefined)
+          : { name: "?", shortName: "?", symbolName: "?", id: "", color: "334155", textColor: "FFFFFF" };
+
+        const gameStatus = (game.status as Record<string, unknown>) ?? {};
+        const statusName = String(gameStatus.name ?? "");
+        let status: BracketMatch["status"] = "upcoming";
+        if (statusName === "Finalizado" || statusName === "Final" || statusName === "FT") status = "finished";
+        else if (statusName === "En juego" || statusName === "1T" || statusName === "2T") status = "live";
+
+        return {
+          id: String(game.id ?? ""),
+          homeTeam,
+          awayTeam,
+          status,
+          statusText: statusName || "Programado",
+          startTime: game.start_time ? String(game.start_time) : null,
+          homeScore: score.length > 0 ? Number(score[0]) : null,
+          awayScore: score.length > 1 ? Number(score[1]) : null,
+          winner: Number(g.winner ?? -1),
+        };
+      });
+
+      return {
+        name: String(stage.name ?? ""),
+        matches,
+      };
+    });
+
+    const result: BracketData = { stages };
+    setCache(cacheKey, result, 5 * 60_000);
+    return result;
+  } catch (err) {
+    console.error("[promiedos] fetchBrackets failed", leagueId, err);
+    return null;
+  }
+}

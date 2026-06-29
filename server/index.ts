@@ -17,9 +17,11 @@ import {
   fetchTeamData,
   fetchRounds,
   fetchTeamStats,
+  fetchMatchSummary,
+  fetchTeamSchedule,
   cacheStats,
-  type CategoryId,
 } from "./lib/espn.js";
+import { fetchBrackets } from "./lib/promiedos.js";
 import { fetchNews } from "./lib/news.js";
 
 const __filename = fileURLToPath(import.meta.url);
@@ -299,6 +301,80 @@ app.get("/api/teams/:teamId", async (req, res) => {
       return;
     }
     res.json(teamData);
+  } catch (err) {
+    console.error(err);
+    res.status(500).json({ error: "Error interno" });
+  }
+});
+
+// ---------- Match Summary (goals, cards, lineups, H2H, stats) ----------
+app.get("/api/matches/:id/summary", async (req, res) => {
+  try {
+    const rawId = req.params.id;
+    let matchId = rawId;
+    let leagueId = "";
+
+    if (rawId.includes(":")) {
+      const [lid, mid] = rawId.split(":");
+      leagueId = lid!;
+      matchId = mid!;
+    } else {
+      const all = await fetchTodayMatches();
+      const found = all.find((m) => m.id === rawId);
+      if (found) leagueId = found.leagueId;
+    }
+
+    if (!leagueId) {
+      // Try to find league from all leagues
+      const all = await fetchTodayMatches();
+      for (const m of all) {
+        if (m.id === rawId) { leagueId = m.leagueId; break; }
+      }
+    }
+
+    if (!leagueId) {
+      res.status(404).json({ error: "Partido no encontrado" });
+      return;
+    }
+
+    const summary = await fetchMatchSummary(matchId, leagueId);
+    if (!summary) {
+      res.status(404).json({ error: "Resumen no disponible" });
+      return;
+    }
+    res.json(summary);
+  } catch (err) {
+    console.error(err);
+    res.status(500).json({ error: "Error interno" });
+  }
+});
+
+// ---------- Team Schedule ----------
+app.get("/api/teams/:teamId/schedule", async (req, res) => {
+  try {
+    const leagueId = req.query.league as string ?? "arg.1";
+    const schedule = await fetchTeamSchedule(req.params.teamId, leagueId);
+    res.json({ schedule });
+  } catch (err) {
+    console.error(err);
+    res.status(500).json({ error: "Error interno" });
+  }
+});
+
+// ---------- Tournament Brackets (knockout rounds) ----------
+app.get("/api/tournaments/:slug/brackets", async (req, res) => {
+  try {
+    const leagueId = SLUG_TO_LEAGUE[req.params.slug];
+    if (!leagueId) {
+      res.status(404).json({ error: "Torneo no encontrado" });
+      return;
+    }
+    const brackets = await fetchBrackets(leagueId);
+    if (!brackets) {
+      res.json({ stages: [] });
+      return;
+    }
+    res.json(brackets);
   } catch (err) {
     console.error(err);
     res.status(500).json({ error: "Error interno" });

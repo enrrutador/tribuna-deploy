@@ -10,6 +10,9 @@ import type {
   TeamDetail,
   RoundInfo,
   TeamStatEntry,
+  MatchSummaryData,
+  TeamScheduleEvent,
+  BracketData,
 } from "./types";
 
 /** Base API URL — proxied to Express in dev, same-origin in prod. */
@@ -65,6 +68,16 @@ export const api = {
 
   // Teams
   getTeam: (id: string) => request<TeamDetail>(`/teams/${id}`),
+  getTeamSchedule: (teamId: string, league?: string) =>
+    request<{ schedule: TeamScheduleEvent[] }>(`/teams/${teamId}/schedule${league ? `?league=${league}` : ""}`),
+
+  // Match Summary
+  getMatchSummary: (id: string) =>
+    request<MatchSummaryData>(`/matches/${id}/summary`),
+
+  // Brackets
+  getTournamentBrackets: (slug: string) =>
+    request<BracketData>(`/tournaments/${slug}/brackets`),
 
   // News
   getNews: () => request<{ news: NewsItem[]; count: number }>("/news"),
