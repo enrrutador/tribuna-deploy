@@ -163,6 +163,32 @@ export interface NewsItem {
   category: "mundial" | "argentina" | "general";
 }
 
+export interface RoundInfo {
+  name: string;
+  key: string;
+  selected?: boolean;
+}
+
+export interface TeamStatEntry {
+  teamId: string;
+  teamName: string;
+  teamShortName: string;
+  teamLogoUrl: string;
+  played: number;
+  won: number;
+  drawn: number;
+  lost: number;
+  goalsFor: number;
+  goalsAgainst: number;
+  goalDiff: number;
+  points: number;
+  winRate: number;
+  goalsPerGame: number;
+  concededPerGame: number;
+  cleanSheets: number;
+  form: string[];
+}
+
 export interface TeamMatch {
   date: string;
   homeAway: string;

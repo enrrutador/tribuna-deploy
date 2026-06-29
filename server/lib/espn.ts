@@ -745,6 +745,97 @@ function convertPromiedosScorers(groups: ScorersGroup[]): ScorerEntry[] {
   return scorers;
 }
 
+// ---------- Available rounds/fechas for a league ----------
+export interface RoundInfo {
+  name: string;
+  key: string;
+  selected?: boolean;
+}
+
+export async function fetchRounds(leagueId: string): Promise<RoundInfo[]> {
+  const cacheKey = `rounds:${leagueId}`;
+  const cached = getCache<RoundInfo[]>(cacheKey);
+  if (cached) return cached;
+
+  const promiedosId = PROMIEDOS_LEAGUE_MAP[leagueId];
+  if (!promiedosId) return [];
+
+  try {
+    const res = await fetch(`${PROMIEDOS_BASE}/league/tables_and_fixtures/${promiedosId}`, {
+      headers: { Accept: "application/json", ...PROMIEDOS_HEADERS },
+      signal: AbortSignal.timeout(8000),
+    });
+    if (!res.ok) return [];
+    const data = await res.json();
+    const filters = (data.games?.filters ?? []) as { name: string; key: string; selected?: boolean }[];
+    const rounds = filters.map((f) => ({ name: f.name, key: f.key, selected: f.selected }));
+    setCache(cacheKey, rounds, 10 * 60_000);
+    return rounds;
+  } catch (err) {
+    console.error("[espn] fetchRounds failed", leagueId, err);
+    return [];
+  }
+}
+
+// ---------- Team statistics from standings ----------
+export interface TeamStatEntry {
+  teamId: string;
+  teamName: string;
+  teamShortName: string;
+  teamLogoUrl: string;
+  played: number;
+  won: number;
+  drawn: number;
+  lost: number;
+  goalsFor: number;
+  goalsAgainst: number;
+  goalDiff: number;
+  points: number;
+  winRate: number;
+  goalsPerGame: number;
+  concededPerGame: number;
+  cleanSheets: number;
+  form: string[];
+}
+
+export interface TeamStatsResponse {
+  stats: TeamStatEntry[];
+}
+
+export async function fetchTeamStats(leagueId: string): Promise<TeamStatsResponse> {
+  const cacheKey = `teamStats:${leagueId}`;
+  const cached = getCache<TeamStatsResponse>(cacheKey);
+  if (cached) return cached;
+
+  const standings = await fetchStandings(leagueId);
+  const firstGroup = standings[0];
+  if (!firstGroup) return { stats: [] };
+
+  const stats: TeamStatEntry[] = firstGroup.entries.map((e) => ({
+    teamId: e.teamId,
+    teamName: e.teamName,
+    teamShortName: e.teamShortName,
+    teamLogoUrl: e.teamLogoUrl,
+    played: e.played,
+    won: e.won,
+    drawn: e.drawn,
+    lost: e.lost,
+    goalsFor: e.goalsFor,
+    goalsAgainst: e.goalsAgainst,
+    goalDiff: e.goalsFor - e.goalsAgainst,
+    points: e.points,
+    winRate: e.played > 0 ? Math.round((e.won / e.played) * 100) : 0,
+    goalsPerGame: e.played > 0 ? Number((e.goalsFor / e.played).toFixed(2)) : 0,
+    concededPerGame: e.played > 0 ? Number((e.goalsAgainst / e.played).toFixed(2)) : 0,
+    cleanSheets: 0,
+    form: e.form ?? [],
+  }));
+
+  const result: TeamStatsResponse = { stats };
+  setCache(cacheKey, result, 5 * 60_000);
+  return result;
+}
+
 // ---------- Team name → Promiedos ID resolver ----------
 // Hardcoded map of ESPN team IDs → Promiedos team IDs for Argentine football.
 // This ensures team pages always show full Promiedos data.

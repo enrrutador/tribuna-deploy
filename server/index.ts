@@ -15,6 +15,8 @@ import {
   fetchStandings,
   fetchScorers,
   fetchTeamData,
+  fetchRounds,
+  fetchTeamStats,
   cacheStats,
   type CategoryId,
 } from "./lib/espn.js";
@@ -251,6 +253,36 @@ app.get("/api/tournaments/:slug/scorers", async (req, res) => {
     }
     const scorers = await fetchScorers(leagueId);
     res.json({ scorers });
+  } catch (err) {
+    console.error(err);
+    res.status(500).json({ error: "Error interno" });
+  }
+});
+
+app.get("/api/tournaments/:slug/rounds", async (req, res) => {
+  try {
+    const leagueId = SLUG_TO_LEAGUE[req.params.slug];
+    if (!leagueId) {
+      res.status(404).json({ error: "Torneo no encontrado" });
+      return;
+    }
+    const rounds = await fetchRounds(leagueId);
+    res.json({ rounds });
+  } catch (err) {
+    console.error(err);
+    res.status(500).json({ error: "Error interno" });
+  }
+});
+
+app.get("/api/tournaments/:slug/team-stats", async (req, res) => {
+  try {
+    const leagueId = SLUG_TO_LEAGUE[req.params.slug];
+    if (!leagueId) {
+      res.status(404).json({ error: "Torneo no encontrado" });
+      return;
+    }
+    const teamStats = await fetchTeamStats(leagueId);
+    res.json(teamStats);
   } catch (err) {
     console.error(err);
     res.status(500).json({ error: "Error interno" });

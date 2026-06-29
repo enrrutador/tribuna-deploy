@@ -1,6 +1,6 @@
 import { useQuery, keepPreviousData } from "@tanstack/react-query";
 import { api } from "./api";
-import type { MatchStatus } from "./types";
+import type { MatchStatus, RoundInfo, TeamStatEntry } from "./types";
 
 // ---------- Query keys ----------
 export const qk = {
@@ -14,6 +14,8 @@ export const qk = {
   fixtures: (slug: string) => ["fixtures", slug] as const,
   standings: (slug: string) => ["standings", slug] as const,
   scorers: (slug: string) => ["scorers", slug] as const,
+  rounds: (slug: string) => ["rounds", slug] as const,
+  teamStats: (slug: string) => ["teamStats", slug] as const,
   team: (id: string) => ["team", id] as const,
 };
 
@@ -107,6 +109,24 @@ export function useTournamentScorers(slug: string | undefined) {
     enabled: !!slug,
     queryFn: () => api.getTournamentScorers(slug!),
     staleTime: 10 * 60_000,
+  });
+}
+
+export function useTournamentRounds(slug: string | undefined) {
+  return useQuery({
+    queryKey: qk.rounds(slug ?? ""),
+    enabled: !!slug,
+    queryFn: () => api.getTournamentRounds(slug!),
+    staleTime: 10 * 60_000,
+  });
+}
+
+export function useTournamentTeamStats(slug: string | undefined) {
+  return useQuery({
+    queryKey: qk.teamStats(slug ?? ""),
+    enabled: !!slug,
+    queryFn: () => api.getTournamentTeamStats(slug!),
+    staleTime: 5 * 60_000,
   });
 }
 

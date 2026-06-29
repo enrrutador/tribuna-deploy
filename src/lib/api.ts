@@ -8,6 +8,8 @@ import type {
   TournamentInfo,
   MatchStatus,
   TeamDetail,
+  RoundInfo,
+  TeamStatEntry,
 } from "./types";
 
 /** Base API URL — proxied to Express in dev, same-origin in prod. */
@@ -56,6 +58,10 @@ export const api = {
     request<{ groups: StandingsGroup[] }>(`/tournaments/${slug}/standings`),
   getTournamentScorers: (slug: string) =>
     request<{ scorers: ScorerEntry[] }>(`/tournaments/${slug}/scorers`),
+  getTournamentRounds: (slug: string) =>
+    request<{ rounds: RoundInfo[] }>(`/tournaments/${slug}/rounds`),
+  getTournamentTeamStats: (slug: string) =>
+    request<{ stats: TeamStatEntry[] }>(`/tournaments/${slug}/team-stats`),
 
   // Teams
   getTeam: (id: string) => request<TeamDetail>(`/teams/${id}`),
