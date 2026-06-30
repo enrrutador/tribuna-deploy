@@ -408,6 +408,26 @@ export async function fetchLeagueMatches(leagueId: string, utcDateStr?: string, 
           if (promiedosMatches.length > 0) {
             const normalize = (s: string) =>
               s.normalize("NFD").replace(/[\u0300-\u036f]/g, "").toLowerCase().replace(/[^a-z0-9]/g, "").trim();
+
+            // Enrich existing matches with round info from Promiedos
+            const roundMap = new Map<string, string>();
+            for (const pm of promiedosMatches) {
+              if (pm.round) {
+                const sig = `${normalize(pm.homeTeam.name)}|${normalize(pm.awayTeam.name)}`;
+                const sigReverse = `${normalize(pm.awayTeam.name)}|${normalize(pm.homeTeam.name)}`;
+                roundMap.set(sig, pm.round);
+                roundMap.set(sigReverse, pm.round);
+              }
+            }
+            for (const m of matches) {
+              if (!m.round) {
+                const sig = `${normalize(m.homeTeam.name)}|${normalize(m.awayTeam.name)}`;
+                const inferred = roundMap.get(sig);
+                if (inferred) m.round = inferred;
+              }
+            }
+
+            // Also add matches from Promiedos that don't exist in ESPN
             const existing = new Set(
               matches.map((m) => `${normalize(m.homeTeam.name)}|${normalize(m.awayTeam.name)}`),
             );
