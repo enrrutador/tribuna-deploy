@@ -1,13 +1,10 @@
-import { useState } from "react";
 import { Trophy, CalendarDays, BarChart3, Target, Users, Info, Swords } from "lucide-react";
 import { Tabs } from "@/components/ui/Tabs";
 import { PageLoader } from "@/components/ui/PageLoader";
 import { ErrorState } from "@/components/ui/ErrorState";
 import { SectionTitle } from "@/components/ui/SectionTitle";
-import MatchGroupCard from "@/components/domain/MatchGroupCard";
 import StandingsTable from "@/components/domain/StandingsTable";
 import ScorersList from "@/components/domain/ScorersList";
-import RoundSelector from "@/components/domain/RoundSelector";
 import TeamGrid from "@/components/domain/TeamGrid";
 import TeamStats from "@/components/domain/TeamStats";
 import BracketView from "@/components/domain/BracketView";
@@ -17,20 +14,16 @@ import {
   useTournamentFixtures,
   useTournamentStandings,
   useTournamentScorers,
-  useTournamentRounds,
   useTournamentTeamStats,
   useTournamentBrackets,
 } from "@/lib/hooks";
 
 export default function Tournament({ slug }: { slug: string }) {
-  const [selectedRound, setSelectedRound] = useState<string | null>(null);
-
   const { data: tournament, isLoading: loadingT } = useTournament(slug);
-  const { data: fixtures, isLoading: loadingF, error: errorF, refetch: refetchF } = useTournamentFixtures(slug, selectedRound);
+  const { isLoading: loadingF, error: errorF, refetch: refetchF } = useTournamentFixtures(slug);
   const { data: standings, isLoading: loadingS } = useTournamentStandings(slug);
   const { data: scorersData, isLoading: loadingSc } = useTournamentScorers(slug);
-  const { data: roundsData } = useTournamentRounds(slug);
-  const { data: teamStatsData, isLoading: loadingTS } = useTournamentTeamStats(slug);
+  const { data: teamStatsData } = useTournamentTeamStats(slug);
   const { data: bracketsData, isLoading: loadingBr } = useTournamentBrackets(slug);
 
   if (loadingT) return <PageLoader label="Cargando torneo" />;
@@ -38,65 +31,25 @@ export default function Tournament({ slug }: { slug: string }) {
     return <ErrorState title="Torneo no encontrado" description="El torneo que buscás no existe." />;
   }
 
-  const rounds = roundsData?.rounds ?? [];
-  const selectedRoundObj = rounds.find((r) => r.key === selectedRound);
-
-  // Filter fixtures by selected round if available
-  const filteredGroups = (() => {
-    if (!fixtures?.groups) return [];
-    if (!selectedRound || selectedRound === "latest" || rounds.length === 0) return fixtures.groups;
-
-    // Filter matches by round name (e.g., "Fecha 1")
-    const selectedRoundObj = rounds.find((r) => r.key === selectedRound);
-    if (!selectedRoundObj) return fixtures.groups;
-
-    return fixtures.groups.map((group) => ({
-      ...group,
-      matches: group.matches.filter((m) => {
-        const matchRound = m.round?.toLowerCase() ?? "";
-        const roundName = selectedRoundObj.name.toLowerCase();
-        return matchRound.includes(roundName) || matchRound.includes(selectedRound);
-      }),
-    })).filter((group) => group.matches.length > 0);
-  })();
-
   const tabs = [
     {
       id: "fixtures",
       label: "Fechas",
       icon: <CalendarDays size={16} />,
-      content: (
+      content: loadingF ? (
         <div className="space-y-3">
-          {rounds.length > 0 && (
-            <RoundSelector
-              rounds={rounds}
-              selectedKey={selectedRound}
-              onChange={setSelectedRound}
-            />
-          )}
-          <FixtureGrid slug={slug} round={selectedRound} />
-          {loadingF ? (
-            <div className="space-y-3">
-              {[1, 2].map((i) => (
-                <div key={i} className="glass rounded-2xl p-5 space-y-3">
-                  <div className="shimmer h-4 w-1/3 rounded" />
-                  <div className="shimmer h-12 w-full rounded" />
-                  <div className="shimmer h-12 w-full rounded" />
-                </div>
-              ))}
+          {[1, 2].map((i) => (
+            <div key={i} className="glass rounded-2xl p-5 space-y-3">
+              <div className="shimmer h-4 w-1/3 rounded" />
+              <div className="shimmer h-12 w-full rounded" />
+              <div className="shimmer h-12 w-full rounded" />
             </div>
-          ) : errorF ? (
-            <ErrorState onRetry={() => refetchF()} />
-          ) : filteredGroups.length > 0 ? (
-            filteredGroups.map((group, i) => (
-              <MatchGroupCard key={group.tournament.id} group={group} index={i} />
-            ))
-          ) : (
-            <div className="glass rounded-2xl p-10 text-center text-sm text-[var(--color-slate-400)]">
-              No hay partidos disponibles para este torneo.
-            </div>
-          )}
+          ))}
         </div>
+      ) : errorF ? (
+        <ErrorState onRetry={() => refetchF()} />
+      ) : (
+        <FixtureGrid slug={slug} />
       ),
     },
     {
