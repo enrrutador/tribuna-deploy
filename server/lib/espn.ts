@@ -651,6 +651,17 @@ export async function fetchStandings(leagueId: string): Promise<StandingsGroup[]
         };
       });
 
+      // Sort by points desc, then goal difference desc, then goals for desc
+      parsed.sort((a, b) => {
+        if (b.points !== a.points) return b.points - a.points;
+        const gdA = parseInt(a.goalDiff) || 0;
+        const gdB = parseInt(b.goalDiff) || 0;
+        if (gdB !== gdA) return gdB - gdA;
+        return b.goalsFor - a.goalsFor;
+      });
+      // Re-assign positions after sort
+      parsed.forEach((e, i) => { e.position = i + 1; });
+
       groups.push({ name: groupName, entries: parsed });
     }
 

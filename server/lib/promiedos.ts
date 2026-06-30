@@ -599,6 +599,17 @@ export async function fetchPromiedosStandings(leagueId: string): Promise<Standin
           };
         });
 
+        // Sort by points desc, then goal difference desc, then goals for desc
+        entries.sort((a, b) => {
+          if (b.points !== a.points) return b.points - a.points;
+          const gdA = parseInt(a.goalDiff) || 0;
+          const gdB = parseInt(b.goalDiff) || 0;
+          if (gdB !== gdA) return gdB - gdA;
+          return b.goalsFor - a.goalsFor;
+        });
+        // Re-assign positions after sort
+        entries.forEach((e, i) => { e.position = i + 1; });
+
         groups.push({
           name: table.name || tg.name,
           entries,
