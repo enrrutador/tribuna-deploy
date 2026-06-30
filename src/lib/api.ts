@@ -13,6 +13,8 @@ import type {
   MatchSummaryData,
   TeamScheduleEvent,
   BracketData,
+  TrendingResponse,
+  TrendingTopic,
 } from "./types";
 
 /** Base API URL — proxied to Express in dev, same-origin in prod. */
@@ -82,6 +84,10 @@ export const api = {
   // News
   getNews: (category?: string) =>
     request<{ news: NewsItem[]; count: number }>(`/news${category ? `?category=${encodeURIComponent(category)}` : ""}`),
+
+  // Trending
+  getTrending: () => request<TrendingResponse>("/trending"),
+  getTrendingTopic: (slug: string) => request<TrendingTopic>(`/trending/${slug}`),
 };
 
 export { ApiError };

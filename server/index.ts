@@ -23,6 +23,7 @@ import {
 } from "./lib/espn.js";
 import { fetchBrackets } from "./lib/promiedos.js";
 import { fetchNews } from "./lib/news.js";
+import { fetchTrending, fetchTrendingTopic, trendingToRSS } from "./lib/trending.js";
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
@@ -398,6 +399,117 @@ app.get("/api/news", async (req, res) => {
   } catch (err) {
     console.error(err);
     res.status(500).json({ error: "Error interno" });
+  }
+});
+
+// ---------- Trending ----------
+app.get("/api/trending", async (_req, res) => {
+  try {
+    const trending = await fetchTrending();
+    res.json(trending);
+  } catch (err) {
+    console.error(err);
+    res.status(500).json({ error: "Error interno" });
+  }
+});
+
+app.get("/api/trending/rss", async (_req, res) => {
+  try {
+    const trending = await fetchTrending();
+    const rss = trendingToRSS(trending.items);
+    res.set("Content-Type", "application/rss+xml; charset=utf-8");
+    res.send(rss);
+  } catch (err) {
+    console.error(err);
+    res.status(500).send("Error");
+  }
+});
+
+app.get("/api/trending/:slug", async (req, res) => {
+  try {
+    const topic = await fetchTrendingTopic(req.params.slug);
+    if (!topic) return res.status(404).json({ error: "Tema no encontrado" });
+    res.json(topic);
+  } catch (err) {
+    console.error(err);
+    res.status(500).json({ error: "Error interno" });
+  }
+});
+
+// ---------- Dynamic Sitemap ----------
+app.get("/sitemap.xml", async (_req, res) => {
+  try {
+    const trending = await fetchTrending();
+    const base = "https://tribuna-8b8r.onrender.com";
+
+    const tournamentSlugs = Object.keys(
+      // eslint-disable-next-line @typescript-eslint/no-require-imports
+      await import("./lib/espn.js").then((m) => m.LEAGUES)
+    );
+
+    let xml = `<?xml version="1.0" encoding="UTF-8"?>
+<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">
+  <url>
+    <loc>${base}/</loc>
+    <changefreq>always</changefreq>
+    <priority>1.0</priority>
+  </url>
+  <url>
+    <loc>${base}/live</loc>
+    <changefreq>always</changefreq>
+    <priority>0.9</priority>
+  </url>
+  <url>
+    <loc>${base}/tournaments</loc>
+    <changefreq>daily</changefreq>
+    <priority>0.8</priority>
+  </url>
+  <url>
+    <loc>${base}/tendencias</loc>
+    <changefreq>hourly</changefreq>
+    <priority>0.8</priority>
+  </url>`;
+
+    for (const slug of tournamentSlugs) {
+      xml += `
+  <url>
+    <loc>${base}/tournament/${slug}</loc>
+    <changefreq>daily</changefreq>
+    <priority>0.7</priority>
+  </url>`;
+    }
+
+    for (const topic of trending.topics.slice(0, 20)) {
+      xml += `
+  <url>
+    <loc>${base}/tendencias/${topic.slug}</loc>
+    <changefreq>daily</changefreq>
+    <priority>0.5</priority>
+  </url>`;
+    }
+
+    xml += "\n</urlset>";
+
+    res.set("Content-Type", "application/xml; charset=utf-8");
+    res.set("Cache-Control", "public, max-age=3600");
+    res.send(xml);
+  } catch (err) {
+    console.error(err);
+    res.status(500).send("Error generating sitemap");
+  }
+});
+
+// ---------- RSS Feed ----------
+app.get("/feed.xml", async (_req, res) => {
+  try {
+    const trending = await fetchTrending();
+    const rss = trendingToRSS(trending.items);
+    res.set("Content-Type", "application/rss+xml; charset=utf-8");
+    res.set("Cache-Control", "public, max-age=1800");
+    res.send(rss);
+  } catch (err) {
+    console.error(err);
+    res.status(500).send("Error");
   }
 });
 

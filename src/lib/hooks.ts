@@ -179,3 +179,21 @@ export function useTournamentBrackets(slug: string | undefined) {
     staleTime: 5 * 60_000,
   });
 }
+
+// ---------- Trending ----------
+export function useTrending() {
+  return useQuery({
+    queryKey: ["trending"],
+    queryFn: api.getTrending,
+    staleTime: 30 * 60_000,
+  });
+}
+
+export function useTrendingTopic(slug: string | undefined) {
+  return useQuery({
+    queryKey: ["trending", slug ?? ""],
+    enabled: !!slug,
+    queryFn: () => api.getTrendingTopic(slug!),
+    staleTime: 30 * 60_000,
+  });
+}

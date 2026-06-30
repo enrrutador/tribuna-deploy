@@ -306,6 +306,37 @@ export interface TeamScheduleEvent {
   score: string | null;
 }
 
+// ========== Trending ==========
+
+export interface TrendingItem {
+  id: string;
+  title: string;
+  description: string;
+  url: string;
+  imageUrl: string | null;
+  source: "google_trends" | "google_news" | "youtube" | "reddit";
+  publishedAt: string;
+  publishedAgo: string | null;
+  score: number;
+  tags: string[];
+  meta: Record<string, string>;
+}
+
+export interface TrendingTopic {
+  slug: string;
+  title: string;
+  description: string;
+  count: number;
+  sources: string[];
+  topItems: TrendingItem[];
+}
+
+export interface TrendingResponse {
+  topics: TrendingTopic[];
+  items: TrendingItem[];
+  lastUpdated: string;
+}
+
 // ========== Brackets (knockout rounds) ==========
 
 export interface BracketTeam {

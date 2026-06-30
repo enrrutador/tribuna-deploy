@@ -10,6 +10,8 @@ import Tournaments from "@/pages/Tournaments";
 import MatchDetail from "@/pages/MatchDetail";
 import Team from "@/pages/Team";
 import Favorites from "@/pages/Favorites";
+import Trending from "@/pages/Trending";
+import TrendingDetail from "@/pages/TrendingDetail";
 import NotFound from "@/pages/NotFound";
 
 function AnimatedRoutes() {
@@ -46,6 +48,10 @@ function AnimatedRoutes() {
           {(params) => <Team id={params.id} />}
         </Route>
         <Route path="/favorites" component={Favorites} />
+        <Route path="/tendencias" component={Trending} />
+        <Route path="/tendencias/:slug">
+          {(params) => <TrendingDetail slug={params.slug} />}
+        </Route>
         <Route component={NotFound} />
       </Switch>
     </motion.div>
