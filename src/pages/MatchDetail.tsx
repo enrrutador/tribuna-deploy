@@ -2,7 +2,7 @@ import { Link } from "wouter";
 import { motion } from "framer-motion";
 import {
   ArrowLeft, MapPin, Radio, Tv, Clock,
-  ChevronRight, Users, History,
+  ChevronRight, Users, History, ArrowLeftRight,
 } from "lucide-react";
 import { useMatch, useMatchSummary } from "@/lib/hooks";
 import { formatKickoff, parseMinute } from "@/lib/utils";
@@ -16,6 +16,7 @@ import { ErrorState } from "@/components/ui/ErrorState";
 import { SectionTitle } from "@/components/ui/SectionTitle";
 import EventTimeline from "@/components/domain/EventTimeline";
 import StatsChart from "@/components/domain/StatsChart";
+import TeamCompare from "@/components/domain/TeamCompare";
 
 function Lineup({ teamName, formation, players }: { teamName: string; formation: string | null; players: { name: string; jerseyNumber: string | null; position: string | null; starter: boolean }[] }) {
   const starters = players.filter((p) => p.starter);
@@ -213,6 +214,18 @@ export default function MatchDetail({ id: matchId }: { id: string }) {
         </div>
 
         <div className="space-y-5">
+          {/* Team Compare */}
+          <SectionTitle icon={<ArrowLeftRight size={18} />} title="Comparación" accent="cyan" />
+          <TeamCompare
+            homeTeamId={match.homeTeam.id}
+            homeTeamName={match.homeTeam.shortName || match.homeTeam.name}
+            homeTeamLogo={match.homeTeam.logoUrl}
+            awayTeamId={match.awayTeam.id}
+            awayTeamName={match.awayTeam.shortName || match.awayTeam.name}
+            awayTeamLogo={match.awayTeam.logoUrl}
+            matchId={matchId}
+          />
+
           {/* H2H */}
           {hasH2H && (
             <>

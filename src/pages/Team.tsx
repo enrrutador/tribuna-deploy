@@ -9,6 +9,7 @@ import { Button } from "@/components/ui/Button";
 import { PageLoader } from "@/components/ui/PageLoader";
 import { EmptyState } from "@/components/ui/EmptyState";
 import { SectionTitle } from "@/components/ui/SectionTitle";
+import TeamCalendar from "@/components/domain/TeamCalendar";
 
 export default function Team({ id: teamId }: { id: string }) {
   const { toggleTeam, isFavoriteTeam } = useFavorites();
@@ -183,6 +184,11 @@ export default function Team({ id: teamId }: { id: string }) {
           </GlassCard>
         </motion.div>
       )}
+
+      {/* Calendario */}
+      <motion.div initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.35 }}>
+        <TeamCalendar teamId={teamId} teamName={team.name} />
+      </motion.div>
 
       {/* Últimos partidos */}
       {team.lastMatches.length > 0 && (

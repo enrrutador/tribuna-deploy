@@ -11,6 +11,7 @@ import RoundSelector from "@/components/domain/RoundSelector";
 import TeamGrid from "@/components/domain/TeamGrid";
 import TeamStats from "@/components/domain/TeamStats";
 import BracketView from "@/components/domain/BracketView";
+import FixtureGrid from "@/components/domain/FixtureGrid";
 import {
   useTournament,
   useTournamentFixtures,
@@ -73,6 +74,7 @@ export default function Tournament({ slug }: { slug: string }) {
               onChange={setSelectedRound}
             />
           )}
+          <FixtureGrid slug={slug} round={selectedRound} />
           {loadingF ? (
             <div className="space-y-3">
               {[1, 2].map((i) => (
