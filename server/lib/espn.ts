@@ -12,6 +12,7 @@ import {
   fetchPromiedosStandings as promiedosStandings,
   fetchPromiedosScorers as promiedosScorers,
   fetchPromiedosTeam as promiedosTeam,
+  fetchPromiedosMatchesByDate as promiedosMatchesByDate,
   PROMIEDOS_LEAGUE_MAP,
   PROMIEDOS_BASE,
   PROMIEDOS_HEADERS,
@@ -405,29 +406,67 @@ export async function fetchLeagueMatches(leagueId: string, utcDateStr?: string, 
             leagueInfo.category,
             leagueInfo.flag,
           );
+
+          const normalize = (s: string) =>
+            s.normalize("NFD").replace(/[\u0300-\u036f]/g, "").toLowerCase().replace(/[^a-z0-9]/g, "").trim();
+          const normalizeBase = (s: string) => {
+            const base = s.replace(/\s*\(.*?\)\s*/g, "").trim();
+            return normalize(base);
+          };
+
+          // Enrich existing matches with round info from Promiedos
+          const roundMap = new Map<string, string>();
+          const addRoundSig = (h: string, a: string, round: string) => {
+            roundMap.set(`${normalize(h)}|${normalize(a)}`, round);
+            roundMap.set(`${normalize(a)}|${normalize(h)}`, round);
+            roundMap.set(`${normalizeBase(h)}|${normalizeBase(a)}`, round);
+            roundMap.set(`${normalizeBase(a)}|${normalizeBase(h)}`, round);
+          };
+
+          for (const pm of promiedosMatches) {
+            if (pm.round) addRoundSig(pm.homeTeam.name, pm.awayTeam.name, pm.round);
+          }
+
+          // Find matches still missing round info → fetch their specific dates from Promiedos
+          const missingDates = new Set<string>();
+          for (const m of matches) {
+            if (!m.round && m.kickoffTime) {
+              // Convert ISO to DD-MM-YYYY for Promiedos
+              const d = new Date(m.kickoffTime);
+              const argD = new Date(d.getTime() - 3 * 60 * 60 * 1000);
+              const dd = String(argD.getUTCDate()).padStart(2, "0");
+              const mm = String(argD.getUTCMonth() + 1).padStart(2, "0");
+              const yyyy = argD.getUTCFullYear();
+              missingDates.add(`${dd}-${mm}-${yyyy}`);
+            }
+          }
+
+          for (const dateStr of missingDates) {
+            try {
+              const pmForDate = await promiedosMatchesByDate(
+                dateStr, leagueId, leagueInfo.name, leagueInfo.slug, leagueInfo.category, leagueInfo.flag
+              );
+              for (const pm of pmForDate) {
+                if (pm.round) addRoundSig(pm.homeTeam.name, pm.awayTeam.name, pm.round);
+              }
+            } catch {
+              // Skip failed dates
+            }
+          }
+
+          // Apply round enrichment
+          for (const m of matches) {
+            if (!m.round) {
+              const sig = `${normalize(m.homeTeam.name)}|${normalize(m.awayTeam.name)}`;
+              const sigBase = `${normalizeBase(m.homeTeam.name)}|${normalizeBase(m.awayTeam.name)}`;
+              const sigBaseRev = `${normalizeBase(m.awayTeam.name)}|${normalizeBase(m.homeTeam.name)}`;
+              const inferred = roundMap.get(sig) ?? roundMap.get(sigBase) ?? roundMap.get(sigBaseRev);
+              if (inferred) m.round = inferred;
+            }
+          }
+
+          // Also add matches from Promiedos that don't exist in ESPN
           if (promiedosMatches.length > 0) {
-            const normalize = (s: string) =>
-              s.normalize("NFD").replace(/[\u0300-\u036f]/g, "").toLowerCase().replace(/[^a-z0-9]/g, "").trim();
-
-            // Enrich existing matches with round info from Promiedos
-            const roundMap = new Map<string, string>();
-            for (const pm of promiedosMatches) {
-              if (pm.round) {
-                const sig = `${normalize(pm.homeTeam.name)}|${normalize(pm.awayTeam.name)}`;
-                const sigReverse = `${normalize(pm.awayTeam.name)}|${normalize(pm.homeTeam.name)}`;
-                roundMap.set(sig, pm.round);
-                roundMap.set(sigReverse, pm.round);
-              }
-            }
-            for (const m of matches) {
-              if (!m.round) {
-                const sig = `${normalize(m.homeTeam.name)}|${normalize(m.awayTeam.name)}`;
-                const inferred = roundMap.get(sig);
-                if (inferred) m.round = inferred;
-              }
-            }
-
-            // Also add matches from Promiedos that don't exist in ESPN
             const existing = new Set(
               matches.map((m) => `${normalize(m.homeTeam.name)}|${normalize(m.awayTeam.name)}`),
             );
