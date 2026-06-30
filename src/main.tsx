@@ -2,6 +2,7 @@ import { StrictMode, Component } from "react";
 import type { ReactNode, ErrorInfo } from "react";
 import { createRoot } from "react-dom/client";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
+import { HelmetProvider } from "react-helmet-async";
 import App from "./App";
 import "./styles/index.css";
 
@@ -68,7 +69,9 @@ createRoot(root).render(
   <StrictMode>
     <AppErrorBoundary>
       <QueryClientProvider client={queryClient}>
-        <App />
+        <HelmetProvider>
+          <App />
+        </HelmetProvider>
       </QueryClientProvider>
     </AppErrorBoundary>
   </StrictMode>

@@ -1,6 +1,6 @@
 import { Link, useLocation } from "wouter";
 import { motion } from "framer-motion";
-import { Activity, Radio, Star, Trophy, Search } from "lucide-react";
+import { Activity, Radio, Star, Trophy, Search, TrendingUp } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { useLiveMatches } from "@/lib/hooks";
 import { Badge } from "@/components/ui/Badge";
@@ -8,6 +8,7 @@ import { Badge } from "@/components/ui/Badge";
 const items = [
   { href: "/", label: "Inicio", icon: Activity },
   { href: "/live", label: "Vivo", icon: Radio },
+  { href: "/tendencias", label: "Trending", icon: TrendingUp },
   { href: "/favorites", label: "Favoritos", icon: Star },
   { href: "/tournaments", label: "Torneos", icon: Trophy },
 ];

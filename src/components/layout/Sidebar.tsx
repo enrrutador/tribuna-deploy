@@ -1,5 +1,6 @@
 import { Link } from "wouter";
 import { motion } from "framer-motion";
+import { TrendingUp } from "lucide-react";
 import TournamentList from "@/components/domain/TournamentList";
 
 export default function Sidebar() {
@@ -17,6 +18,17 @@ export default function Sidebar() {
               <span className="relative inline-flex h-2 w-2 rounded-full bg-[var(--color-live)]" />
             </span>
             En Vivo
+          </motion.div>
+        </Link>
+
+        {/* Trending shortcut */}
+        <Link href="/tendencias">
+          <motion.div
+            whileHover={{ x: 3 }}
+            className="mb-3 flex items-center gap-2.5 rounded-xl bg-lime-400/8 border border-lime-400/15 px-3 py-2.5 text-sm font-semibold text-lime-400 transition-all hover:bg-lime-400/15"
+          >
+            <TrendingUp className="h-4 w-4" />
+            Tendencias
           </motion.div>
         </Link>
 

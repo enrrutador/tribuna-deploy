@@ -1,5 +1,6 @@
 import { Link } from "wouter";
 import { motion } from "framer-motion";
+import { Helmet } from "react-helmet-async";
 import { TrendingUp, ExternalLink, ArrowLeft, MessageSquare, Play, Newspaper, Search } from "lucide-react";
 import { useTrendingTopic } from "@/lib/hooks";
 import type { TrendingItem } from "@/lib/types";
@@ -98,51 +99,67 @@ export default function TrendingDetail({ slug }: { slug: string }) {
   }
 
   return (
-    <div className="space-y-6">
-      <div>
-        <Link href="/tendencias" className="mb-3 flex items-center gap-1.5 text-xs text-white/50 hover:text-white">
-          <ArrowLeft className="h-3 w-3" /> Tendencias
-        </Link>
-        <div className="flex items-center gap-3">
-          <TrendingUp className="h-6 w-6 text-lime-400" />
-          <div>
-            <h1 className="text-xl font-bold text-white capitalize">{topic.title}</h1>
-            <p className="text-xs text-white/50">
-              {topic.count} resultados de {topic.sources.length} fuentes
-            </p>
+    <>
+      <Helmet>
+        <title>Tribuna — {topic.title} | Tendencias de Futbol</title>
+        <meta
+          name="description"
+          content={`Lo mas buscado sobre ${topic.title}: noticias, videos y discusiones de futbol en tiempo real.`}
+        />
+        <meta property="og:title" content={`Tribuna — ${topic.title}`} />
+        <meta
+          property="og:description"
+          content={`Lo mas buscado sobre ${topic.title} en el futbol argentino y mundial.`}
+        />
+        <meta property="og:url" content={`https://tribuna-8b8r.onrender.com/tendencias/${topic.slug}`} />
+        <link rel="canonical" href={`https://tribuna-8b8r.onrender.com/tendencias/${topic.slug}`} />
+      </Helmet>
+      <div className="space-y-6">
+        <div>
+          <Link href="/tendencias" className="mb-3 flex items-center gap-1.5 text-xs text-white/50 hover:text-white">
+            <ArrowLeft className="h-3 w-3" /> Tendencias
+          </Link>
+          <div className="flex items-center gap-3">
+            <TrendingUp className="h-6 w-6 text-lime-400" />
+            <div>
+              <h1 className="text-xl font-bold text-white capitalize">{topic.title}</h1>
+              <p className="text-xs text-white/50">
+                {topic.count} resultados de {topic.sources.length} fuentes
+              </p>
+            </div>
+          </div>
+
+          <div className="mt-3 flex gap-1.5">
+            {topic.sources.map((src) => {
+              const cfg = sourceConfig[src];
+              if (!cfg) return null;
+              const Icon = cfg.icon;
+              return (
+                <span
+                  key={src}
+                  className={`flex items-center gap-1 rounded-full bg-white/5 px-2 py-0.5 text-[10px] font-medium ${cfg.color}`}
+                >
+                  <Icon className="h-3 w-3" />
+                  {cfg.label}
+                </span>
+              );
+            })}
           </div>
         </div>
 
-        <div className="mt-3 flex gap-1.5">
-          {topic.sources.map((src) => {
-            const cfg = sourceConfig[src];
-            if (!cfg) return null;
-            const Icon = cfg.icon;
-            return (
-              <span
-                key={src}
-                className={`flex items-center gap-1 rounded-full bg-white/5 px-2 py-0.5 text-[10px] font-medium ${cfg.color}`}
-              >
-                <Icon className="h-3 w-3" />
-                {cfg.label}
-              </span>
-            );
-          })}
+        <div className="space-y-3">
+          {topic.topItems.map((item, i) => (
+            <motion.div
+              key={item.id}
+              initial={{ opacity: 0, y: 10 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ delay: i * 0.05 }}
+            >
+              <ItemCard item={item} />
+            </motion.div>
+          ))}
         </div>
       </div>
-
-      <div className="space-y-3">
-        {topic.topItems.map((item, i) => (
-          <motion.div
-            key={item.id}
-            initial={{ opacity: 0, y: 10 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ delay: i * 0.05 }}
-          >
-            <ItemCard item={item} />
-          </motion.div>
-        ))}
-      </div>
-    </div>
+    </>
   );
 }
