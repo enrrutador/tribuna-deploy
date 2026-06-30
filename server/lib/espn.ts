@@ -428,29 +428,37 @@ export async function fetchLeagueMatches(leagueId: string, utcDateStr?: string, 
           }
 
           // Find matches still missing round info → fetch their specific dates from Promiedos
+          // Cap at 5 dates to avoid excessive API calls for large tournaments
           const missingDates = new Set<string>();
           for (const m of matches) {
             if (!m.round && m.kickoffTime) {
-              // Convert ISO to DD-MM-YYYY for Promiedos
               const d = new Date(m.kickoffTime);
               const argD = new Date(d.getTime() - 3 * 60 * 60 * 1000);
               const dd = String(argD.getUTCDate()).padStart(2, "0");
               const mm = String(argD.getUTCMonth() + 1).padStart(2, "0");
               const yyyy = argD.getUTCFullYear();
               missingDates.add(`${dd}-${mm}-${yyyy}`);
+              if (missingDates.size >= 5) break;
             }
           }
 
-          for (const dateStr of missingDates) {
-            try {
-              const pmForDate = await promiedosMatchesByDate(
-                dateStr, leagueId, leagueInfo.name, leagueInfo.slug, leagueInfo.category, leagueInfo.flag
-              );
-              for (const pm of pmForDate) {
-                if (pm.round) addRoundSig(pm.homeTeam.name, pm.awayTeam.name, pm.round);
+          // Fetch missing dates in parallel (max 5 concurrent)
+          const dateArr = [...missingDates];
+          for (let i = 0; i < dateArr.length; i += 5) {
+            const batch = dateArr.slice(i, i + 5);
+            const results = await Promise.allSettled(
+              batch.map((dateStr) =>
+                promiedosMatchesByDate(
+                  dateStr, leagueId, leagueInfo.name, leagueInfo.slug, leagueInfo.category, leagueInfo.flag
+                )
+              )
+            );
+            for (const r of results) {
+              if (r.status === "fulfilled") {
+                for (const pm of r.value) {
+                  if (pm.round) addRoundSig(pm.homeTeam.name, pm.awayTeam.name, pm.round);
+                }
               }
-            } catch {
-              // Skip failed dates
             }
           }
 
