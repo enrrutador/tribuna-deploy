@@ -50,7 +50,7 @@ function StatCard({ title, stats, getValue, format = "number", accent = "lime", 
           >
             <span className="w-5 text-center text-xs font-bold text-[var(--color-slate-500)]">{i + 1}</span>
             {entry.teamLogoUrl && (
-              <img src={entry.teamLogoUrl} alt="" className="h-5 w-5 object-contain" loading="lazy" />
+              <img src={entry.teamLogoUrl} alt="" className="h-5 w-5 object-contain" loading="lazy" width="20" height="20" />
             )}
             <span className="flex-1 truncate text-xs font-semibold text-[var(--color-slate-200)]">
               {entry.teamShortName || entry.teamName}

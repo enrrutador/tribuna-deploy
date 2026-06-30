@@ -35,7 +35,7 @@ export default function PlayerCard({ name, jerseyNumber, position, team, teamLog
           size === "sm" ? "w-10 h-10" : "w-12 h-12"
         )}>
           {teamLogo ? (
-            <img src={teamLogo} alt="" className="w-6 h-6 object-contain" />
+            <img src={teamLogo} alt="" className="w-6 h-6 object-contain" width="24" height="24" />
           ) : (
             <span className="text-lg font-black text-[var(--color-lime-400)]/60">{jerseyNumber ?? "?"}</span>
           )}

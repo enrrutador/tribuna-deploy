@@ -55,13 +55,6 @@ class AppErrorBoundary extends Component<{ children: ReactNode }, { error: Error
   }
 }
 
-// Preconnect to Google Fonts for faster typography load
-const fontLink = document.createElement("link");
-fontLink.rel = "stylesheet";
-fontLink.href =
-  "https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=Space+Grotesk:wght@500;600;700&family=JetBrains+Mono:wght@400;600&display=swap";
-document.head.appendChild(fontLink);
-
 const root = document.getElementById("root");
 if (!root) throw new Error("Root element #root not found");
 

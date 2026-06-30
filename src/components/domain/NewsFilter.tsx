@@ -72,7 +72,7 @@ export default function NewsFilter({ initialCategory }: NewsFilterProps) {
               <GlassCard variant="soft" className="p-3 hover:border-[var(--color-lime-400)]/20 transition-all">
                 <div className="flex gap-3">
                   {item.imageUrl && (
-                    <img src={item.imageUrl} alt="" className="w-16 h-12 object-cover rounded-lg flex-shrink-0" loading="lazy" />
+                    <img src={item.imageUrl} alt="" className="w-16 h-12 object-cover rounded-lg flex-shrink-0" loading="lazy" width="64" height="48" />
                   )}
                   <div className="flex-1 min-w-0">
                     <p className="text-xs font-bold text-[var(--color-slate-100)] group-hover:text-[var(--color-lime-400)] transition-colors line-clamp-2">{item.title}</p>

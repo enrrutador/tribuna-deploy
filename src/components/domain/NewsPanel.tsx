@@ -48,6 +48,7 @@ function NewsCard({ item, index }: { item: NewsItem; index: number }) {
                   alt={item.title}
                   loading="lazy"
                   className="h-full w-full object-cover transition-transform duration-500 group-hover:scale-105"
+                  width="300" height="200"
                   onError={(e) => {
                     (e.target as HTMLImageElement).style.display = "none";
                   }}

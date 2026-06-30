@@ -115,7 +115,7 @@ export default function Favorites() {
                           style={{ backgroundColor: team.color, color: "#fff" }}
                         >
                           {team.logoUrl ? (
-                            <img src={team.logoUrl} alt={team.name} className="h-full w-full object-contain p-0.5" />
+                            <img src={team.logoUrl} alt={team.name} className="h-full w-full object-contain p-0.5" width="100" height="100" />
                           ) : (
                             team.shortName.slice(0, 3).toUpperCase()
                           )}

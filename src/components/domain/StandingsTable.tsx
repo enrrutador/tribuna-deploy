@@ -88,6 +88,7 @@ function GroupTable({ group, maxRows }: { group: StandingsGroup; maxRows?: numbe
                             alt={entry.teamName}
                             className="h-5 w-5 object-contain"
                             loading="lazy"
+                            width="20" height="20"
                           />
                         )}
                         <span className="font-semibold text-[var(--color-slate-200)] group-hover:text-white truncate max-w-[140px]">

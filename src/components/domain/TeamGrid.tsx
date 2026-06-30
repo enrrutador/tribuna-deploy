@@ -44,6 +44,7 @@ export default function TeamGrid({ groups }: TeamGridProps) {
                             alt={entry.teamName}
                             className="h-full w-full object-contain p-1"
                             loading="lazy"
+                            width="100" height="100"
                             onError={(e) => {
                               (e.target as HTMLImageElement).style.display = "none";
                             }}

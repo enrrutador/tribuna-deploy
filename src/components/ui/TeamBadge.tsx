@@ -33,6 +33,7 @@ export function TeamBadge({ team, size = "md", className }: TeamBadgeProps) {
           alt={team.name}
           loading="lazy"
           className="h-full w-full object-contain p-0.5"
+          width="100" height="100"
           onError={(e) => {
             (e.target as HTMLImageElement).style.display = "none";
           }}

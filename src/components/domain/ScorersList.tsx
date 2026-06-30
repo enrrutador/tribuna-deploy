@@ -63,7 +63,7 @@ export default function ScorersList({ scorers, maxRows }: ScorersListProps) {
               {/* Player avatar placeholder */}
               <div className="w-9 h-9 rounded-full bg-gradient-to-br from-[var(--color-lime-400)]/10 to-[var(--color-cyan-400)]/10 flex items-center justify-center flex-shrink-0 ring-1 ring-white/5">
                 {scorer.teamLogoUrl ? (
-                  <img src={scorer.teamLogoUrl} alt="" className="w-5 h-5 object-contain" />
+                  <img src={scorer.teamLogoUrl} alt="" className="w-5 h-5 object-contain" width="20" height="20" />
                 ) : (
                   <Target size={14} className="text-[var(--color-lime-400)]/40" />
                 )}
