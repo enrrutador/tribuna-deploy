@@ -3,6 +3,7 @@ import Header from "./Header";
 import Sidebar from "./Sidebar";
 import Footer from "./Footer";
 import BottomNav from "./BottomNav";
+import ScrollToTop from "@/components/ui/ScrollToTop";
 
 interface LayoutProps {
   children: ReactNode;
@@ -22,6 +23,7 @@ export default function Layout({ children }: LayoutProps) {
         </main>
       </div>
       <BottomNav />
+      <ScrollToTop />
     </div>
   );
 }
