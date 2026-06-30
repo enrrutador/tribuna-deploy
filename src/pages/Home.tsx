@@ -2,9 +2,10 @@ import { useState, useMemo } from "react";
 import { motion } from "framer-motion";
 import { format, isToday } from "date-fns";
 import { es } from "date-fns/locale";
-import { Radio, RefreshCw } from "lucide-react";
-import { useTodayMatches, useLiveMatches, useMatches, useTournaments } from "@/lib/hooks";
-import { timeAgo } from "@/lib/utils";
+import { Radio, RefreshCw, Star } from "lucide-react";
+import { useTodayMatches, useLiveMatches, useMatches } from "@/lib/hooks";
+import { useFavorites } from "@/lib/favorites";
+import { timeAgo, cn } from "@/lib/utils";
 import { Button } from "@/components/ui/Button";
 import { Badge } from "@/components/ui/Badge";
 import { CardSkeleton } from "@/components/ui/Skeleton";
@@ -14,15 +15,24 @@ import { DateNav } from "@/components/ui/DateNav";
 import { Segmented } from "@/components/ui/Segmented";
 import MatchGroupCard from "@/components/domain/MatchGroupCard";
 import NewsPanel from "@/components/domain/NewsPanel";
+import type { CategoryId } from "@/lib/types";
 
 type Filter = "Todos" | "Vivo" | "Finalizados" | "Próximos";
 
+const CATEGORIES: { id: CategoryId | "all"; label: string }[] = [
+  { id: "all", label: "Todos" },
+  { id: "argentina", label: "Argentina" },
+  { id: "sudamerica", label: "Sudamérica" },
+  { id: "world", label: "Mundial" },
+];
+
 export default function Home() {
   const [filter, setFilter] = useState<Filter>("Todos");
+  const [category, setCategory] = useState<CategoryId | "all">("all");
   const [date, setDate] = useState(new Date());
   const dateStr = format(date, "yyyy-MM-dd");
   const todayDate = isToday(date);
-  const isDefaultView = todayDate && filter === "Todos";
+  const isDefaultView = todayDate && filter === "Todos" && category === "all";
 
   const {
     data: todayData,
@@ -49,28 +59,46 @@ export default function Home() {
   );
 
   const { data: liveData } = useLiveMatches();
+  const { teams: favTeams } = useFavorites();
+  const favTeamIds = useMemo(() => new Set(favTeams.map((t) => t.id)), [favTeams]);
 
   const isLoading = isDefaultView ? loadingToday : loadingFiltered;
   const isFetching = isDefaultView ? fetchingToday : fetchingFiltered;
   const dataUpdatedAt = isDefaultView ? updatedToday : updatedFiltered;
-  const data = isDefaultView ? todayData : filteredData;
+  const rawData = isDefaultView ? todayData : filteredData;
   const error = isDefaultView ? errorToday : errorFiltered;
   const refetch = isDefaultView ? refetchToday : refetchFiltered;
 
   const liveCount = liveData?.totalMatches ?? 0;
+
+  // Filter by category + sort favorites first
   const sortedGroups = useMemo(() => {
-    const g = [...(data?.groups ?? [])];
-    return g.sort((a, b) =>
-      a.tournament.slug === "mundial-2026" ? -1 :
-      b.tournament.slug === "mundial-2026" ? 1 : 0
-    );
-  }, [data]);
-  const totalMatches = data?.totalMatches ?? 0;
+    let groups = [...(rawData?.groups ?? [])];
+
+    // Category filter
+    if (category !== "all") {
+      groups = groups.filter((g) => g.tournament.category === category);
+    }
+
+    // Sort: groups with favorite team matches first, then mundial first, then rest
+    groups.sort((a, b) => {
+      const aHasFav = a.matches.some((m) => favTeamIds.has(m.homeTeam.id) || favTeamIds.has(m.awayTeam.id));
+      const bHasFav = b.matches.some((m) => favTeamIds.has(m.homeTeam.id) || favTeamIds.has(m.awayTeam.id));
+      if (aHasFav !== bHasFav) return aHasFav ? -1 : 1;
+      if (a.tournament.slug === "mundial-2026") return -1;
+      if (b.tournament.slug === "mundial-2026") return 1;
+      return 0;
+    });
+
+    return groups;
+  }, [rawData, category, favTeamIds]);
+
+  const totalMatches = rawData?.totalMatches ?? 0;
   const updatedAgo = dataUpdatedAt && !isLoading ? timeAgo(dataUpdatedAt) : null;
 
   return (
     <div className="space-y-4">
-      {/* Compact hero banner */}
+      {/* Hero banner */}
       <motion.div
         initial={{ opacity: 0, y: -8 }}
         animate={{ opacity: 1, y: 0 }}
@@ -105,11 +133,11 @@ export default function Home() {
         </div>
       </motion.div>
 
-      {/* ====== TWO-COLUMN LAYOUT: Matches + News ====== */}
+      {/* TWO-COLUMN LAYOUT */}
       <div className="flex gap-5 items-start">
         {/* LEFT: Matches */}
         <div className="flex-1 min-w-0 space-y-4">
-          {/* Controls row: Date + Filters */}
+          {/* Controls: Date + Filters */}
           <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
             <DateNav date={date} onChange={setDate} />
             <Segmented
@@ -122,6 +150,30 @@ export default function Home() {
               value={filter}
               onChange={setFilter}
             />
+          </div>
+
+          {/* Category pills */}
+          <div className="flex items-center gap-2 overflow-x-auto pb-1 scrollbar-none">
+            {CATEGORIES.map((cat) => (
+              <button
+                key={cat.id}
+                onClick={() => setCategory(cat.id)}
+                className={cn(
+                  "flex-shrink-0 px-3 py-1 rounded-full text-[10px] font-bold transition-all",
+                  category === cat.id
+                    ? "bg-[var(--color-lime-400)] text-black"
+                    : "bg-white/[0.04] text-[var(--color-slate-400)] hover:bg-white/[0.08]"
+                )}
+              >
+                {cat.label}
+              </button>
+            ))}
+            {favTeamIds.size > 0 && (
+              <div className="flex items-center gap-1 flex-shrink-0 text-[10px] text-[var(--color-warn)]">
+                <Star size={10} className="fill-current" />
+                <span className="font-bold">{favTeamIds.size} fav</span>
+              </div>
+            )}
           </div>
 
           {/* Refresh + meta */}
@@ -141,13 +193,7 @@ export default function Home() {
                   )}
                 </span>
               )}
-              <Button
-                variant="ghost"
-                size="icon"
-                className="h-7 w-7"
-                onClick={() => refetch()}
-                disabled={isFetching}
-              >
+              <Button variant="ghost" size="icon" className="h-7 w-7" onClick={() => refetch()} disabled={isFetching}>
                 <RefreshCw size={14} className={isFetching ? "animate-spin" : ""} />
               </Button>
             </div>
@@ -169,18 +215,13 @@ export default function Home() {
           ) : (
             <div className="space-y-3">
               {sortedGroups.map((group, i) => (
-                <MatchGroupCard
-                  key={group.tournament.id}
-                  group={group}
-                  showLink
-                  index={i}
-                />
+                <MatchGroupCard key={group.tournament.id} group={group} showLink index={i} />
               ))}
             </div>
           )}
         </div>
 
-        {/* RIGHT: News panel (sticky) */}
+        {/* RIGHT: News */}
         <div className="hidden xl:block w-[340px] shrink-0">
           <div className="sticky top-20">
             <NewsPanel />

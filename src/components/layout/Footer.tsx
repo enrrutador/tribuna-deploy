@@ -103,6 +103,12 @@ export default function Footer() {
               </h4>
               <ul className="space-y-2">
                 <li>
+                  <a href="/sitemap.xml" target="_blank" className="flex items-center gap-1.5 text-sm text-[var(--color-slate-500)] transition-colors hover:text-[var(--color-lime-400)]">
+                    <ExternalLink size={10} className="shrink-0 text-[var(--color-slate-600)]" />
+                    Sitemap
+                  </a>
+                </li>
+                <li>
                   <span className="flex items-start gap-1.5 text-sm text-[var(--color-slate-500)]">
                     <Shield size={10} className="mt-1 shrink-0 text-[var(--color-slate-600)]" />
                     Datos de terceros obtenidos de fuentes públicas.

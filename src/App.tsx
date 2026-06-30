@@ -1,6 +1,8 @@
+import { useEffect } from "react";
 import { Switch, Route, useLocation } from "wouter";
 import { motion } from "framer-motion";
 import Layout from "@/components/layout/Layout";
+import ErrorBoundary from "@/components/layout/ErrorBoundary";
 import Home from "@/pages/Home";
 import Live from "@/pages/Live";
 import Tournament from "@/pages/Tournament";
@@ -12,6 +14,10 @@ import NotFound from "@/pages/NotFound";
 
 function AnimatedRoutes() {
   const [location] = useLocation();
+
+  useEffect(() => {
+    window.scrollTo({ top: 0, behavior: "instant" });
+  }, [location]);
 
   // NOTE: We intentionally avoid <AnimatePresence mode="wait"> here.
   // With framer-motion v11 + React 19, the exit animation can fail to
@@ -48,8 +54,10 @@ function AnimatedRoutes() {
 
 export default function App() {
   return (
-    <Layout>
-      <AnimatedRoutes />
-    </Layout>
+    <ErrorBoundary>
+      <Layout>
+        <AnimatedRoutes />
+      </Layout>
+    </ErrorBoundary>
   );
 }

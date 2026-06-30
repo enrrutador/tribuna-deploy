@@ -1,5 +1,6 @@
 import { Link } from "wouter";
 import { motion } from "framer-motion";
+import { Target } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { formatKickoff } from "@/lib/utils";
 import { useFavorites } from "@/lib/favorites";
@@ -115,6 +116,14 @@ export default function MatchRow({ match, compact = false }: MatchRowProps) {
         {(homeFav || awayFav) && (
           <div className="absolute right-2 top-1">
             <span className="text-[9px] text-[var(--color-warn)]/60">★</span>
+          </div>
+        )}
+
+        {/* Finished match: high-scoring highlight */}
+        {isFinished && (match.homeScore ?? 0) + (match.awayScore ?? 0) >= 3 && (
+          <div className="absolute bottom-0.5 right-3 flex items-center gap-0.5 text-[8px] text-[var(--color-lime-400)]/50">
+            <Target size={8} />
+            <span>Ver goles</span>
           </div>
         )}
       </motion.div>

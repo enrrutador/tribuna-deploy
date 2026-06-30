@@ -1,4 +1,5 @@
 import { motion } from "framer-motion";
+import { Link } from "wouter";
 import { GlassCard } from "@/components/ui/GlassCard";
 import { cn } from "@/lib/utils";
 import type { BracketData, BracketMatch, BracketStage } from "@/lib/types";
@@ -11,8 +12,8 @@ function MatchCard({ match }: { match: BracketMatch }) {
   const isFinished = match.status === "finished";
   const isLive = match.status === "live";
 
-  return (
-    <div className="w-[160px] flex-shrink-0 rounded-lg border border-white/[0.06] bg-white/[0.02] overflow-hidden text-[10px]">
+  const card = (
+    <div className="w-[160px] flex-shrink-0 rounded-lg border border-white/[0.06] bg-white/[0.02] overflow-hidden text-[10px] hover:border-[var(--color-lime-400)]/20 transition-colors cursor-pointer">
       {/* Status */}
       <div
         className={cn(
@@ -59,6 +60,8 @@ function MatchCard({ match }: { match: BracketMatch }) {
       )}
     </div>
   );
+
+  return <Link href={`/match/${match.id}`}>{card}</Link>;
 }
 
 export default function BracketView({ data }: BracketViewProps) {
