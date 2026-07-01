@@ -6,12 +6,13 @@ import { cn } from "@/lib/utils";
 import { useTournaments } from "@/lib/hooks";
 import { useFavorites } from "@/lib/favorites";
 import { Spinner } from "@/components/ui/Spinner";
+import { useTranslation } from "@/lib/i18n";
 
-const CATEGORY_META: { id: string; label: string; accent: string }[] = [
-  { id: "destacados", label: "Destacados", accent: "lime" },
-  { id: "argentina", label: "Argentina", accent: "cyan" },
-  { id: "sudamerica", label: "Sudamérica", accent: "magenta" },
-  { id: "world", label: "Mundo", accent: "cyan" },
+const CATEGORY_META: { id: string; labelKey: string; accent: string }[] = [
+  { id: "destacados", labelKey: "Destacados", accent: "lime" },
+  { id: "argentina", labelKey: "Argentina", accent: "cyan" },
+  { id: "sudamerica", labelKey: "Sudamérica", accent: "magenta" },
+  { id: "world", labelKey: "Mundo", accent: "cyan" },
 ];
 
 const ACCENT_TEXT: Record<string, string> = {
@@ -43,6 +44,7 @@ interface TournamentListProps {
  * LeaguesDrawer so both render the exact same navigation.
  */
 export default function TournamentList({ onNavigate }: TournamentListProps) {
+  const { t } = useTranslation();
   const [collapsed, setCollapsed] = useState<Record<string, boolean>>({});
   const [location] = useLocation();
   const { data: tournaments, isLoading } = useTournaments();
@@ -82,7 +84,7 @@ export default function TournamentList({ onNavigate }: TournamentListProps) {
               )}
             >
               {isOpen ? <ChevronDown size={12} /> : <ChevronRight size={12} />}
-              {cat.label}
+              {t(cat.labelKey)}
               <span className={cn("ml-auto h-1.5 w-1.5 rounded-full", accent.dot)} />
             </button>
 

@@ -13,8 +13,11 @@ import { cn } from "@/lib/utils";
 import { useLiveMatches } from "@/lib/hooks";
 import { Badge } from "@/components/ui/Badge";
 import LeaguesDrawer from "./LeaguesDrawer";
+import LanguageSwitcher from "@/components/ui/LanguageSwitcher";
+import { useTranslation } from "@/lib/i18n";
 
 export default function Header() {
+  const { t } = useTranslation();
   const [drawerOpen, setDrawerOpen] = useState(false);
   const [searchOpen, setSearchOpen] = useState(false);
   const [searchQuery, setSearchQuery] = useState("");
@@ -27,9 +30,9 @@ export default function Header() {
   const isHome = location === "/";
 
   const navItems = [
-    { href: "/", label: "Inicio", icon: <Activity size={18} /> },
-    { href: "/live", label: "En Vivo", icon: <Radio size={18} />, badge: liveCount },
-    { href: "/favorites", label: "Favoritos", icon: <Star size={18} /> },
+    { href: "/", label: t("Inicio"), icon: <Activity size={18} /> },
+    { href: "/live", label: t("En Vivo"), icon: <Radio size={18} />, badge: liveCount },
+    { href: "/favorites", label: t("Favoritos"), icon: <Star size={18} /> },
   ];
 
   return (
@@ -50,7 +53,7 @@ export default function Header() {
                   <span className="relative inline-flex h-2 w-2 rounded-full bg-[var(--color-live)]" />
                 </span>
                 <span className="text-[11px] font-bold uppercase tracking-wider text-[var(--color-live)]">
-                  {liveCount} EN VIVO
+                  {liveCount} {t("EN VIVO")}
                 </span>
               </div>
               <div className="relative overflow-hidden flex-1">
@@ -96,7 +99,7 @@ export default function Header() {
                 TRIBUNA
               </span>
               <span className="text-[9px] font-semibold uppercase tracking-[0.2em] text-[var(--color-slate-500)] leading-none mt-0.5">
-                Fútbol en vivo
+                {t("Fútbol en vivo")}
               </span>
             </div>
           </Link>
@@ -136,6 +139,9 @@ export default function Header() {
 
           {/* Right actions */}
           <div className="flex items-center gap-2">
+            {/* Language switcher */}
+            <LanguageSwitcher />
+
             {/* Search toggle */}
             <button
               onClick={() => setSearchOpen(!searchOpen)}
@@ -153,7 +159,7 @@ export default function Header() {
             <motion.button
               onClick={() => setDrawerOpen((v) => !v)}
               whileTap={{ scale: 0.92 }}
-              aria-label="Ver torneos"
+              aria-label={t("Ver torneos")}
               className={cn(
                 "relative flex h-9 w-9 items-center justify-center overflow-hidden rounded-lg transition-shadow",
                 "bg-gradient-to-br from-[var(--color-lime-500)] via-[var(--color-cyan-500)] to-[var(--color-magenta-500)] animate-gradient",
@@ -202,7 +208,7 @@ export default function Header() {
                 <Search size={16} className="text-[var(--color-slate-500)] shrink-0" />
                 <input
                   type="text"
-                  placeholder="Buscar equipo, torneo o jugador…"
+                  placeholder={t("Buscar equipo, torneo o jugador")}
                   value={searchQuery}
                   onChange={(e) => setSearchQuery(e.target.value)}
                   className="flex-1 bg-transparent text-sm text-[var(--color-slate-100)] placeholder:text-[var(--color-slate-500)] outline-none"
@@ -213,7 +219,7 @@ export default function Header() {
                     onClick={() => setSearchQuery("")}
                     className="text-[11px] text-[var(--color-lime-400)] hover:text-[var(--color-lime-300)]"
                   >
-                    Limpiar
+                    {t("Limpiar")}
                   </button>
                 )}
               </div>

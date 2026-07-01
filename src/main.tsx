@@ -3,6 +3,7 @@ import type { ReactNode, ErrorInfo } from "react";
 import { createRoot } from "react-dom/client";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { HelmetProvider } from "react-helmet-async";
+import { I18nProvider } from "@/lib/i18n";
 import App from "./App";
 import "./styles/index.css";
 
@@ -63,7 +64,9 @@ createRoot(root).render(
     <AppErrorBoundary>
       <QueryClientProvider client={queryClient}>
         <HelmetProvider>
-          <App />
+          <I18nProvider>
+            <App />
+          </I18nProvider>
         </HelmetProvider>
       </QueryClientProvider>
     </AppErrorBoundary>
