@@ -10,6 +10,7 @@ import { Spinner } from "@/components/ui/Spinner";
 import { Button } from "@/components/ui/Button";
 import { fallbackNews } from "@/lib/newsFallback";
 import type { NewsItem } from "@/lib/types";
+import { useTranslation } from "@/lib/i18n";
 
 interface NewsPanelProps {
   className?: string;
@@ -17,6 +18,7 @@ interface NewsPanelProps {
 
 /** Single news card with image and glassmorphism overlay. */
 function NewsCard({ item, index }: { item: NewsItem; index: number }) {
+const { t } = useTranslation();
   const isFeatured = index === 0;
 
   return (
@@ -109,6 +111,7 @@ function NewsCard({ item, index }: { item: NewsItem; index: number }) {
 }
 
 export default function NewsPanel({ className }: NewsPanelProps) {
+  const { t } = useTranslation();
   const { data, isLoading, error, refetch, isFetching } = useNews();
   const [useFallback, setUseFallback] = useState(false);
 
@@ -207,7 +210,7 @@ export default function NewsPanel({ className }: NewsPanelProps) {
       {news.length > 0 && !isFallbackMode && (
         <div className="flex items-center gap-2 flex-wrap">
           <Flame size={12} className="text-[var(--color-magenta-400)]" />
-          <span className="text-[10px] font-bold uppercase tracking-wider text-[var(--color-slate-500)]">En tendencia:</span>
+          <span className="text-[10px] font-bold uppercase tracking-wider text-[var(--color-slate-500)]">{t("En tendencia:")}</span>
           {news.slice(0, 3).map((item) => (
             <a
               key={item.id}

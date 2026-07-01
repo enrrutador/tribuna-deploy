@@ -1,6 +1,7 @@
 import type { ReactNode } from "react";
 import { motion } from "framer-motion";
 import { cn } from "@/lib/utils";
+import { useTranslation } from "@/lib/i18n";
 
 interface SectionTitleProps {
   icon?: ReactNode;
@@ -25,6 +26,7 @@ export function SectionTitle({
   className,
   accent = "lime",
 }: SectionTitleProps) {
+const { t } = useTranslation();
   return (
     <div className={cn("flex items-end justify-between gap-4", className)}>
       <motion.div

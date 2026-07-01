@@ -17,8 +17,10 @@ import { SectionTitle } from "@/components/ui/SectionTitle";
 import EventTimeline from "@/components/domain/EventTimeline";
 import StatsChart from "@/components/domain/StatsChart";
 import TeamCompare from "@/components/domain/TeamCompare";
+import { useTranslation } from "@/lib/i18n";
 
 function Lineup({ teamName, formation, players }: { teamName: string; formation: string | null; players: { name: string; jerseyNumber: string | null; position: string | null; starter: boolean }[] }) {
+const { t } = useTranslation();
   const starters = players.filter((p) => p.starter);
   const subs = players.filter((p) => !p.starter);
 
@@ -40,7 +42,7 @@ function Lineup({ teamName, formation, players }: { teamName: string; formation:
       {subs.length > 0 && (
         <>
           <div className="mt-3 mb-2 border-t border-white/5 pt-2">
-            <span className="text-[10px] font-bold uppercase tracking-wider text-[var(--color-slate-500)]">Suplentes</span>
+            <span className="text-[10px] font-bold uppercase tracking-wider text-[var(--color-slate-500)]">{t("Suplentes")}</span>
           </div>
           <div className="space-y-1">
             {subs.map((p, i) => (
@@ -57,10 +59,11 @@ function Lineup({ teamName, formation, players }: { teamName: string; formation:
 }
 
 function HeadToHead({ games }: { games: { date: string; homeTeam: string; awayTeam: string; homeScore: number; awayScore: number; competition: string }[] }) {
+  const { t } = useTranslation();
   if (games.length === 0) return null;
   return (
     <GlassCard variant="soft" className="p-4">
-      <h4 className="text-sm font-bold text-[var(--color-slate-100)] mb-3">Historial entre ambos</h4>
+      <h4 className="text-sm font-bold text-[var(--color-slate-100)] mb-3">{t("Historial entre ambos")}</h4>
       <div className="space-y-2">
         {games.slice(0, 5).map((g, i) => (
           <div key={i} className="flex items-center gap-2 text-xs py-1.5 border-b border-white/[0.03] last:border-0">
@@ -96,6 +99,7 @@ function BoxscoreBar({ label, home, away }: { label: string; home: string; away:
 }
 
 export default function MatchDetail({ id: matchId }: { id: string }) {
+  const { t } = useTranslation();
   const { data: match, isLoading, error, refetch } = useMatch(matchId);
   const { data: summary } = useMatchSummary(matchId);
 
@@ -114,7 +118,7 @@ export default function MatchDetail({ id: matchId }: { id: string }) {
     <div className="space-y-5">
       {/* Breadcrumb */}
       <nav className="flex items-center gap-1.5 text-xs text-[var(--color-slate-500)]">
-        <Link href="/" className="hover:text-[var(--color-lime-400)] transition-colors">Inicio</Link>
+        <Link href="/" className="hover:text-[var(--color-lime-400)] transition-colors">{t("Inicio")}</Link>
         <ChevronRight size={12} />
         <Link href={`/tournament/${match.tournamentSlug}`} className="hover:text-[var(--color-lime-400)] transition-colors truncate max-w-[160px]">
           {match.tournamentName}
@@ -151,7 +155,7 @@ export default function MatchDetail({ id: matchId }: { id: string }) {
                     <Badge tone="live" pulse>{match.minute ?? "LIVE"}</Badge>
                   </motion.div>
                 )}
-                {isFinished && <Badge tone="default" className="text-[var(--color-slate-400)]">Final</Badge>}
+                {isFinished && <Badge tone="default" className="text-[var(--color-slate-400)]">{t("Final")}</Badge>}
                 {!isLive && !isFinished && (
                   <div className="flex items-center gap-1.5 text-[var(--color-cyan-400)]">
                     <Clock size={12} />
@@ -182,7 +186,7 @@ export default function MatchDetail({ id: matchId }: { id: string }) {
       {/* Boxscore stats (possession, shots, etc.) */}
       {hasBoxscore && (
         <GlassCard variant="soft" className="p-4 space-y-3">
-          <h4 className="text-sm font-bold text-[var(--color-slate-100)] mb-2">Estadísticas del partido</h4>
+          <h4 className="text-sm font-bold text-[var(--color-slate-100)] mb-2">{t("Estadísticas del partido")}</h4>
           <BoxscoreBar label="Posesión" home={summary.boxscore!.home.possession} away={summary.boxscore!.away.possession} />
           <BoxscoreBar label="Tiros" home={summary.boxscore!.home.shots} away={summary.boxscore!.away.shots} />
           <BoxscoreBar label="Tiros al arco" home={summary.boxscore!.home.shotsOnTarget} away={summary.boxscore!.away.shotsOnTarget} />
@@ -236,12 +240,12 @@ export default function MatchDetail({ id: matchId }: { id: string }) {
 
           {/* Quick info */}
           <GlassCard variant="soft" className="p-4 space-y-3">
-            <h4 className="text-sm font-bold text-[var(--color-slate-100)]">Info del partido</h4>
+            <h4 className="text-sm font-bold text-[var(--color-slate-100)]">{t("Info del partido")}</h4>
             <div className="space-y-2 text-xs text-[var(--color-slate-400)]">
-              {match.round && <div className="flex justify-between"><span>Ronda</span><span className="font-semibold text-[var(--color-slate-200)]">{match.round}</span></div>}
-              {match.venue && <div className="flex justify-between"><span>Estadio</span><span className="font-semibold text-[var(--color-slate-200)] truncate max-w-[140px]">{match.venue}</span></div>}
-              <div className="flex justify-between"><span>Estado</span><Badge tone={isLive ? "live" : isFinished ? "default" : "cyan"} className="text-[9px]">{isLive ? "En vivo" : isFinished ? "Finalizado" : "Por jugar"}</Badge></div>
-              <div className="flex justify-between"><span>Horario</span><span className="font-semibold text-[var(--color-cyan-400)]">{formatKickoff(match.kickoffTime)} hs</span></div>
+              {match.round && <div className="flex justify-between"><span>{t("Ronda")}</span><span className="font-semibold text-[var(--color-slate-200)]">{match.round}</span></div>}
+              {match.venue && <div className="flex justify-between"><span>{t("Estadio")}</span><span className="font-semibold text-[var(--color-slate-200)] truncate max-w-[140px]">{match.venue}</span></div>}
+              <div className="flex justify-between"><span>{t("Estado")}</span><Badge tone={isLive ? "live" : isFinished ? "default" : "cyan"} className="text-[9px]">{isLive ? "En vivo" : isFinished ? "Finalizado" : "Por jugar"}</Badge></div>
+              <div className="flex justify-between"><span>{t("Horario")}</span><span className="font-semibold text-[var(--color-cyan-400)]">{formatKickoff(match.kickoffTime)} hs</span></div>
             </div>
           </GlassCard>
         </div>

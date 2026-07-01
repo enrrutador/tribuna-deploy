@@ -1,6 +1,7 @@
 import { forwardRef } from "react";
 import type { HTMLAttributes } from "react";
 import { cn } from "@/lib/utils";
+import { useTranslation } from "@/lib/i18n";
 
 interface GlassCardProps extends HTMLAttributes<HTMLDivElement> {
   variant?: "default" | "soft" | "strong";

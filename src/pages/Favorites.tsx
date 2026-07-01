@@ -13,8 +13,10 @@ import { Link } from "wouter";
 import { cn } from "@/lib/utils";
 import { formatKickoff } from "@/lib/utils";
 import type { Match } from "@/lib/types";
+import { useTranslation } from "@/lib/i18n";
 
 export default function Favorites() {
+const { t } = useTranslation();
   const { teams, tournaments, toggleTeam, toggleTournament, clear } = useFavorites();
   const { data: todayData } = useTodayMatches();
   const { data: liveData } = useLiveMatches();
@@ -159,7 +161,7 @@ export default function Favorites() {
                         <div className="flex-1 min-w-0">
                           <p className="text-sm font-bold text-[var(--color-slate-100)] capitalize">{slug.replace(/-/g, " ")}</p>
                         </div>
-                        <Badge tone="cyan" className="text-[9px]">Ver</Badge>
+                        <Badge tone="cyan" className="text-[9px]">{t("Ver")}</Badge>
                         <button
                           onClick={(e) => { e.preventDefault(); toggleTournament(slug); }}
                           className="text-[var(--color-warn)] hover:text-[var(--color-warn)]/70 transition-colors"

@@ -5,6 +5,7 @@ import { Badge } from "@/components/ui/Badge";
 import { TeamBadge } from "@/components/ui/TeamBadge";
 import { cn } from "@/lib/utils";
 import type { ScorerEntry } from "@/lib/types";
+import { useTranslation } from "@/lib/i18n";
 
 interface ScorersListProps {
   scorers: ScorerEntry[];
@@ -12,6 +13,7 @@ interface ScorersListProps {
 }
 
 export default function ScorersList({ scorers, maxRows }: ScorersListProps) {
+const { t } = useTranslation();
   const rows = maxRows ? scorers.slice(0, maxRows) : scorers;
 
   if (rows.length === 0) {

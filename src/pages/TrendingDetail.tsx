@@ -4,6 +4,7 @@ import { Helmet } from "react-helmet-async";
 import { TrendingUp, ExternalLink, ArrowLeft, MessageSquare, Play, Newspaper, Search } from "lucide-react";
 import { useTrendingTopic } from "@/lib/hooks";
 import type { TrendingItem } from "@/lib/types";
+import { useTranslation } from "@/lib/i18n";
 
 const sourceConfig: Record<string, { icon: typeof TrendingUp; color: string; label: string }> = {
   google_trends: { icon: Search, color: "text-blue-400", label: "Google Trends" },
@@ -13,6 +14,7 @@ const sourceConfig: Record<string, { icon: typeof TrendingUp; color: string; lab
 };
 
 function ItemCard({ item }: { item: TrendingItem }) {
+const { t } = useTranslation();
   const cfg = sourceConfig[item.source];
   const Icon = cfg?.icon ?? TrendingUp;
 
@@ -71,6 +73,7 @@ function ItemCard({ item }: { item: TrendingItem }) {
 }
 
 export default function TrendingDetail({ slug }: { slug: string }) {
+  const { t } = useTranslation();
   const { data: topic, isLoading } = useTrendingTopic(slug);
 
   if (isLoading) {
@@ -92,7 +95,7 @@ export default function TrendingDetail({ slug }: { slug: string }) {
         </Link>
         <div className="rounded-2xl border border-white/5 bg-white/5 p-8 text-center">
           <TrendingUp className="mx-auto mb-3 h-8 w-8 text-white/20" />
-          <p className="text-sm text-white/50">Tema no encontrado</p>
+          <p className="text-sm text-white/50">{t("Tema no encontrado")}</p>
         </div>
       </div>
     );

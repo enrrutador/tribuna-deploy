@@ -3,6 +3,7 @@ import { motion } from "framer-motion";
 import { TrendingUp, ExternalLink, MessageSquare, Play, Newspaper, Search } from "lucide-react";
 import { cn } from "@/lib/utils";
 import type { TrendingItem } from "@/lib/types";
+import { useTranslation } from "@/lib/i18n";
 
 interface TrendingCardProps {
   title: string;
@@ -21,6 +22,7 @@ const sourceConfig: Record<string, { icon: typeof TrendingUp; color: string; lab
 };
 
 export default function TrendingCard({ title, slug, count, sources, items, className }: TrendingCardProps) {
+const { t } = useTranslation();
   return (
     <Link href={`/tendencias/${slug}`}>
       <motion.div

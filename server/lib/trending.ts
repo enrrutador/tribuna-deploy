@@ -186,7 +186,7 @@ async function fetchGoogleNews(): Promise<TrendingItem[]> {
 // ---------- Source: YouTube RSS ----------
 
 const YOUTUBE_CHANNELS = [
-  { id: "UCaFvHfKtFPCqjzKpJ1y0nKw", name: "TyC Sports" },
+  { id: "UC72ZaBKI-Bo5fjmWEYonhJw", name: "TyC Sports" },
 ];
 
 async function fetchYouTube(): Promise<TrendingItem[]> {
@@ -222,65 +222,51 @@ async function fetchYouTube(): Promise<TrendingItem[]> {
   return results;
 }
 
-// ---------- Source: Reddit JSON ----------
+// ---------- Source: RSS News Feeds ----------
 
-const SUBREDDITS = ["soccer", "argentina", "fulbo", "BocaJuniors", "RiverPlate"];
+const RSS_FEEDS: { name: string; url: string }[] = [
+  { name: "Olé", url: "https://www.ole.com.ar/rss/" },
+  { name: "Marca", url: "https://e00-marca.uecdn.es/rss/futbol.xml" },
+  { name: "ESPN Argentina", url: "https://www.espn.com.ar/espn/rss/futbol" },
+];
 
-async function fetchReddit(): Promise<TrendingItem[]> {
+async function fetchRSSFeeds(): Promise<TrendingItem[]> {
   const results: TrendingItem[] = [];
 
-  for (const sub of SUBREDDITS) {
+  for (const feed of RSS_FEEDS) {
     try {
-      const r = await fetch(`https://www.reddit.com/r/${sub}/hot.json?limit=10`, {
-        headers: { "User-Agent": "Tribuna/1.0 (football aggregator)" },
-        signal: AbortSignal.timeout(8000),
-      });
-      if (!r.ok) continue;
-      const data = (await r.json()) as {
-        data?: { children?: { data: Record<string, unknown> }[] };
-      };
-      const children = data.data?.children ?? [];
-
-      for (let i = 0; i < Math.min(8, children.length); i++) {
-        const post = children[i].data;
-        if (!post || post.stickied) continue;
-
-        const title = String(post.title ?? "");
-        if (!isFootballRelated(title, String(post.selftext ?? ""))) continue;
-
-        const created =
-          typeof post.created_utc === "number"
-            ? new Date(post.created_utc * 1000).toISOString()
-            : new Date().toISOString();
-
+      const parsed = await parser.parseURL(feed.url);
+      for (let i = 0; i < Math.min(15, parsed.items.length); i++) {
+        const item = parsed.items[i];
+        const title = item.title ?? "Sin título";
+        const desc = item.contentSnippet ?? item.content ?? "";
+        if (!isFootballRelated(title, desc)) continue;
         results.push({
-          id: `reddit-${sub}-${i}`,
+          id: `rss-${feed.name}-${i}`,
           title,
-          description: String(post.selftext ?? "").slice(0, 200),
-          url: `https://reddit.com${post.permalink ?? ""}`,
-          imageUrl:
-            typeof post.thumbnail === "string" && post.thumbnail.startsWith("http")
-              ? String(post.thumbnail)
-              : null,
-          source: "reddit" as const,
-          publishedAt: created,
-          publishedAgo: relativeAgo(created),
-          score: typeof post.score === "number" ? post.score : 0,
-          tags: extractFootballKeywords(title),
-          meta: {
-            subreddit: sub,
-            author: String(post.author ?? ""),
-            upvotes: String(post.score ?? 0),
-            comments: String(post.num_comments ?? 0),
-          },
+          description: desc,
+          url: item.link ?? "#",
+          imageUrl: null,
+          source: "google_news" as const,
+          publishedAt: item.pubDate ?? new Date().toISOString(),
+          publishedAgo: item.pubDate ? relativeAgo(item.pubDate) : null,
+          score: 20 - i,
+          tags: extractFootballKeywords(`${title} ${desc}`),
+          meta: { publisher: feed.name },
         });
       }
     } catch (err) {
-      console.error(`[trends] Reddit r/${sub} failed:`, err);
+      console.error(`[trends] RSS feed ${feed.name} failed:`, err);
     }
   }
 
-  return results;
+  const seen = new Set<string>();
+  return results.filter((item) => {
+    const key = item.title.toLowerCase().trim();
+    if (seen.has(key)) return false;
+    seen.add(key);
+    return true;
+  });
 }
 
 // ---------- Aggregate & group ----------
@@ -325,22 +311,22 @@ export async function fetchTrending(): Promise<TrendingResponse> {
   const cached = getCache<TrendingResponse>(cacheKey);
   if (cached) return cached;
 
-  const [googleTrends, googleNews, youtube, reddit] = await Promise.allSettled([
+  const [googleTrends, googleNews, youtube, rssFeeds] = await Promise.allSettled([
     fetchGoogleTrends(),
     fetchGoogleNews(),
     fetchYouTube(),
-    fetchReddit(),
+    fetchRSSFeeds(),
   ]);
 
   const allItems: TrendingItem[] = [];
   if (googleTrends.status === "fulfilled") allItems.push(...googleTrends.value);
   if (googleNews.status === "fulfilled") allItems.push(...googleNews.value);
   if (youtube.status === "fulfilled") allItems.push(...youtube.value);
-  if (reddit.status === "fulfilled") allItems.push(...reddit.value);
+  if (rssFeeds.status === "fulfilled") allItems.push(...rssFeeds.value);
 
   const filtered = allItems.filter((item) => {
     if (item.source === "google_news" || item.source === "youtube") return true;
-    return isFootballRelated(item.title, item.description) || item.tags.length > 0;
+    return item.tags.length > 0;
   });
 
   const topics = groupIntoTopics(filtered);

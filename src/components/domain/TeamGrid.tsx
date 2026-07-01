@@ -3,12 +3,14 @@ import { Link } from "wouter";
 import { GlassCard } from "@/components/ui/GlassCard";
 import { getTeamColors } from "@/lib/teamColors";
 import type { StandingEntry, StandingsGroup } from "@/lib/types";
+import { useTranslation } from "@/lib/i18n";
 
 interface TeamGridProps {
   groups: StandingsGroup[];
 }
 
 export default function TeamGrid({ groups }: TeamGridProps) {
+const { t } = useTranslation();
   return (
     <div className="space-y-6">
       {groups.map((group, gi) => (

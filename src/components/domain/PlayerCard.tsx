@@ -1,6 +1,7 @@
 import { motion } from "framer-motion";
 import { Trophy, Target, Shield } from "lucide-react";
 import { cn } from "@/lib/utils";
+import { useTranslation } from "@/lib/i18n";
 
 interface PlayerCardProps {
   name: string;
@@ -20,6 +21,7 @@ interface PlayerCardProps {
 }
 
 export default function PlayerCard({ name, jerseyNumber, position, team, teamLogo, stats, size = "md" }: PlayerCardProps) {
+const { t } = useTranslation();
   return (
     <motion.div
       whileHover={{ scale: 1.02, y: -2 }}

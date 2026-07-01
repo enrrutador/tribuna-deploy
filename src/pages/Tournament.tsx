@@ -9,6 +9,7 @@ import TeamGrid from "@/components/domain/TeamGrid";
 import TeamStats from "@/components/domain/TeamStats";
 import BracketView from "@/components/domain/BracketView";
 import FixtureGrid from "@/components/domain/FixtureGrid";
+import { useTranslation } from "@/lib/i18n";
 import {
   useTournament,
   useTournamentFixtures,
@@ -19,6 +20,7 @@ import {
 } from "@/lib/hooks";
 
 export default function Tournament({ slug }: { slug: string }) {
+const { t } = useTranslation();
   const { data: tournament, isLoading: loadingT } = useTournament(slug);
   const { isLoading: loadingF, error: errorF, refetch: refetchF } = useTournamentFixtures(slug);
   const { data: standings, isLoading: loadingS } = useTournamentStandings(slug);
@@ -127,16 +129,16 @@ export default function Tournament({ slug }: { slug: string }) {
             </p>
             <div className="mt-4 grid grid-cols-2 gap-4 text-sm">
               <div>
-                <span className="font-semibold text-[var(--color-slate-300)]">ID del torneo:</span>
+                <span className="font-semibold text-[var(--color-slate-300)]">{t("ID del torneo:")}</span>
                 <span className="ml-2 text-[var(--color-slate-400)]">{tournament.id}</span>
               </div>
               <div>
-                <span className="font-semibold text-[var(--color-slate-300)]">País:</span>
+                <span className="font-semibold text-[var(--color-slate-300)]">{t("País:")}</span>
                 <span className="ml-2 text-[var(--color-slate-400)]">{tournament.country}</span>
               </div>
               {tournament.slug && (
                 <div>
-                  <span className="font-semibold text-[var(--color-slate-300)]">Slug:</span>
+                  <span className="font-semibold text-[var(--color-slate-300)]">{t("Slug:")}</span>
                   <span className="ml-2 text-[var(--color-slate-400)]">{tournament.slug}</span>
                 </div>
               )}

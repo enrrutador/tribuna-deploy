@@ -6,6 +6,7 @@ import { Button } from "@/components/ui/Button";
 import { Badge } from "@/components/ui/Badge";
 import { cn } from "@/lib/utils";
 import type { Match } from "@/lib/types";
+import { useTranslation } from "@/lib/i18n";
 
 interface PredictionWidgetProps {
   match: Match;
@@ -14,6 +15,7 @@ interface PredictionWidgetProps {
 type Prediction = "home" | "draw" | "away" | null;
 
 export default function PredictionWidget({ match }: PredictionWidgetProps) {
+const { t } = useTranslation();
   const [prediction, setPrediction] = useState<Prediction>(null);
   const [voted, setVoted] = useState(false);
 
@@ -30,9 +32,9 @@ export default function PredictionWidget({ match }: PredictionWidgetProps) {
     <GlassCard variant="soft" className="p-4 space-y-4">
       <div className="flex items-center gap-2">
         <TrendingUp size={16} className="text-[var(--color-magenta-400)]" />
-        <h4 className="text-sm font-bold text-[var(--color-slate-100)]">Predicción</h4>
+        <h4 className="text-sm font-bold text-[var(--color-slate-100)]">{t("Predicción")}</h4>
         {match.status === "live" && (
-          <Badge tone="live" className="ml-auto text-[9px]">En curso</Badge>
+          <Badge tone="live" className="ml-auto text-[9px]">{t("En curso")}</Badge>
         )}
       </div>
 
@@ -65,7 +67,7 @@ export default function PredictionWidget({ match }: PredictionWidgetProps) {
           )}
         >
           <Minus size={14} />
-          <span className="text-[10px]">Empate</span>
+          <span className="text-[10px]">{t("Empate")}</span>
           {voted && <span className="font-bold tabular-nums">{distributions.draw}%</span>}
         </button>
 

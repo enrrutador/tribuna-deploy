@@ -1,6 +1,7 @@
 import { motion } from "framer-motion";
 import { cn } from "@/lib/utils";
 import type { ReactNode } from "react";
+import { useTranslation } from "@/lib/i18n";
 
 interface SegmentedProps<T extends string> {
   options: { value: T; label: string; badge?: ReactNode }[];

@@ -2,6 +2,7 @@ import { Component, type ReactNode } from "react";
 import { AlertTriangle, RefreshCw } from "lucide-react";
 import { Button } from "@/components/ui/Button";
 import { GlassCard } from "@/components/ui/GlassCard";
+import { useTranslation } from "@/lib/i18n";
 
 interface Props {
   children: ReactNode;
@@ -24,6 +25,7 @@ export default class ErrorBoundary extends Component<Props, State> {
   }
 
   render() {
+    const { t } = useTranslation();
     if (this.state.hasError) {
       return (
         <div className="flex items-center justify-center min-h-[60vh] px-4">
@@ -31,7 +33,7 @@ export default class ErrorBoundary extends Component<Props, State> {
             <div className="mx-auto h-12 w-12 rounded-full bg-[var(--color-danger)]/10 flex items-center justify-center">
               <AlertTriangle size={24} className="text-[var(--color-danger)]" />
             </div>
-            <h2 className="text-lg font-bold text-[var(--color-slate-100)]">Algo salió mal</h2>
+            <h2 className="text-lg font-bold text-[var(--color-slate-100)]">{t("Algo salió mal")}</h2>
             <p className="text-sm text-[var(--color-slate-400)]">
               Se produjo un error inesperado. Probá recargar la página.
             </p>

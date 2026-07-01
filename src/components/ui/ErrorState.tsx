@@ -2,6 +2,7 @@ import type { ReactNode } from "react";
 import { motion } from "framer-motion";
 import { AlertTriangle, RotateCw } from "lucide-react";
 import { Button } from "./Button";
+import { useTranslation } from "@/lib/i18n";
 
 interface ErrorStateProps {
   title?: string;
@@ -16,6 +17,7 @@ export function ErrorState({
   onRetry,
   icon,
 }: ErrorStateProps) {
+const { t } = useTranslation();
   return (
     <motion.div
       initial={{ opacity: 0, scale: 0.96 }}

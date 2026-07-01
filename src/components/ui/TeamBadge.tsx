@@ -1,6 +1,7 @@
 import { cn } from "@/lib/utils";
 import { getTeamColors } from "@/lib/teamColors";
 import type { TeamRef } from "@/lib/types";
+import { useTranslation } from "@/lib/i18n";
 
 interface TeamBadgeProps {
   team: Pick<TeamRef, "name" | "shortName" | "logoUrl">;
@@ -17,6 +18,7 @@ const sizes = {
 };
 
 export function TeamBadge({ team, size = "md", className }: TeamBadgeProps) {
+const { t } = useTranslation();
   const colors = getTeamColors(team.name);
   return (
     <div

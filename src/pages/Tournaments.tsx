@@ -7,6 +7,7 @@ import { GlassCard } from "@/components/ui/GlassCard";
 import { PageLoader } from "@/components/ui/PageLoader";
 import { Badge } from "@/components/ui/Badge";
 import type { CategoryId } from "@/lib/types";
+import { useTranslation } from "@/lib/i18n";
 
 const CATEGORY_META: { id: CategoryId; label: string; icon: string; accent: string }[] = [
   { id: "destacados", label: "Destacados", icon: "⭐", accent: "lime" },
@@ -22,6 +23,7 @@ const ACCENTS: Record<string, string> = {
 };
 
 export default function Tournaments() {
+const { t } = useTranslation();
   const { data: tournaments, isLoading } = useTournaments();
 
   if (isLoading) return <PageLoader label="Cargando torneos" />;

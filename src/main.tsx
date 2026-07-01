@@ -6,6 +6,7 @@ import { HelmetProvider } from "react-helmet-async";
 import { I18nProvider } from "@/lib/i18n";
 import App from "./App";
 import "./styles/index.css";
+import { useTranslation } from "@/lib/i18n";
 
 const queryClient = new QueryClient({
   defaultOptions: {

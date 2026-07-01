@@ -1,5 +1,6 @@
 import { Link } from "wouter";
 import { Heart, Radio, Trophy, Shield, ExternalLink, Mail, MessageCircle } from "lucide-react";
+import { useTranslation } from "@/lib/i18n";
 
 const tournaments = [
   { slug: "mundial-2026", name: "Mundial 2026" },
@@ -18,6 +19,7 @@ const navLinks = [
 ];
 
 export default function Footer() {
+const { t } = useTranslation();
   return (
     <footer className="mt-auto border-t border-white/5">
       {/* Main footer */}

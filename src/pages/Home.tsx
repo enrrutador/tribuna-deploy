@@ -15,7 +15,9 @@ import { DateNav } from "@/components/ui/DateNav";
 import { Segmented } from "@/components/ui/Segmented";
 import MatchGroupCard from "@/components/domain/MatchGroupCard";
 import NewsPanel from "@/components/domain/NewsPanel";
+import NewsCarousel from "@/components/domain/NewsCarousel";
 import type { CategoryId } from "@/lib/types";
+import { useTranslation } from "@/lib/i18n";
 
 type Filter = "Todos" | "Vivo" | "Finalizados" | "Próximos";
 
@@ -27,6 +29,8 @@ const CATEGORIES: { id: CategoryId | "all"; label: string }[] = [
 ];
 
 export default function Home() {
+const { t } = useTranslation();
+  const localizedCategories = useMemo(() => CATEGORIES.map(c => ({ ...c, label: t(c.label) })), [t]);
   const [filter, setFilter] = useState<Filter>("Todos");
   const [category, setCategory] = useState<CategoryId | "all">("all");
   const [date, setDate] = useState(new Date());
@@ -108,15 +112,15 @@ export default function Home() {
         <div className="relative flex items-center justify-between gap-4 px-5 py-4">
           <div>
             <h1 className="text-xl font-black tracking-tight sm:text-2xl text-gradient-lime">
-              Fútbol en vivo
+              {t("Fútbol en vivo")}
             </h1>
             <p className="mt-0.5 text-xs text-[var(--color-slate-400)]">
-              {todayDate ? "Resultados de hoy" : format(date, "EEE d 'de' MMM", { locale: es })}
+              {todayDate ? t("Resultados de hoy") : format(date, "EEE d 'de' MMM", { locale: es })}
               <span className="mx-2 text-[var(--color-slate-700)]">·</span>
-              <span>{totalMatches} partido{totalMatches !== 1 ? "s" : ""}</span>
+              <span>{totalMatches} {totalMatches !== 1 ? t("partidos") : t("partido")}</span>
               {liveCount > 0 && (
                 <Badge tone="live" pulse className="ml-2 text-[9px]">
-                  {liveCount} en vivo
+                  {liveCount} {t("en vivo")}
                 </Badge>
               )}
             </p>
@@ -142,10 +146,10 @@ export default function Home() {
             <DateNav date={date} onChange={setDate} />
             <Segmented
               options={[
-                { value: "Todos", label: "Todos" },
-                { value: "Vivo", label: "Vivo", badge: liveCount > 0 ? <Badge tone="live" pulse className="text-[8px] px-1 py-0">{liveCount}</Badge> : undefined },
-                { value: "Finalizados", label: "Finalizados" },
-                { value: "Próximos", label: "Próximos" },
+                { value: "Todos", label: t("Todos") },
+                { value: "Vivo", label: t("Vivo"), badge: liveCount > 0 ? <Badge tone="live" pulse className="text-[8px] px-1 py-0">{liveCount}</Badge> : undefined },
+                { value: "Finalizados", label: t("Finalizados") },
+                { value: "Próximos", label: t("Próximos") },
               ]}
               value={filter}
               onChange={setFilter}
@@ -154,7 +158,7 @@ export default function Home() {
 
           {/* Category pills */}
           <div className="flex items-center gap-2 overflow-x-auto pb-1 scrollbar-none">
-            {CATEGORIES.map((cat) => (
+            {localizedCategories.map((cat) => (
               <button
                 key={cat.id}
                 onClick={() => setCategory(cat.id)}
@@ -171,7 +175,7 @@ export default function Home() {
             {favTeamIds.size > 0 && (
               <div className="flex items-center gap-1 flex-shrink-0 text-[10px] text-[var(--color-warn)]">
                 <Star size={10} className="fill-current" />
-                <span className="font-bold">{favTeamIds.size} fav</span>
+                <span className="font-bold">{favTeamIds.size} {t("Favoritos")}</span>
               </div>
             )}
           </div>
@@ -179,17 +183,17 @@ export default function Home() {
           {/* Refresh + meta */}
           <div className="flex items-center justify-between">
             <span className="text-xs text-[var(--color-slate-500)]">
-              {isLoading ? "" : `${sortedGroups.length} torneo${sortedGroups.length !== 1 ? "s" : ""}`}
+              {isLoading ? "" : `${sortedGroups.length} ${sortedGroups.length !== 1 ? t("torneos") : t("torneo")}`}
             </span>
             <div className="flex items-center gap-3">
               {updatedAgo && (
                 <span className="text-[11px] text-[var(--color-slate-500)]">
                   {isFetching ? (
                     <span className="flex items-center gap-1 text-[var(--color-lime-400)]">
-                      <RefreshCw size={10} className="animate-spin" /> Actualizando…
+                      <RefreshCw size={10} className="animate-spin" /> {t("Actualizando…")}
                     </span>
                   ) : (
-                    `Act. ${updatedAgo}`
+                    <span>{t("Act.")} {updatedAgo}</span>
                   )}
                 </span>
               )}
@@ -209,8 +213,8 @@ export default function Home() {
           ) : sortedGroups.length === 0 ? (
             <EmptyState
               icon="⚽"
-              title="Sin partidos"
-              description="No hay partidos para los filtros seleccionados. Probá con otra fecha o filtro."
+              title={t("Sin partidos")}
+              description={t("No hay partidos para los filtros seleccionados. Probá con otra fecha o filtro.")}
             />
           ) : (
             <div className="space-y-3">
@@ -219,6 +223,9 @@ export default function Home() {
               ))}
             </div>
           )}
+
+          {/* Bottom news carousel */}
+          <NewsCarousel />
         </div>
 
         {/* RIGHT: News */}

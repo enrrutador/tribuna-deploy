@@ -3,8 +3,10 @@ import { Helmet } from "react-helmet-async";
 import { TrendingUp, RefreshCw } from "lucide-react";
 import { useTrending } from "@/lib/hooks";
 import TrendingCard from "@/components/domain/TrendingCard";
+import { useTranslation } from "@/lib/i18n";
 
 export default function Trending() {
+const { t } = useTranslation();
   const { data, isLoading, refetch, isFetching } = useTrending();
 
   return (
@@ -28,7 +30,7 @@ export default function Trending() {
           <div className="flex items-center gap-3">
             <TrendingUp className="h-6 w-6 text-lime-400" />
             <div>
-              <h1 className="text-xl font-bold text-white">Tendencias</h1>
+              <h1 className="text-xl font-bold text-white">{t("Tendencias")}</h1>
               <p className="text-xs text-white/50">
                 Lo más buscado sobre fútbol en Argentina y el mundo
               </p>
@@ -88,7 +90,7 @@ export default function Trending() {
             </div>
 
             <div className="rounded-2xl border border-white/5 bg-white/5 p-4">
-              <h2 className="mb-3 text-sm font-bold text-white">Últimas noticias</h2>
+              <h2 className="mb-3 text-sm font-bold text-white">{t("Últimas noticias")}</h2>
               <div className="space-y-2">
                 {data.items.slice(0, 10).map((item) => (
                   <a

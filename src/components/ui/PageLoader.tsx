@@ -1,7 +1,9 @@
 import { motion } from "framer-motion";
 import { Spinner } from "./Spinner";
+import { useTranslation } from "@/lib/i18n";
 
 export function PageLoader({ label = "Cargando" }: { label?: string }) {
+const { t } = useTranslation();
   return (
     <div className="flex min-h-[40vh] flex-col items-center justify-center gap-4">
       <motion.div

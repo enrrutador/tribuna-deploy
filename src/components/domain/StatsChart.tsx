@@ -1,6 +1,7 @@
 import { GlassCard } from "@/components/ui/GlassCard";
 import { StatBar } from "@/components/ui/StatBar";
 import type { MatchStats, StatKey } from "@/lib/types";
+import { useTranslation } from "@/lib/i18n";
 
 interface StatsChartProps {
   stats: MatchStats | null;
@@ -20,10 +21,11 @@ const STAT_CONFIG: { key: StatKey; label: string; isPercent?: boolean }[] = [
 ];
 
 export default function StatsChart({ stats }: StatsChartProps) {
+const { t } = useTranslation();
   if (!stats) {
     return (
       <GlassCard variant="soft" className="p-8 text-center">
-        <p className="text-sm text-[var(--color-slate-400)]">Estadísticas no disponibles.</p>
+        <p className="text-sm text-[var(--color-slate-400)]">{t("Estadísticas no disponibles.")}</p>
       </GlassCard>
     );
   }

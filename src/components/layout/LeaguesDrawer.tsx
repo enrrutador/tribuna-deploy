@@ -3,6 +3,7 @@ import { useLocation } from "wouter";
 import { motion, AnimatePresence } from "framer-motion";
 import { X, Trophy } from "lucide-react";
 import TournamentList from "@/components/domain/TournamentList";
+import { useTranslation } from "@/lib/i18n";
 
 interface LeaguesDrawerProps {
   open: boolean;
@@ -15,6 +16,7 @@ interface LeaguesDrawerProps {
  * Locks body scroll while open.
  */
 export default function LeaguesDrawer({ open, onClose }: LeaguesDrawerProps) {
+const { t } = useTranslation();
   const [location] = useLocation();
 
   // Close on Escape

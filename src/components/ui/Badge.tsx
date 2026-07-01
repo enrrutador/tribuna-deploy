@@ -1,5 +1,6 @@
 import type { HTMLAttributes } from "react";
 import { cn } from "@/lib/utils";
+import { useTranslation } from "@/lib/i18n";
 
 type Tone =
   | "default"
@@ -28,6 +29,7 @@ const tones: Record<Tone, string> = {
 };
 
 export function Badge({ className, tone = "default", pulse, children, ...props }: BadgeProps) {
+const { t } = useTranslation();
   return (
     <span
       className={cn(

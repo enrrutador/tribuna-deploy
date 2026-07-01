@@ -1,5 +1,6 @@
 import { motion } from "framer-motion";
 import { cn } from "@/lib/utils";
+import { useTranslation } from "@/lib/i18n";
 
 interface StatBarProps {
   label: string;

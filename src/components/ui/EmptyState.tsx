@@ -1,5 +1,6 @@
 import type { ReactNode } from "react";
 import { cn } from "@/lib/utils";
+import { useTranslation } from "@/lib/i18n";
 
 interface EmptyStateProps {
   icon?: ReactNode;
@@ -10,6 +11,7 @@ interface EmptyStateProps {
 }
 
 export function EmptyState({ icon, title, description, action, className }: EmptyStateProps) {
+const { t } = useTranslation();
   return (
     <div
       className={cn(

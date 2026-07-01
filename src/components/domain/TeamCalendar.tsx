@@ -8,6 +8,7 @@ import { GlassCard } from "@/components/ui/GlassCard";
 import { Badge } from "@/components/ui/Badge";
 import { cn } from "@/lib/utils";
 import type { TeamScheduleEvent } from "@/lib/types";
+import { useTranslation } from "@/lib/i18n";
 
 interface TeamCalendarProps {
   teamId: string;
@@ -15,6 +16,7 @@ interface TeamCalendarProps {
 }
 
 export default function TeamCalendar({ teamId, teamName }: TeamCalendarProps) {
+const { t } = useTranslation();
   const { data: response } = useTeamSchedule(teamId);
   const schedule = response?.schedule ?? [];
   const [currentMonth, setCurrentMonth] = useState(new Date());
@@ -110,7 +112,7 @@ export default function TeamCalendar({ teamId, teamName }: TeamCalendarProps) {
 
       {/* Upcoming matches */}
       <div className="mt-4 space-y-2">
-        <h5 className="text-[10px] font-bold uppercase tracking-wider text-[var(--color-slate-500)]">Próximos partidos</h5>
+        <h5 className="text-[10px] font-bold uppercase tracking-wider text-[var(--color-slate-500)]">{t("Próximos partidos")}</h5>
         {schedule.filter((e) => !e.completed).slice(0, 5).map((event, i) => {
           const isHome = event.homeTeamId === teamId;
           const opponent = isHome ? event.awayTeam : event.homeTeam;
@@ -130,7 +132,7 @@ export default function TeamCalendar({ teamId, teamName }: TeamCalendarProps) {
           );
         })}
         {schedule.filter((e) => !e.completed).length === 0 && (
-          <p className="text-[11px] text-[var(--color-slate-500)]">No hay partidos programados</p>
+          <p className="text-[11px] text-[var(--color-slate-500)]">{t("No hay partidos programados")}</p>
         )}
       </div>
     </GlassCard>

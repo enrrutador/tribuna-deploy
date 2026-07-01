@@ -3,6 +3,7 @@ import { cn } from "@/lib/utils";
 import { GlassCard } from "@/components/ui/GlassCard";
 import { Badge } from "@/components/ui/Badge";
 import type { MatchEvent, Match } from "@/lib/types";
+import { useTranslation } from "@/lib/i18n";
 
 interface EventTimelineProps {
   events: MatchEvent[];
@@ -21,6 +22,7 @@ const EVENT_ICONS: Record<string, { icon: string; color: string }> = {
 };
 
 function EventRow({ event, homeId, isFirst }: { event: MatchEvent; homeId: string; isFirst: boolean }) {
+const { t } = useTranslation();
   const isHome = event.teamId === homeId;
   const style = EVENT_ICONS[event.type] ?? EVENT_ICONS.goal!;
   const homeName = event.teamName;
@@ -77,6 +79,7 @@ function EventRow({ event, homeId, isFirst }: { event: MatchEvent; homeId: strin
 }
 
 export default function EventTimeline({ events, match }: EventTimelineProps) {
+  const { t } = useTranslation();
   if (events.length === 0) {
     return (
       <GlassCard variant="soft" className="p-8 text-center">
@@ -96,7 +99,7 @@ export default function EventTimeline({ events, match }: EventTimelineProps) {
     <div className="space-y-4">
       {firstHalf.length > 0 && (
         <div>
-          <Badge tone="cyan" className="mb-2">1er Tiempo</Badge>
+          <Badge tone="cyan" className="mb-2">{t("1er Tiempo")}</Badge>
           <GlassCard variant="soft" className="px-4 py-1">
             {firstHalf.map((e, i) => (
               <EventRow key={e.id} event={e} homeId={homeId} isFirst={i === 0} />
@@ -106,7 +109,7 @@ export default function EventTimeline({ events, match }: EventTimelineProps) {
       )}
       {secondHalf.length > 0 && (
         <div>
-          <Badge tone="magenta" className="mb-2">2do Tiempo</Badge>
+          <Badge tone="magenta" className="mb-2">{t("2do Tiempo")}</Badge>
           <GlassCard variant="soft" className="px-4 py-1">
             {secondHalf.map((e, i) => (
               <EventRow key={e.id} event={e} homeId={homeId} isFirst={i === 0} />

@@ -8,8 +8,10 @@ import { ErrorState } from "@/components/ui/ErrorState";
 import { EmptyState } from "@/components/ui/EmptyState";
 import { CardSkeleton } from "@/components/ui/Skeleton";
 import MatchGroupCard from "@/components/domain/MatchGroupCard";
+import { useTranslation } from "@/lib/i18n";
 
 export default function Live() {
+const { t } = useTranslation();
   const {
     data: liveData,
     isLoading,

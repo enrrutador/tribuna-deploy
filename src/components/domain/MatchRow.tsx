@@ -7,6 +7,7 @@ import { useFavorites } from "@/lib/favorites";
 import { TeamBadge } from "@/components/ui/TeamBadge";
 import { Badge } from "@/components/ui/Badge";
 import type { Match } from "@/lib/types";
+import { useTranslation } from "@/lib/i18n";
 
 interface MatchRowProps {
   match: Match;
@@ -14,6 +15,7 @@ interface MatchRowProps {
 }
 
 export default function MatchRow({ match, compact = false }: MatchRowProps) {
+const { t } = useTranslation();
   const { toggleTeam, isFavoriteTeam } = useFavorites();
   const isLive = match.status === "live";
   const isFinished = match.status === "finished";
@@ -123,7 +125,7 @@ export default function MatchRow({ match, compact = false }: MatchRowProps) {
         {isFinished && (match.homeScore ?? 0) + (match.awayScore ?? 0) >= 3 && (
           <div className="absolute bottom-0.5 right-3 flex items-center gap-0.5 text-[8px] text-[var(--color-lime-400)]/50">
             <Target size={8} />
-            <span>Ver goles</span>
+            <span>{t("Ver goles")}</span>
           </div>
         )}
       </motion.div>

@@ -3,8 +3,10 @@ import { motion } from "framer-motion";
 import { Home, ArrowLeft } from "lucide-react";
 import { Button } from "@/components/ui/Button";
 import { GlassCard } from "@/components/ui/GlassCard";
+import { useTranslation } from "@/lib/i18n";
 
 export default function NotFound() {
+const { t } = useTranslation();
   return (
     <div className="flex min-h-[60vh] items-center justify-center">
       <motion.div

@@ -10,19 +10,21 @@ import { PageLoader } from "@/components/ui/PageLoader";
 import { EmptyState } from "@/components/ui/EmptyState";
 import { SectionTitle } from "@/components/ui/SectionTitle";
 import TeamCalendar from "@/components/domain/TeamCalendar";
+import { useTranslation } from "@/lib/i18n";
 
 export default function Team({ id: teamId }: { id: string }) {
+const { t } = useTranslation();
   const { toggleTeam, isFavoriteTeam } = useFavorites();
   const { data: team, isLoading, error } = useTeam(teamId);
 
-  if (isLoading) return <PageLoader label="Cargando equipo" />;
+  if (isLoading) return <PageLoader label={t("Cargando equipo")} />;
 
   if (error || !team) {
     return (
       <EmptyState
         icon="🤔"
-        title="Equipo no encontrado"
-        description="No se encontró información detallada de este equipo. Puede que no esté disponible en Promiedos todavía."
+        title={t("Equipo no encontrado")}
+        description={t("No se encontró información detallada de este equipo.")}
       />
     );
   }
@@ -72,7 +74,7 @@ export default function Team({ id: teamId }: { id: string }) {
               }
             >
               <Star size={16} className={isFav ? "fill-current text-[var(--color-warn)]" : ""} />
-              {isFav ? "Favorito" : "Agregar"}
+              {isFav ? t("Favorito") : t("Agregar")}
             </Button>
           </div>
         </GlassCard>
@@ -81,16 +83,16 @@ export default function Team({ id: teamId }: { id: string }) {
       {/* Estadio */}
       {team.stadium && (
         <motion.div initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.1 }}>
-          <SectionTitle icon={<MapPin size={14} />} title="Estadio" accent="cyan" />
+          <SectionTitle icon={<MapPin size={14} />} title={t("Estadio")} accent="cyan" />
           <GlassCard variant="soft">
             <div className="space-y-2">
               <h3 className="text-lg font-bold text-[var(--color-slate-100)]">{team.stadium.name}</h3>
               <div className="flex flex-wrap gap-4 text-sm text-[var(--color-slate-400)]">
                 {team.stadium.capacity && (
-                  <span>Capacidad: <strong className="text-[var(--color-slate-200)]">{team.stadium.capacity}</strong></span>
+                  <span>{t("Capacidad:")} <strong className="text-[var(--color-slate-200)]">{team.stadium.capacity}</strong></span>
                 )}
                 {team.stadium.city && (
-                  <span>Ciudad: <strong className="text-[var(--color-slate-200)]">{team.stadium.city}</strong></span>
+                  <span>{t("Ciudad:")} <strong className="text-[var(--color-slate-200)]">{team.stadium.city}</strong></span>
                 )}
               </div>
               {team.stadium.address && (
@@ -104,7 +106,7 @@ export default function Team({ id: teamId }: { id: string }) {
       {/* Plantel */}
       {team.squad.length > 0 && (
         <motion.div initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.15 }}>
-          <SectionTitle icon={<Users size={14} />} title="Plantel" accent="lime" />
+          <SectionTitle icon={<Users size={14} />} title={t("Plantel")} accent="lime" />
           <div className="space-y-4">
             {team.squad.map((group) => (
               <GlassCard key={group.position} variant="soft">
@@ -124,7 +126,7 @@ export default function Team({ id: teamId }: { id: string }) {
                       )}
                       <span className="flex-1 truncate text-[var(--color-slate-200)]">{player.name}</span>
                       {player.age && (
-                        <span className="text-xs text-[var(--color-slate-500)]">{player.age} años</span>
+                        <span className="text-xs text-[var(--color-slate-500)]">{player.age}{t(" años")}</span>
                       )}
                       {player.height && (
                         <span className="text-xs text-[var(--color-slate-500)]">{player.height}</span>
@@ -141,7 +143,7 @@ export default function Team({ id: teamId }: { id: string }) {
       {/* Goleadores */}
       {team.topScorers.length > 0 && (
         <motion.div initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.2 }}>
-          <SectionTitle icon={<Trophy size={14} />} title="Goleadores" accent="magenta" />
+          <SectionTitle icon={<Trophy size={14} />} title={t("Goleadores")} accent="magenta" />
           <GlassCard variant="soft">
             <div className="space-y-1">
               {team.topScorers.map((scorer, i) => (
@@ -153,7 +155,7 @@ export default function Team({ id: teamId }: { id: string }) {
                     {i + 1}
                   </span>
                   <span className="flex-1 text-[var(--color-slate-200)]">{scorer.name}</span>
-                  <Badge tone="lime">{scorer.goals} gol{scorer.goals !== 1 ? "es" : ""}</Badge>
+                  <Badge tone="lime">{scorer.goals} {scorer.goals !== 1 ? t("goles") : t("gol")}</Badge>
                 </div>
               ))}
             </div>
@@ -164,7 +166,7 @@ export default function Team({ id: teamId }: { id: string }) {
       {/* Próximos partidos */}
       {team.nextMatches.length > 0 && (
         <motion.div initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.25 }}>
-          <SectionTitle icon={<Calendar size={14} />} title="Próximos partidos" accent="cyan" />
+          <SectionTitle icon={<Calendar size={14} />} title={t("Próximos partidos")} accent="cyan" />
           <GlassCard variant="soft">
             <div className="space-y-1">
               {team.nextMatches.map((m, i) => (
@@ -174,7 +176,7 @@ export default function Team({ id: teamId }: { id: string }) {
                 >
                   <span className="w-20 shrink-0 text-xs text-[var(--color-slate-500)]">{m.date}</span>
                   <Badge tone={m.homeAway === "L" ? "cyan" : "default"} className="shrink-0">
-                    {m.homeAway === "L" ? "Local" : "Visita"}
+                    {m.homeAway === "L" ? t("Local") : t("Visita")}
                   </Badge>
                   <span className="flex-1 truncate font-semibold text-[var(--color-slate-200)]">{m.opponent}</span>
                   {m.time && <span className="text-xs text-[var(--color-slate-500)]">{m.time}</span>}
@@ -193,7 +195,7 @@ export default function Team({ id: teamId }: { id: string }) {
       {/* Últimos partidos */}
       {team.lastMatches.length > 0 && (
         <motion.div initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.3 }}>
-          <SectionTitle icon={<ArrowLeftRight size={14} />} title="Últimos partidos" accent="lime" />
+          <SectionTitle icon={<ArrowLeftRight size={14} />} title={t("Últimos partidos")} accent="lime" />
           <GlassCard variant="soft">
             <div className="space-y-1">
               {team.lastMatches.map((m, i) => (
@@ -203,7 +205,7 @@ export default function Team({ id: teamId }: { id: string }) {
                 >
                   <span className="w-20 shrink-0 text-xs text-[var(--color-slate-500)]">{m.date}</span>
                   <Badge tone={m.homeAway === "L" ? "cyan" : "default"} className="shrink-0">
-                    {m.homeAway === "L" ? "Local" : "Visita"}
+                    {m.homeAway === "L" ? t("Local") : t("Visita")}
                   </Badge>
                   <span className="flex-1 truncate text-[var(--color-slate-200)]">{m.opponent}</span>
                   {m.result && (

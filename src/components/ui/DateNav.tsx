@@ -2,6 +2,7 @@ import { ChevronLeft, ChevronRight, Calendar as CalIcon } from "lucide-react";
 import { format, addDays, subDays, isToday } from "date-fns";
 import { es } from "date-fns/locale";
 import { cn } from "@/lib/utils";
+import { useTranslation } from "@/lib/i18n";
 
 interface DateNavProps {
   date: Date;
@@ -10,9 +11,10 @@ interface DateNavProps {
 }
 
 export function DateNav({ date, onChange, className }: DateNavProps) {
+const { t } = useTranslation();
   const today = isToday(date);
   const label = today
-    ? "Hoy"
+    ? t("Hoy")
     : format(date, "EEE d 'de' MMM", { locale: es });
 
   return (
@@ -20,7 +22,7 @@ export function DateNav({ date, onChange, className }: DateNavProps) {
       <button
         onClick={() => onChange(subDays(date, 1))}
         className="flex h-8 w-8 items-center justify-center rounded-lg text-[var(--color-slate-400)] transition-colors hover:bg-white/5 hover:text-[var(--color-slate-100)]"
-        aria-label="Día anterior"
+        aria-label={t("Día anterior")}
       >
         <ChevronLeft size={16} />
       </button>
@@ -31,7 +33,7 @@ export function DateNav({ date, onChange, className }: DateNavProps) {
       <button
         onClick={() => onChange(addDays(date, 1))}
         className="flex h-8 w-8 items-center justify-center rounded-lg text-[var(--color-slate-400)] transition-colors hover:bg-white/5 hover:text-[var(--color-slate-100)]"
-        aria-label="Día siguiente"
+        aria-label={t("Día siguiente")}
       >
         <ChevronRight size={16} />
       </button>
@@ -40,7 +42,7 @@ export function DateNav({ date, onChange, className }: DateNavProps) {
           onClick={() => onChange(new Date())}
           className="ml-1 rounded-lg bg-[var(--color-lime-500)]/12 px-2.5 py-1 text-[11px] font-bold uppercase tracking-wider text-[var(--color-lime-400)] transition-colors hover:bg-[var(--color-lime-500)]/20"
         >
-          Hoy
+          {t("Hoy")}
         </button>
       )}
     </div>

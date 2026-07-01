@@ -3,6 +3,7 @@ import { GlassCard } from "@/components/ui/GlassCard";
 import { Badge } from "@/components/ui/Badge";
 import { cn } from "@/lib/utils";
 import type { TeamStatEntry } from "@/lib/types";
+import { useTranslation } from "@/lib/i18n";
 
 interface TeamStatsProps {
   stats: TeamStatEntry[];
@@ -18,6 +19,7 @@ interface StatCardProps {
 }
 
 function StatCard({ title, stats, getValue, format = "number", accent = "lime", maxShow = 6 }: StatCardProps) {
+const { t } = useTranslation();
   const sorted = [...stats].sort((a, b) => {
     const va = Number(getValue(a));
     const vb = Number(getValue(b));

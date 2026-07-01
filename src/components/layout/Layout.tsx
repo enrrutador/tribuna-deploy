@@ -4,12 +4,14 @@ import Sidebar from "./Sidebar";
 import Footer from "./Footer";
 import BottomNav from "./BottomNav";
 import ScrollToTop from "@/components/ui/ScrollToTop";
+import { useTranslation } from "@/lib/i18n";
 
 interface LayoutProps {
   children: ReactNode;
 }
 
 export default function Layout({ children }: LayoutProps) {
+const { t } = useTranslation();
   return (
     <div className="flex min-h-screen flex-col">
       <Header />

@@ -2,6 +2,7 @@ import { useState } from "react";
 import type { ReactNode } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { cn } from "@/lib/utils";
+import { useTranslation } from "@/lib/i18n";
 
 interface TabsProps {
   tabs: { id: string; label: string; icon?: ReactNode; content: ReactNode }[];
@@ -10,6 +11,7 @@ interface TabsProps {
 }
 
 export function Tabs({ tabs, defaultTab, className }: TabsProps) {
+const { t } = useTranslation();
   const [active, setActive] = useState(defaultTab ?? tabs[0]?.id ?? "");
   const current = tabs.find((t) => t.id === active);
 

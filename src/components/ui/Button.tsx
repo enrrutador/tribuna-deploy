@@ -1,6 +1,7 @@
 import { forwardRef } from "react";
 import type { ButtonHTMLAttributes, ReactNode } from "react";
 import { cn } from "@/lib/utils";
+import { useTranslation } from "@/lib/i18n";
 
 type Variant = "primary" | "secondary" | "ghost" | "outline" | "danger" | "live";
 type Size = "sm" | "md" | "lg" | "icon";

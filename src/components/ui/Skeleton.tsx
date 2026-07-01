@@ -1,7 +1,9 @@
 import type { HTMLAttributes } from "react";
 import { cn } from "@/lib/utils";
+import { useTranslation } from "@/lib/i18n";
 
 export function Skeleton({ className, ...props }: HTMLAttributes<HTMLDivElement>) {
+const { t } = useTranslation();
   return <div className={cn("shimmer rounded-lg", className)} {...props} />;
 }
 

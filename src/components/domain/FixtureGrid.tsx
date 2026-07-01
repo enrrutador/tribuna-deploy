@@ -10,6 +10,7 @@ import { Badge } from "@/components/ui/Badge";
 import { TeamBadge } from "@/components/ui/TeamBadge";
 import { cn } from "@/lib/utils";
 import type { Match } from "@/lib/types";
+import { useTranslation } from "@/lib/i18n";
 
 interface FixtureGridProps {
   slug: string;
@@ -38,6 +39,7 @@ function formatDateHeader(dateKey: string): string {
 }
 
 export default function FixtureGrid({ slug }: FixtureGridProps) {
+const { t } = useTranslation();
   const { data: response, isLoading } = useTournamentFixtures(slug);
   const [selectedIndex, setSelectedIndex] = useState(0);
 
@@ -106,7 +108,7 @@ export default function FixtureGrid({ slug }: FixtureGridProps) {
   if (!rounds.length) {
     return (
       <GlassCard variant="soft" className="p-6 text-center">
-        <p className="text-sm text-[var(--color-slate-400)]">No hay fechas disponibles</p>
+        <p className="text-sm text-[var(--color-slate-400)]">{t("No hay fechas disponibles")}</p>
       </GlassCard>
     );
   }

@@ -4,6 +4,7 @@ import { cn } from "@/lib/utils";
 import { GlassCard } from "@/components/ui/GlassCard";
 import { Badge } from "@/components/ui/Badge";
 import type { StandingEntry, StandingsGroup } from "@/lib/types";
+import { useTranslation } from "@/lib/i18n";
 
 interface StandingsTableProps {
   groups: StandingsGroup[];
@@ -11,6 +12,7 @@ interface StandingsTableProps {
 }
 
 function FormBadge({ result }: { result: string }) {
+const { t } = useTranslation();
   const colors: Record<string, string> = {
     W: "bg-[var(--color-success)]/20 text-[var(--color-success)]",
     D: "bg-[var(--color-warn)]/20 text-[var(--color-warn)]",
@@ -31,6 +33,7 @@ function FormBadge({ result }: { result: string }) {
 }
 
 function GroupTable({ group, maxRows }: { group: StandingsGroup; maxRows?: number }) {
+  const { t } = useTranslation();
   const rows = maxRows ? group.entries.slice(0, maxRows) : group.entries;
 
   return (
@@ -44,17 +47,17 @@ function GroupTable({ group, maxRows }: { group: StandingsGroup; maxRows?: numbe
         <table className="w-full text-sm">
           <thead>
             <tr className="border-b border-white/5 text-[10px] font-bold uppercase tracking-wider text-[var(--color-slate-500)]">
-              <th className="w-8 py-2.5 text-center">#</th>
-              <th className="py-2.5 text-left pl-3">Equipo</th>
-              <th className="py-2.5 text-center hidden sm:table-cell">PJ</th>
-              <th className="py-2.5 text-center hidden sm:table-cell">G</th>
-              <th className="py-2.5 text-center hidden sm:table-cell">E</th>
-              <th className="py-2.5 text-center hidden sm:table-cell">P</th>
-              <th className="py-2.5 text-center hidden md:table-cell">GF</th>
-              <th className="py-2.5 text-center hidden md:table-cell">GC</th>
-              <th className="py-2.5 text-center hidden md:table-cell">DG</th>
-              <th className="py-2.5 text-center hidden lg:table-cell">Forma</th>
-              <th className="py-2.5 text-center font-bold text-[var(--color-lime-400)]">Pts</th>
+              <th className="w-8 py-2.5 text-center">{t("#")}</th>
+              <th className="py-2.5 text-left pl-3">{t("Equipo")}</th>
+              <th className="py-2.5 text-center hidden sm:table-cell">{t("PJ")}</th>
+              <th className="py-2.5 text-center hidden sm:table-cell">{t("G")}</th>
+              <th className="py-2.5 text-center hidden sm:table-cell">{t("E")}</th>
+              <th className="py-2.5 text-center hidden sm:table-cell">{t("P")}</th>
+              <th className="py-2.5 text-center hidden md:table-cell">{t("GF")}</th>
+              <th className="py-2.5 text-center hidden md:table-cell">{t("GC")}</th>
+              <th className="py-2.5 text-center hidden md:table-cell">{t("DG")}</th>
+              <th className="py-2.5 text-center hidden lg:table-cell">{t("Forma")}</th>
+              <th className="py-2.5 text-center font-bold text-[var(--color-lime-400)]">{t("Pts")}</th>
             </tr>
           </thead>
           <tbody className="divide-y divide-white/[0.02]">

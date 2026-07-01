@@ -1,5 +1,6 @@
 import { cn } from "@/lib/utils";
 import type { RoundInfo } from "@/lib/types";
+import { useTranslation } from "@/lib/i18n";
 
 interface RoundSelectorProps {
   rounds: RoundInfo[];
@@ -8,6 +9,7 @@ interface RoundSelectorProps {
 }
 
 export default function RoundSelector({ rounds, selectedKey, onChange }: RoundSelectorProps) {
+const { t } = useTranslation();
   if (rounds.length === 0) return null;
 
   return (

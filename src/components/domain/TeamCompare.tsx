@@ -5,6 +5,7 @@ import { useMatchSummary } from "@/lib/hooks";
 import { GlassCard } from "@/components/ui/GlassCard";
 import { TeamBadge } from "@/components/ui/TeamBadge";
 import { PageLoader } from "@/components/ui/PageLoader";
+import { useTranslation } from "@/lib/i18n";
 
 interface TeamCompareProps {
   homeTeamId: string;
@@ -17,6 +18,7 @@ interface TeamCompareProps {
 }
 
 function CompareBar({ label, home, away }: { label: string; home: string | number; away: string | number }) {
+const { t } = useTranslation();
   const hVal = typeof home === "string" ? parseFloat(home) || 0 : home;
   const aVal = typeof away === "string" ? parseFloat(away) || 0 : away;
   const total = hVal + aVal;
@@ -42,6 +44,7 @@ function CompareBar({ label, home, away }: { label: string; home: string | numbe
 }
 
 export default function TeamCompare({ homeTeamId, homeTeamName, homeTeamLogo, awayTeamId, awayTeamName, awayTeamLogo, matchId }: TeamCompareProps) {
+  const { t } = useTranslation();
   const { data: summary, isLoading } = useMatchSummary(matchId);
 
   if (isLoading) {
@@ -61,7 +64,7 @@ export default function TeamCompare({ homeTeamId, homeTeamName, homeTeamLogo, aw
       <div className="flex items-center justify-between">
         <div className="flex items-center gap-2">
           <Users size={16} className="text-[var(--color-magenta-400)]" />
-          <h4 className="text-sm font-bold text-[var(--color-slate-100)]">Comparación</h4>
+          <h4 className="text-sm font-bold text-[var(--color-slate-100)]">{t("Comparación")}</h4>
         </div>
       </div>
 
@@ -96,7 +99,7 @@ export default function TeamCompare({ homeTeamId, homeTeamName, homeTeamLogo, aw
         <div className="pt-3 border-t border-white/[0.05]">
           <div className="flex items-center gap-1.5 mb-2">
             <Shield size={12} className="text-[var(--color-lime-400)]" />
-            <span className="text-[10px] font-bold uppercase tracking-wider text-[var(--color-slate-500)]">Historial reciente</span>
+            <span className="text-[10px] font-bold uppercase tracking-wider text-[var(--color-slate-500)]">{t("Historial reciente")}</span>
           </div>
           <div className="space-y-1.5">
             {headToHead.slice(0, 3).map((g, i) => (

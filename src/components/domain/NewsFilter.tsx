@@ -3,6 +3,7 @@ import { motion, AnimatePresence } from "framer-motion";
 import { useNews } from "@/lib/hooks";
 import { GlassCard } from "@/components/ui/GlassCard";
 import { cn } from "@/lib/utils";
+import { useTranslation } from "@/lib/i18n";
 
 interface NewsFilterProps {
   initialCategory?: string;
@@ -15,6 +16,7 @@ const CATEGORIES = [
 ];
 
 export default function NewsFilter({ initialCategory }: NewsFilterProps) {
+const { t } = useTranslation();
   const [category, setCategory] = useState(initialCategory ?? "general");
   const { data: response, isLoading } = useNews(category === "general" ? undefined : category);
   const news = response?.news ?? [];
@@ -57,7 +59,7 @@ export default function NewsFilter({ initialCategory }: NewsFilterProps) {
 
           {!isLoading && news.length === 0 && (
             <GlassCard variant="soft" className="p-4 text-center">
-              <p className="text-xs text-[var(--color-slate-400)]">No hay noticias disponibles</p>
+              <p className="text-xs text-[var(--color-slate-400)]">{t("No hay noticias disponibles")}</p>
             </GlassCard>
           )}
 

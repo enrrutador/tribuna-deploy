@@ -4,6 +4,7 @@ import { Link } from "wouter";
 import { Crown, Zap } from "lucide-react";
 import { cn } from "@/lib/utils";
 import type { BracketData, BracketMatch, BracketTeam } from "@/lib/types";
+import { useTranslation } from "@/lib/i18n";
 
 /* --- MINI TEAM ROW --- */
 function TeamMini({
@@ -17,6 +18,7 @@ function TeamMini({
   score: number | null;
   isChampion: boolean;
 }) {
+const { t } = useTranslation();
   return (
     <div
       className={cn(

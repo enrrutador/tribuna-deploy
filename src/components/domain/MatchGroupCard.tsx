@@ -6,6 +6,7 @@ import { GlassCard } from "@/components/ui/GlassCard";
 import { Badge } from "@/components/ui/Badge";
 import MatchRow from "./MatchRow";
 import type { MatchGroup } from "@/lib/types";
+import { useTranslation } from "@/lib/i18n";
 
 interface MatchGroupCardProps {
   group: MatchGroup;
@@ -15,6 +16,7 @@ interface MatchGroupCardProps {
 }
 
 export default function MatchGroupCard({ group, showLink, index = 0, glow: glowOverride }: MatchGroupCardProps) {
+const { t } = useTranslation();
   const liveCount = group.matches.filter((m) => m.status === "live").length;
   const hasLive = liveCount > 0;
   const activeGlow = glowOverride ?? (hasLive ? "magenta" : "none");

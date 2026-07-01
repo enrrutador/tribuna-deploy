@@ -13,8 +13,10 @@ import Favorites from "@/pages/Favorites";
 import Trending from "@/pages/Trending";
 import TrendingDetail from "@/pages/TrendingDetail";
 import NotFound from "@/pages/NotFound";
+import { useTranslation } from "@/lib/i18n";
 
 function AnimatedRoutes() {
+const { t } = useTranslation();
   const [location] = useLocation();
 
   useEffect(() => {
