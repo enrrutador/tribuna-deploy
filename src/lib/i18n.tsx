@@ -2,7 +2,7 @@ import { createContext, useContext, useState, useCallback, type ReactNode } from
 
 export type Lang = "es" | "en" | "pt" | "it" | "de" | "fr" | "nl" | "zh";
 
-interface I18nContext {
+export interface I18nContext {
   lang: Lang;
   setLang: (l: Lang) => void;
   t: (key: string) => string;
@@ -507,7 +507,7 @@ function loadLang(): Lang {
   return "es";
 }
 
-const I18nCtx = createContext<I18nContext>({
+export const I18nCtx = createContext<I18nContext>({
   lang: "es",
   setLang: () => {},
   t: (k: string) => k,
