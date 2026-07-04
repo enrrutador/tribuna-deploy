@@ -40,28 +40,97 @@ function normalizeTeamName(name: string): string {
     .trim();
 }
 
+const TEAM_NAME_MAP: Record<string, string[]> = {
+  alemania: ["germany", "alemania"],
+  francia: ["france", "francia"],
+  españa: ["spain", "espana"],
+  portugal: ["portugal"],
+  holanda: ["netherlands", "holanda", "paises bajos", "paisesbajos"],
+  "países bajos": ["netherlands", "holanda", "paises bajos", "paisesbajos"],
+  brasil: ["brazil", "brasil"],
+  argentina: ["argentina"],
+  uruguay: ["uruguay"],
+  colombia: ["colombia"],
+  chile: ["chile"],
+  ecuador: ["ecuador"],
+  paraguay: ["paraguay"],
+  peru: ["peru", "perú"],
+  mexico: ["mexico", "méxico", "mexico"],
+  "estados unidos": ["united states", "estados unidos", "eeuu", "usa"],
+  canada: ["canada", "canadá"],
+  belgica: ["belgium", "bélgica", "belgica"],
+  italia: ["italy", "italia"],
+  croacia: ["croatia", "croacia"],
+  inglaterra: ["england", "inglaterra"],
+  marruecos: ["morocco", "marruecos"],
+  suiza: ["switzerland", "suiza"],
+  japon: ["japan", "japón", "japon"],
+  "corea del sur": ["south korea", "corea del sur"],
+  "arabia saudita": ["saudi arabia", "arabia saudita"],
+  iran: ["iran", "irán"],
+  tunez: ["tunisia", "tunez", "túnez"],
+  senegal: ["senegal"],
+  ghana: ["ghana"],
+  polonia: ["poland", "polonia"],
+  serbia: ["serbia"],
+  nigeria: ["nigeria"],
+  camerun: ["cameroon", "camerun", "camarún"],
+  "costa de marfil": ["ivory coast", "costa de marfil"],
+  "costa marfil": ["ivory coast", "costa de marfil"],
+  australia: ["australia"],
+  dinamarca: ["denmark", "dinamarca"],
+  suecia: ["sweden", "suecia"],
+  noruega: ["norway", "noruega"],
+  egipto: ["egypt", "egipto"],
+  austria: ["austria"],
+  "bosnia y herzegovina": ["bosnia-herzegovina", "bosnia herzegovina", "bosnia"],
+  "república democrática del congo": ["congo dr", "republica democratica del congo"],
+  congo: ["congo dr", "congo"],
+  hungria: ["hungary", "hungria", "hungría"],
+  escocia: ["scotland", "escocia"],
+  gales: ["wales", "gales"],
+};
+
+function matchTeamNames(bracketName: string, espnName: string): boolean {
+  const bn = normalizeTeamName(bracketName);
+  const en = normalizeTeamName(espnName);
+
+  // Direct match
+  if (bn === en) return true;
+  if (bn.includes(en) || en.includes(bn)) return true;
+
+  // Try the mapping
+  const variants = TEAM_NAME_MAP[bn] ?? TEAM_NAME_MAP[en] ?? [];
+  if (variants.length > 0) {
+    if (variants.includes(bn) || variants.includes(en)) return true;
+    for (const v of variants) {
+      if (bn.includes(v) || en.includes(v)) return true;
+    }
+  }
+
+  return false;
+}
+
 function findEspnMatchId(
   bracketMatch: BracketMatch,
   espnMatches: Match[]
 ): string | null {
-  const homeNorm = normalizeTeamName(bracketMatch.homeTeam.name);
-  const awayNorm = normalizeTeamName(bracketMatch.awayTeam.name);
+  const bracketHome = bracketMatch.homeTeam.name;
+  const bracketAway = bracketMatch.awayTeam.name;
 
-  // Try to find by team names
   for (const m of espnMatches) {
-    const mHome = normalizeTeamName(m.homeTeam.name ?? m.homeTeam.shortName ?? "");
-    const mAway = normalizeTeamName(m.awayTeam.name ?? m.awayTeam.shortName ?? "");
-    // Check direct match
+    const mHome = m.homeTeam.name ?? m.homeTeam.shortName ?? "";
+    const mAway = m.awayTeam.name ?? m.awayTeam.shortName ?? "";
+
     if (
-      (mHome.includes(homeNorm) || homeNorm.includes(mHome)) &&
-      (mAway.includes(awayNorm) || awayNorm.includes(mAway))
+      matchTeamNames(bracketHome, mHome) &&
+      matchTeamNames(bracketAway, mAway)
     ) {
       return m.id;
     }
-    // Check swapped (ESPN might swap home/away)
     if (
-      (mHome.includes(awayNorm) || awayNorm.includes(mHome)) &&
-      (mAway.includes(homeNorm) || homeNorm.includes(mAway))
+      matchTeamNames(bracketHome, mAway) &&
+      matchTeamNames(bracketAway, mHome)
     ) {
       return m.id;
     }
