@@ -104,6 +104,8 @@ const translations: Record<Lang, Record<string, string>> = {
     "Sin partidos": "No matches",
     "No hay partidos para los filtros seleccionados. Probá con otra fecha o filtro.": "No matches for the selected filters. Try a different date or filter.",
     "Últimas noticias": "Latest news",
+    "La instancia más emocionante del fútbol mundial": "The most exciting stage of world football",
+    "Ver torneo": "View tournament",
   },
   pt: {
     "Inicio": "Início",

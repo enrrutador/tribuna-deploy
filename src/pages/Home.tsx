@@ -16,6 +16,7 @@ import { Segmented } from "@/components/ui/Segmented";
 import MatchGroupCard from "@/components/domain/MatchGroupCard";
 import NewsPanel from "@/components/domain/NewsPanel";
 import NewsCarousel from "@/components/domain/NewsCarousel";
+import WorldCupBanner from "@/components/domain/WorldCupBanner";
 import type { CategoryId } from "@/lib/types";
 import { useTranslation } from "@/lib/i18n";
 
@@ -136,6 +137,9 @@ const { t } = useTranslation();
           )}
         </div>
       </motion.div>
+
+      {/* World Cup Octavos de Final banner */}
+      <WorldCupBanner />
 
       {/* TWO-COLUMN LAYOUT */}
       <div className="flex gap-5 items-start">
