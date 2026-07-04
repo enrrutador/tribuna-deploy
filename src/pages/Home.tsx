@@ -98,6 +98,12 @@ const { t } = useTranslation();
     return groups;
   }, [rawData, category, favTeamIds]);
 
+  // Remove Mundial 2026 groups from the list (already shown in WorldCupBanner)
+  const filteredGroups = useMemo(
+    () => sortedGroups.filter((g) => g.tournament.slug !== "mundial-2026"),
+    [sortedGroups]
+  );
+
   const totalMatches = rawData?.totalMatches ?? 0;
   const updatedAgo = dataUpdatedAt && !isLoading ? timeAgo(dataUpdatedAt) : null;
 
@@ -187,7 +193,7 @@ const { t } = useTranslation();
           {/* Refresh + meta */}
           <div className="flex items-center justify-between">
             <span className="text-xs text-[var(--color-slate-500)]">
-              {isLoading ? "" : `${sortedGroups.length} ${sortedGroups.length !== 1 ? t("torneos") : t("torneo")}`}
+              {isLoading ? "" : `${filteredGroups.length} ${filteredGroups.length !== 1 ? t("torneos") : t("torneo")}`}
             </span>
             <div className="flex items-center gap-3">
               {updatedAgo && (
@@ -214,7 +220,7 @@ const { t } = useTranslation();
             <div className="space-y-3">
               {[1, 2, 3].map((i) => <CardSkeleton key={i} />)}
             </div>
-          ) : sortedGroups.length === 0 ? (
+          ) : filteredGroups.length === 0 ? (
             <EmptyState
               icon="⚽"
               title={t("Sin partidos")}
@@ -222,7 +228,7 @@ const { t } = useTranslation();
             />
           ) : (
             <div className="space-y-3">
-              {sortedGroups.map((group, i) => (
+              {filteredGroups.map((group, i) => (
                 <MatchGroupCard key={group.tournament.id} group={group} showLink index={i} />
               ))}
             </div>

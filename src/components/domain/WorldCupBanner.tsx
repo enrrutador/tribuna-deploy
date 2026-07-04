@@ -117,25 +117,26 @@ function findEspnMatchId(
 ): string | null {
   const bracketHome = bracketMatch.homeTeam.name;
   const bracketAway = bracketMatch.awayTeam.name;
+  let best: string | null = null;
 
   for (const m of espnMatches) {
     const mHome = m.homeTeam.name ?? m.homeTeam.shortName ?? "";
     const mAway = m.awayTeam.name ?? m.awayTeam.shortName ?? "";
 
-    if (
-      matchTeamNames(bracketHome, mHome) &&
-      matchTeamNames(bracketAway, mAway)
-    ) {
-      return m.id;
-    }
-    if (
-      matchTeamNames(bracketHome, mAway) &&
-      matchTeamNames(bracketAway, mHome)
-    ) {
-      return m.id;
+    const homeOk =
+      matchTeamNames(bracketHome, mHome) ||
+      matchTeamNames(bracketHome, mAway);
+    const awayOk =
+      matchTeamNames(bracketAway, mAway) ||
+      matchTeamNames(bracketAway, mHome);
+
+    if (homeOk && awayOk) {
+      // Prefer numeric ESPN IDs over Promiedos IDs
+      if (/^\d+$/.test(m.id)) return m.id;
+      if (!best) best = m.id;
     }
   }
-  return null;
+  return best;
 }
 
 export default function WorldCupBanner() {
