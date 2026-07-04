@@ -2,38 +2,55 @@ import { useMemo } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { Trophy, ChevronRight, CalendarDays, Radio } from "lucide-react";
 import { Link } from "wouter";
-import { useTournamentFixtures } from "@/lib/hooks";
+import { useTournamentBrackets } from "@/lib/hooks";
 import { useTranslation } from "@/lib/i18n";
-import { GlassCard } from "@/components/ui/GlassCard";
 import { Badge } from "@/components/ui/Badge";
-import { format } from "date-fns";
-import { es } from "date-fns/locale";
-import type { Match } from "@/lib/types";
+import { format, parse } from "date-fns";
+import { es, type Locale } from "date-fns/locale";
+import type { BracketMatch } from "@/lib/types";
 
 const WORLD_CUP_SLUG = "mundial-2026";
-const STAGE_KEYWORDS = ["octavos", "round of 16", "r16", "8vos"];
 
-function isOctavosMatch(m: Match): boolean {
-  const round = (m.round ?? "").toLowerCase();
-  return STAGE_KEYWORDS.some((k) => round.includes(k));
+function parseBracketTime(startTime: string | null): Date | null {
+  if (!startTime) return null;
+  try {
+    const parsed = parse(startTime, "dd-MM-yyyy HH:mm", new Date());
+    if (isNaN(parsed.getTime())) return null;
+    return parsed;
+  } catch {
+    return null;
+  }
 }
 
-function sameDay(a: string, b: string): boolean {
-  return new Date(a).toDateString() === new Date(b).toDateString();
+function parseBracketDay(startTime: string | null): string | null {
+  const d = parseBracketTime(startTime);
+  return d ? format(d, "yyyy-MM-dd") : null;
+}
+
+function formatBracketTime(startTime: string | null): string {
+  const d = parseBracketTime(startTime);
+  return d ? format(d, "HH:mm") : "";
+}
+
+function formatBracketDay(startTime: string | null, locale: Locale): string {
+  const d = parseBracketTime(startTime);
+  return d ? format(d, "EEE d 'de' MMMM", { locale }) : "";
 }
 
 export default function WorldCupBanner() {
   const { t } = useTranslation();
-  const { data, isLoading } = useTournamentFixtures(WORLD_CUP_SLUG);
+  const { data, isLoading } = useTournamentBrackets(WORLD_CUP_SLUG);
 
   const octavosByDay = useMemo(() => {
-    const allMatches = data?.groups?.flatMap((g) => g.matches) ?? [];
-    const octavos = allMatches.filter(isOctavosMatch);
-    if (octavos.length === 0) return [];
+    const stage = data?.stages?.find(
+      (s) => s.name.toLowerCase().includes("octavos")
+    );
+    if (!stage || stage.matches.length === 0) return [];
 
-    const byDay = new Map<string, Match[]>();
-    for (const m of octavos) {
-      const dayKey = format(new Date(m.kickoffTime), "yyyy-MM-dd");
+    const byDay = new Map<string, BracketMatch[]>();
+    for (const m of stage.matches) {
+      const dayKey = parseBracketDay(m.startTime);
+      if (!dayKey) continue;
       if (!byDay.has(dayKey)) byDay.set(dayKey, []);
       byDay.get(dayKey)!.push(m);
     }
@@ -42,8 +59,13 @@ export default function WorldCupBanner() {
       .sort(([a], [b]) => new Date(a).getTime() - new Date(b).getTime())
       .map(([day, matches]) => ({
         day,
-        dayLabel: format(new Date(day), "EEE d 'de' MMMM", { locale: es }),
-        matches: matches.sort((a, b) => new Date(a.kickoffTime).getTime() - new Date(b.kickoffTime).getTime()),
+        dayLabel: formatBracketDay(matches[0].startTime, es),
+        matches: matches.sort((a, b) => {
+          const ta = parseBracketTime(a.startTime);
+          const tb = parseBracketTime(b.startTime);
+          if (ta && tb) return ta.getTime() - tb.getTime();
+          return 0;
+        }),
       }));
   }, [data]);
 
@@ -61,12 +83,9 @@ export default function WorldCupBanner() {
       transition={{ duration: 0.5, ease: "easeOut" }}
       className="relative overflow-hidden rounded-2xl"
     >
-      {/* Animated gradient background */}
       <div className="absolute inset-0 bg-gradient-to-br from-amber-500/15 via-yellow-500/8 to-orange-500/15 animate-gradient" />
       <div className="absolute inset-0 bg-[radial-gradient(circle_at_20%_50%,rgba(251,191,36,0.12),transparent_50%)]" />
       <div className="absolute inset-0 bg-[radial-gradient(circle_at_80%_50%,rgba(249,115,22,0.10),transparent_50%)]" />
-
-      {/* Glow border */}
       <div className="absolute inset-0 rounded-2xl ring-1 ring-amber-400/20" />
       <div className="absolute -inset-px rounded-2xl bg-gradient-to-r from-amber-500/0 via-amber-400/30 to-amber-500/0 opacity-50 blur-sm animate-gradient" />
 
@@ -106,7 +125,7 @@ export default function WorldCupBanner() {
             return (
               <div
                 key={block.day}
-                className={`flex-shrink-0 rounded-lg px-3 py-1.5 text-[11px] font-semibold transition-all ${
+                className={`flex-shrink-0 cursor-pointer rounded-lg px-3 py-1.5 text-[11px] font-semibold transition-all ${
                   isActive
                     ? "bg-amber-500/20 text-amber-200 ring-1 ring-amber-400/40"
                     : "bg-white/[0.03] text-[var(--color-slate-500)] ring-1 ring-white/5"
@@ -139,7 +158,9 @@ export default function WorldCupBanner() {
             {activeBlock.matches.map((match, idx) => {
               const isLive = match.status === "live";
               const isFinished = match.status === "finished";
-              const kickoff = format(new Date(match.kickoffTime), "HH:mm");
+              const kickoff = formatBracketTime(match.startTime);
+              const homeWon = isFinished && match.winner === 1;
+              const awayWon = isFinished && match.winner === 2;
 
               return (
                 <motion.div
@@ -151,7 +172,6 @@ export default function WorldCupBanner() {
                   className="group relative"
                 >
                   <Link href={`/match/${match.id}`}>
-                    {/* Glow effect on hover */}
                     <div className="absolute -inset-0.5 rounded-xl bg-gradient-to-r from-amber-500/0 via-amber-400/20 to-amber-500/0 opacity-0 blur transition-opacity group-hover:opacity-100" />
 
                     <div className={`relative rounded-xl border bg-[var(--color-carbon)]/60 backdrop-blur-md p-3 transition-all ${
@@ -170,11 +190,7 @@ export default function WorldCupBanner() {
                         ) : (
                           <span className="text-[10px] font-bold text-amber-300/80">{kickoff} hs</span>
                         )}
-                        {match.round && (
-                          <span className="text-[9px] text-[var(--color-slate-600)] truncate max-w-[100px]">
-                            {match.round}
-                          </span>
-                        )}
+                        <span className="text-[9px] text-[var(--color-slate-600)]">Octavos de Final</span>
                       </div>
 
                       {/* Teams */}
@@ -182,13 +198,16 @@ export default function WorldCupBanner() {
                         {/* Home team */}
                         <div className="flex items-center justify-between gap-2">
                           <div className="flex items-center gap-2 min-w-0">
-                            <span className="text-lg">{match.tournamentFlag}</span>
+                            <span
+                              className="flex h-6 w-6 items-center justify-center rounded-full text-[10px] font-bold shadow-sm ring-1 ring-white/10"
+                              style={{ backgroundColor: `#${match.homeTeam.color}`, color: `#${match.homeTeam.textColor}` }}
+                            >
+                              {match.homeTeam.symbolName?.slice(0, 2) ?? "?"}
+                            </span>
                             <span className={`truncate text-sm font-bold ${
-                              isFinished && match.homeScore !== null && match.awayScore !== null && match.homeScore > match.awayScore
-                                ? "text-amber-300"
-                                : "text-[var(--color-slate-200)]"
+                              homeWon ? "text-amber-300" : "text-[var(--color-slate-200)]"
                             }`}>
-                              {match.homeTeam.shortName ?? match.homeTeam.name}
+                              {match.homeTeam.name}
                             </span>
                           </div>
                           <span className={`text-base font-black tabular-nums ${
@@ -201,13 +220,16 @@ export default function WorldCupBanner() {
                         {/* Away team */}
                         <div className="flex items-center justify-between gap-2">
                           <div className="flex items-center gap-2 min-w-0">
-                            <span className="text-lg">{match.tournamentFlag}</span>
+                            <span
+                              className="flex h-6 w-6 items-center justify-center rounded-full text-[10px] font-bold shadow-sm ring-1 ring-white/10"
+                              style={{ backgroundColor: `#${match.awayTeam.color}`, color: `#${match.awayTeam.textColor}` }}
+                            >
+                              {match.awayTeam.symbolName?.slice(0, 2) ?? "?"}
+                            </span>
                             <span className={`truncate text-sm font-bold ${
-                              isFinished && match.homeScore !== null && match.awayScore !== null && match.awayScore > match.homeScore
-                                ? "text-amber-300"
-                                : "text-[var(--color-slate-200)]"
+                              awayWon ? "text-amber-300" : "text-[var(--color-slate-200)]"
                             }`}>
-                              {match.awayTeam.shortName ?? match.awayTeam.name}
+                              {match.awayTeam.name}
                             </span>
                           </div>
                           <span className={`text-base font-black tabular-nums ${
