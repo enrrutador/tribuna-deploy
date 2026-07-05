@@ -43,10 +43,10 @@ function normalizeTeamName(name: string): string {
 const TEAM_NAME_MAP: Record<string, string[]> = {
   alemania: ["germany", "alemania"],
   francia: ["france", "francia"],
-  españa: ["spain", "espana"],
+  espana: ["spain", "espana"],
   portugal: ["portugal"],
   holanda: ["netherlands", "holanda", "paises bajos", "paisesbajos"],
-  "países bajos": ["netherlands", "holanda", "paises bajos", "paisesbajos"],
+  "paises bajos": ["netherlands", "holanda", "paises bajos", "paisesbajos"],
   brasil: ["brazil", "brasil"],
   argentina: ["argentina"],
   uruguay: ["uruguay"],
@@ -54,27 +54,27 @@ const TEAM_NAME_MAP: Record<string, string[]> = {
   chile: ["chile"],
   ecuador: ["ecuador"],
   paraguay: ["paraguay"],
-  peru: ["peru", "perú"],
-  mexico: ["mexico", "méxico", "mexico"],
+  peru: ["peru", "peru"],
+  mexico: ["mexico", "mexico", "mexico"],
   "estados unidos": ["united states", "estados unidos", "eeuu", "usa"],
-  canada: ["canada", "canadá"],
-  belgica: ["belgium", "bélgica", "belgica"],
+  canada: ["canada", "canada"],
+  belgica: ["belgium", "belgica", "belgica"],
   italia: ["italy", "italia"],
   croacia: ["croatia", "croacia"],
   inglaterra: ["england", "inglaterra"],
   marruecos: ["morocco", "marruecos"],
   suiza: ["switzerland", "suiza"],
-  japon: ["japan", "japón", "japon"],
+  japon: ["japan", "japon", "japon"],
   "corea del sur": ["south korea", "corea del sur"],
   "arabia saudita": ["saudi arabia", "arabia saudita"],
-  iran: ["iran", "irán"],
-  tunez: ["tunisia", "tunez", "túnez"],
+  iran: ["iran", "iran"],
+  tunez: ["tunisia", "tunez", "tunez"],
   senegal: ["senegal"],
   ghana: ["ghana"],
   polonia: ["poland", "polonia"],
   serbia: ["serbia"],
   nigeria: ["nigeria"],
-  camerun: ["cameroon", "camerun", "camarún"],
+  camerun: ["cameroon", "camerun", "camerun"],
   "costa de marfil": ["ivory coast", "costa de marfil"],
   "costa marfil": ["ivory coast", "costa de marfil"],
   australia: ["australia"],
@@ -84,9 +84,9 @@ const TEAM_NAME_MAP: Record<string, string[]> = {
   egipto: ["egypt", "egipto"],
   austria: ["austria"],
   "bosnia y herzegovina": ["bosnia-herzegovina", "bosnia herzegovina", "bosnia"],
-  "república democrática del congo": ["congo dr", "republica democratica del congo"],
+  "republica democratica del congo": ["congo dr", "republica democratica del congo"],
   congo: ["congo dr", "congo"],
-  hungria: ["hungary", "hungria", "hungría"],
+  hungria: ["hungary", "hungria", "hungria"],
   escocia: ["scotland", "escocia"],
   gales: ["wales", "gales"],
 };
@@ -94,20 +94,11 @@ const TEAM_NAME_MAP: Record<string, string[]> = {
 function matchTeamNames(bracketName: string, espnName: string): boolean {
   const bn = normalizeTeamName(bracketName);
   const en = normalizeTeamName(espnName);
-
-  // Direct match
   if (bn === en) return true;
-  if (bn.includes(en) || en.includes(bn)) return true;
-
-  // Try the mapping
-  const variants = TEAM_NAME_MAP[bn] ?? TEAM_NAME_MAP[en] ?? [];
-  if (variants.length > 0) {
-    if (variants.includes(bn) || variants.includes(en)) return true;
-    for (const v of variants) {
-      if (bn.includes(v) || en.includes(v)) return true;
-    }
-  }
-
+  const bnVars = TEAM_NAME_MAP[bn];
+  if (bnVars && bnVars.some((v) => en === v)) return true;
+  const enVars = TEAM_NAME_MAP[en];
+  if (enVars && enVars.some((v) => bn === v)) return true;
   return false;
 }
 
