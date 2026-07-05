@@ -105,10 +105,10 @@ function matchTeamNames(bracketName: string, espnName: string): boolean {
 function findEspnMatchId(
   bracketMatch: BracketMatch,
   espnMatches: Match[]
-): string | null {
+): { id: string; leagueId: string } | null {
   const bracketHome = bracketMatch.homeTeam.name;
   const bracketAway = bracketMatch.awayTeam.name;
-  let best: string | null = null;
+  let best: { id: string; leagueId: string } | null = null;
 
   for (const m of espnMatches) {
     const mHome = m.homeTeam.name ?? m.homeTeam.shortName ?? "";
@@ -123,8 +123,8 @@ function findEspnMatchId(
 
     if (homeOk && awayOk) {
       // Prefer numeric ESPN IDs over Promiedos IDs
-      if (/^\d+$/.test(m.id)) return m.id;
-      if (!best) best = m.id;
+      if (/^\d+$/.test(m.id)) return { id: m.id, leagueId: m.leagueId };
+      if (!best) best = { id: m.id, leagueId: m.leagueId };
     }
   }
   return best;
@@ -169,12 +169,12 @@ export default function WorldCupBanner() {
       }));
   }, [brackets]);
 
-  const bracketToEspnId = useMemo(() => {
+  const bracketToMatchPath = useMemo(() => {
     const map = new Map<string, string>();
     const allMatches = brackets?.stages?.flatMap((s) => s.matches) ?? [];
     for (const bm of allMatches) {
-      const espnId = findEspnMatchId(bm, allEspnMatches);
-      if (espnId) map.set(bm.id, espnId);
+      const found = findEspnMatchId(bm, allEspnMatches);
+      if (found) map.set(bm.id, `/match/${found.leagueId}:${found.id}`);
     }
     return map;
   }, [brackets, allEspnMatches]);
@@ -271,10 +271,7 @@ export default function WorldCupBanner() {
               const kickoff = formatBracketTime(match.startTime);
               const homeWon = isFinished && match.winner === 1;
               const awayWon = isFinished && match.winner === 2;
-              const espnId = bracketToEspnId.get(match.id) ?? null;
-              const matchPath = espnId
-                ? `/match/${espnId}`
-                : `/tournament/${WORLD_CUP_SLUG}`;
+              const matchPath = bracketToMatchPath.get(match.id) ?? `/tournament/${WORLD_CUP_SLUG}`;
 
               return (
                 <motion.div
