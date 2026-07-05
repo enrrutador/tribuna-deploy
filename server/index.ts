@@ -183,7 +183,11 @@ app.get("/api/matches/:id", async (req, res) => {
       matchId = mid!;
     } else {
       const all = await fetchTodayMatches();
-      const found = all.find((m) => m.id === rawId);
+      let found = all.find((m) => m.id === rawId);
+      if (!found) {
+        const mundialMatches = await fetchLeagueMatches("fifa.world");
+        found = mundialMatches.find((m) => m.id === rawId);
+      }
       if (found) leagueId = found.leagueId;
     }
 
