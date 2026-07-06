@@ -325,6 +325,83 @@ export async function fetchLeagueMatches(leagueId: string, utcDateStr?: string, 
     }
   }
 
+  // ========== MUNDIAL: Promiedos-first approach ==========
+  // For the World Cup, Promiedos is the primary source (Spanish names, correct rounds, bracket data).
+  // We only use ESPN for enrichment (events, stats, lineups) when available.
+  if (leagueId === "fifa.world") {
+    const leagueInfo = LEAGUES[leagueId as LeagueId];
+    if (!leagueInfo) return [];
+
+    // If a round key is provided, fetch that specific round from Promiedos
+    if (roundKey && roundKey !== "latest") {
+      const roundMatches = await promiedosRound(leagueId, roundKey);
+      if (roundMatches.length > 0) {
+        setCache(cacheKey, roundMatches, 60_000);
+        return roundMatches;
+      }
+    }
+
+    // Get Promiedos matches as the base (Spanish names, correct rounds)
+    let matches: Match[];
+    try {
+      matches = await promiedosWeekExtended(
+        leagueId,
+        leagueInfo.name,
+        leagueInfo.slug,
+        leagueInfo.category,
+        leagueInfo.flag,
+      );
+    } catch (pe) {
+      console.error("[promiedos] mundiales fetch failed", pe);
+      matches = [];
+    }
+
+    // Try to enrich with ESPN data (match IDs for detail pages)
+    try {
+      const espnUrl = utcDateStr
+        ? `${ESPN_SCOREBOARD}/${leagueId}/scoreboard?dates=${utcDateStr}`
+        : `${ESPN_SCOREBOARD}/${leagueId}/scoreboard?dates=${getWeekRange()}`;
+      const espnData = (await espnFetch(espnUrl).catch(() => null)) as Record<string, unknown> | null;
+      const espnEvents = (espnData?.events as Record<string, unknown>[]) ?? [];
+
+      if (espnEvents.length > 0) {
+        const normalize = (s: string) =>
+          s.normalize("NFD").replace(/[\u0300-\u036f]/g, "").toLowerCase().replace(/[^a-z0-9]/g, "").trim();
+
+        // Build lookup from ESPN: normalized "home|away" → { espnId, espnMatch }
+        const espnLookup = new Map<string, { id: string; match: Record<string, unknown> }>();
+        for (const ev of espnEvents) {
+          const comp = (ev.competitions as Record<string, unknown>[])?.[0] ?? {};
+          const competitors = (comp.competitors as Record<string, unknown>[]) ?? [];
+          const home = competitors.find((c) => c.homeAway === "home") ?? competitors[0] ?? {};
+          const away = competitors.find((c) => c.homeAway === "away") ?? competitors[1] ?? {};
+          const homeName = String(((home.team as Record<string, unknown>)?.displayName) ?? ((home.team as Record<string, unknown>)?.shortDisplayName) ?? "");
+          const awayName = String(((away.team as Record<string, unknown>)?.displayName) ?? ((away.team as Record<string, unknown>)?.shortDisplayName) ?? "");
+          const sig = `${normalize(homeName)}|${normalize(awayName)}`;
+          const sigRev = `${normalize(awayName)}|${normalize(homeName)}`;
+          espnLookup.set(sig, { id: String(ev.id), match: ev });
+          espnLookup.set(sigRev, { id: String(ev.id), match: ev });
+        }
+
+        // Enrich Promiedos matches with ESPN IDs
+        for (const pm of matches) {
+          const pmSig = `${normalize(pm.homeTeam.name)}|${normalize(pm.awayTeam.name)}`;
+          const espnEntry = espnLookup.get(pmSig);
+          if (espnEntry) {
+            // Use the ESPN numeric ID so /match/:id detail pages work
+            pm.id = espnEntry.id;
+          }
+        }
+      }
+    } catch (espnErr) {
+      console.error("[espn] mundiales enrichment failed (non-fatal)", espnErr);
+    }
+
+    const ttl = matches.some((m) => m.status === "live") ? 15_000 : 60_000;
+    setCache(cacheKey, matches, ttl);
+    return matches;
+  }
+
   // ESPN leagues - try ESPN first, fallback to Promiedos
   let url: string;
   if (utcDateStr) {
