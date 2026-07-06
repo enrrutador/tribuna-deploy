@@ -365,11 +365,36 @@ export async function fetchLeagueMatches(leagueId: string, utcDateStr?: string, 
       const espnEvents = (espnData?.events as Record<string, unknown>[]) ?? [];
 
       if (espnEvents.length > 0) {
+        // Spanish → English name translation for Mundial teams
+        const ES_TO_EN: Record<string, string> = {
+          "alemania": "germany", "argentina": "argentina", "australia": "australia",
+          "austria": "austria", "bélgica": "belgium", "bosnia herzegovina": "bosnia-herzegovina",
+          "brasil": "brazil", "canadá": "canada", "colombia": "colombia",
+          "corea del sur": "south korea", "costa de marfil": "ivory coast",
+          "croacia": "croatia", "dinamarca": "denmark", "ecuador": "ecuador",
+          "egipto": "egypt", "españa": "spain", "estados unidos": "united states",
+          "francia": "france", "ghana": "ghana", "inglaterra": "england",
+          "irán": "iran", "irak": "iraq", "japón": "japan",
+          "jordania": "jordan", "marruecos": "morocco", "méxico": "mexico",
+          "noruega": "norway", "nueva zelanda": "new zealand", "países bajos": "netherlands",
+          "paraguay": "paraguay", "perú": "peru", "polonia": "poland",
+          "portugal": "portugal", "qatar": "qatar", "rd congo": "congo dr",
+          "republica checa": "czechia", "arabia saudita": "saudi arabia",
+          "senegal": "senegal", "suecia": "sweden", "suiza": "switzerland",
+          "senegal": "senegal", "sudáfrica": "south africa",
+          "túnez": "tunisia", "turquía": "turkiye", "uruguay": "uruguay",
+          "uzbekistán": "uzbekistan",
+        };
+        const translateToEn = (name: string) => {
+          const lower = name.toLowerCase();
+          return ES_TO_EN[lower] ?? lower;
+        };
+
         const normalize = (s: string) =>
           s.normalize("NFD").replace(/[\u0300-\u036f]/g, "").toLowerCase().replace(/[^a-z0-9]/g, "").trim();
 
-        // Build lookup from ESPN: normalized "home|away" → { espnId, espnMatch }
-        const espnLookup = new Map<string, { id: string; match: Record<string, unknown> }>();
+        // Build lookup from ESPN: normalized translated "home|away" → espnId
+        const espnLookup = new Map<string, string>();
         for (const ev of espnEvents) {
           const comp = (ev.competitions as Record<string, unknown>[])?.[0] ?? {};
           const competitors = (comp.competitors as Record<string, unknown>[]) ?? [];
@@ -379,18 +404,17 @@ export async function fetchLeagueMatches(leagueId: string, utcDateStr?: string, 
           const awayName = String(((away.team as Record<string, unknown>)?.displayName) ?? ((away.team as Record<string, unknown>)?.shortDisplayName) ?? "");
           const sig = `${normalize(homeName)}|${normalize(awayName)}`;
           const sigRev = `${normalize(awayName)}|${normalize(homeName)}`;
-          espnLookup.set(sig, { id: String(ev.id), match: ev });
-          espnLookup.set(sigRev, { id: String(ev.id), match: ev });
+          espnLookup.set(sig, String(ev.id));
+          espnLookup.set(sigRev, String(ev.id));
         }
 
-        // Enrich Promiedos matches with ESPN IDs
+        // Enrich Promiedos matches with ESPN IDs (translate Spanish → English before matching)
         for (const pm of matches) {
-          const pmSig = `${normalize(pm.homeTeam.name)}|${normalize(pm.awayTeam.name)}`;
-          const espnEntry = espnLookup.get(pmSig);
-          if (espnEntry) {
-            // Use the ESPN numeric ID so /match/:id detail pages work
-            pm.id = espnEntry.id;
-          }
+          const homeEn = translateToEn(pm.homeTeam.name);
+          const awayEn = translateToEn(pm.awayTeam.name);
+          const pmSig = `${normalize(homeEn)}|${normalize(awayEn)}`;
+          const espnId = espnLookup.get(pmSig);
+          if (espnId) pm.id = espnId;
         }
       }
     } catch (espnErr) {
