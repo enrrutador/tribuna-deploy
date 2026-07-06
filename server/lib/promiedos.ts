@@ -512,6 +512,87 @@ export async function promiedosWeekExtended(
     }
   }
 
+  // For Mundial: assign rounds from bracket data when stage_round_name is missing
+  if (leagueId === "fifa.world") {
+    const brackets = await fetchBrackets(leagueId);
+    if (brackets?.stages) {
+      const normalize = (s: string) =>
+        s.normalize("NFD").replace(/[\u0300-\u036f]/g, "").toLowerCase().replace(/[^a-z0-9]/g, "").trim();
+
+      // Build a map: normalized "home|away" → stage name (from brackets)
+      const bracketRoundMap = new Map<string, string>();
+      for (const stage of brackets.stages) {
+        for (const bm of stage.matches) {
+          const sig = `${normalize(bm.homeTeam.name)}|${normalize(bm.awayTeam.name)}`;
+          const sigRev = `${normalize(bm.awayTeam.name)}|${normalize(bm.homeTeam.name)}`;
+          bracketRoundMap.set(sig, stage.name);
+          bracketRoundMap.set(sigRev, stage.name);
+        }
+      }
+
+      // Assign rounds to matches
+      for (const m of allMatches) {
+        if (!m.round) {
+          const sig = `${normalize(m.homeTeam.name)}|${normalize(m.awayTeam.name)}`;
+          const inferred = bracketRoundMap.get(sig);
+          if (inferred) m.round = inferred;
+        }
+      }
+
+      // For matches still without round: infer from date ranges based on bracket stages
+      // Group stage (Fecha 1-3): before first knockout date
+      // 16avos: based on bracket stage dates
+      // etc.
+      const stageDateRanges: { name: string; start: Date; end: Date }[] = [];
+      for (const stage of brackets.stages) {
+        const dates = stage.matches
+          .filter((bm) => bm.startTime)
+          .map((bm) => {
+            const [dd, mm, yyyy] = bm.startTime!.split(" ")[0].split("-");
+            return new Date(Number(yyyy), Number(mm) - 1, Number(dd));
+          });
+        if (dates.length > 0) {
+          const start = new Date(Math.min(...dates.map((d) => d.getTime())));
+          const end = new Date(Math.max(...dates.map((d) => d.getTime())));
+          end.setHours(23, 59, 59);
+          stageDateRanges.push({ name: stage.name, start, end });
+        }
+      }
+
+      for (const m of allMatches) {
+        if (!m.round) {
+          const [datePart] = m.kickoffTime.split("T");
+          const matchDate = new Date(datePart);
+          // Find which stage range this match falls into
+          const matched = stageDateRanges.find(
+            (r) => matchDate >= r.start && matchDate <= r.end
+          );
+          if (matched) m.round = matched.name;
+        }
+      }
+
+      // Last resort: infer group stage matches as "Fecha 1", "Fecha 2", "Fecha 3"
+      // based on the group stage date ranges from filters
+      if (allMatches.some((m) => !m.round)) {
+        const fechaRanges: { name: string; start: Date; end: Date }[] = [
+          { name: "Fecha 1", start: new Date("2026-06-28"), end: new Date("2026-06-30T23:59:59") },
+          { name: "Fecha 2", start: new Date("2026-06-30"), end: new Date("2026-07-02T23:59:59") },
+          { name: "Fecha 3", start: new Date("2026-07-02"), end: new Date("2026-07-04T23:59:59") },
+        ];
+        for (const m of allMatches) {
+          if (!m.round) {
+            const [datePart] = m.kickoffTime.split("T");
+            const matchDate = new Date(datePart);
+            const matched = fechaRanges.find(
+              (r) => matchDate >= r.start && matchDate <= r.end
+            );
+            if (matched) m.round = matched.name;
+          }
+        }
+      }
+    }
+  }
+
   allMatches.sort((a, b) => new Date(a.kickoffTime).getTime() - new Date(b.kickoffTime).getTime());
 
   setCache(cacheKey, allMatches, 60_000);
