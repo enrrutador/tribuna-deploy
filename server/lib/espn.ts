@@ -357,10 +357,18 @@ export async function fetchLeagueMatches(leagueId: string, utcDateStr?: string, 
     }
 
     // Try to enrich with ESPN data (match IDs for detail pages)
+    // Use ±7 day range to match Promiedos window (getWeekRange is only ±3)
     try {
+      const now = new Date();
+      const start = new Date(now);
+      start.setDate(start.getDate() - 7);
+      const end = new Date(now);
+      end.setDate(end.getDate() + 7);
+      const fmt = (d: Date) => d.toISOString().slice(0, 10).replace(/-/g, "");
+      const wideRange = `${fmt(start)}-${fmt(end)}`;
       const espnUrl = utcDateStr
         ? `${ESPN_SCOREBOARD}/${leagueId}/scoreboard?dates=${utcDateStr}`
-        : `${ESPN_SCOREBOARD}/${leagueId}/scoreboard?dates=${getWeekRange()}`;
+        : `${ESPN_SCOREBOARD}/${leagueId}/scoreboard?dates=${wideRange}`;
       const espnData = (await espnFetch(espnUrl).catch(() => null)) as Record<string, unknown> | null;
       const espnEvents = (espnData?.events as Record<string, unknown>[]) ?? [];
 
@@ -409,13 +417,22 @@ export async function fetchLeagueMatches(leagueId: string, utcDateStr?: string, 
         }
 
         // Enrich Promiedos matches with ESPN IDs (translate Spanish → English before matching)
+        let enriched = 0;
+        let unmatched = 0;
         for (const pm of matches) {
           const homeEn = translateToEn(pm.homeTeam.name);
           const awayEn = translateToEn(pm.awayTeam.name);
           const pmSig = `${normalize(homeEn)}|${normalize(awayEn)}`;
           const espnId = espnLookup.get(pmSig);
-          if (espnId) pm.id = espnId;
+          if (espnId) {
+            pm.id = espnId;
+            enriched++;
+          } else {
+            unmatched++;
+            console.log(`[espn] mundial unmatched: ${pm.homeTeam.name} vs ${pm.awayTeam.name} (sig: ${pmSig})`);
+          }
         }
+        console.log(`[espn] mundial enrichment: ${enriched} matched, ${unmatched} unmatched out of ${espnEvents.length} ESPN events, ${matches.length} PM matches`);
       }
     } catch (espnErr) {
       console.error("[espn] mundiales enrichment failed (non-fatal)", espnErr);
@@ -693,18 +710,77 @@ export async function fetchMatchDetail(matchId: string, leagueId: string): Promi
   const byId = leagueMatches.find((m) => m.id === matchId);
   if (byId) return byId;
 
-  // For pm- prefixed IDs (Promiedos matches that weren't enriched with ESPN IDs):
-  // the match might exist with the same ID in the league fetch results
-  // since promiedos matches use `pm-{gameId}` format
-  if (matchId.startsWith("pm-")) {
-    // Already searched above, but also try raw promiedos fetch for the date range
-    if (leagueId === "fifa.world" && PROMIEDOS_LEAGUE_MAP[leagueId]) {
-      const pmMatches = await promiedosWeekExtended(
+  // For pm- prefixed IDs (Promiedos bracket game IDs):
+  // The match may have been enriched with an ESPN numeric ID, so pm-{gameId} won't match.
+  // Find the bracket match by ID, then search league matches by team names.
+  if (matchId.startsWith("pm-") && leagueId === "fifa.world" && PROMIEDOS_LEAGUE_MAP[leagueId]) {
+    const brackets = await fetchBrackets(leagueId);
+    const bracketGameId = matchId.slice(3); // remove "pm-" prefix
+    const bracketMatch = brackets?.stages
+      ?.flatMap((s) => s.matches)
+      .find((bm) => bm.id === bracketGameId);
+
+    if (bracketMatch) {
+      const normalize = (s: string) =>
+        s.normalize("NFD").replace(/[\u0300-\u036f]/g, "").toLowerCase().replace(/[^a-z0-9]/g, "").trim();
+
+      const bHome = normalize(bracketMatch.homeTeam.name);
+      const bAway = normalize(bracketMatch.awayTeam.name);
+
+      // Search enriched league matches by team names (handles both orderings)
+      const matchByName = leagueMatches.find((m) => {
+        const mHome = normalize(m.homeTeam.name);
+        const mAway = normalize(m.awayTeam.name);
+        return (mHome === bHome && mAway === bAway) || (mHome === bAway && mAway === bHome);
+      });
+      if (matchByName) return matchByName;
+
+      // If still not found, construct a basic match from bracket data
+      return {
+        id: matchId,
         leagueId,
-        LEAGUES[leagueId as LeagueId]?.name ?? "",
-        LEAGUES[leagueId as LeagueId]?.slug ?? "",
-        LEAGUES[leagueId as LeagueId]?.category ?? "destacados",
-        LEAGUES[leagueId as LeagueId]?.flag ?? "🌍",
+        tournamentName: "Mundial 2026",
+        tournamentSlug: "mundial-2026",
+        tournamentFlag: "🌍",
+        tournamentCategory: "destacados",
+        kickoffTime: bracketMatch.startTime
+          ? (() => {
+              const [datePart, timePart] = bracketMatch.startTime.split(" ");
+              const [dd, mm, yyyy] = datePart!.split("-");
+              return `${yyyy}-${mm}-${dd}T${timePart ?? "00:00"}:00-03:00`;
+            })()
+          : new Date().toISOString(),
+        status: bracketMatch.status,
+        minute: null,
+        homeTeam: {
+          id: bracketMatch.homeTeam.id,
+          name: bracketMatch.homeTeam.name,
+          shortName: bracketMatch.homeTeam.shortName,
+          abbreviation: bracketMatch.homeTeam.symbolName,
+          logoUrl: `https://img.promiedos.com.ar/${bracketMatch.homeTeam.id}.png`,
+          color: bracketMatch.homeTeam.color,
+        },
+        awayTeam: {
+          id: bracketMatch.awayTeam.id,
+          name: bracketMatch.awayTeam.name,
+          shortName: bracketMatch.awayTeam.shortName,
+          abbreviation: bracketMatch.awayTeam.symbolName,
+          logoUrl: `https://img.promiedos.com.ar/${bracketMatch.awayTeam.id}.png`,
+          color: bracketMatch.awayTeam.color,
+        },
+        homeScore: bracketMatch.homeScore,
+        awayScore: bracketMatch.awayScore,
+        venue: null,
+        round: null,
+        broadcastChannel: null,
+      };
+    }
+
+    // Last resort: raw promiedos fetch
+    const leagueInfo = LEAGUES[leagueId as LeagueId];
+    if (leagueInfo) {
+      const pmMatches = await promiedosWeekExtended(
+        leagueId, leagueInfo.name, leagueInfo.slug, leagueInfo.category, leagueInfo.flag,
       );
       const pmFound = pmMatches.find((m) => m.id === matchId);
       if (pmFound) return pmFound;
