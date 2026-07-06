@@ -174,7 +174,12 @@ export default function WorldCupBanner() {
     const allMatches = brackets?.stages?.flatMap((s) => s.matches) ?? [];
     for (const bm of allMatches) {
       const found = findEspnMatchId(bm, allEspnMatches);
-      if (found) map.set(bm.id, `/match/${found.leagueId}:${found.id}`);
+      if (found) {
+        map.set(bm.id, `/match/${found.leagueId}:${found.id}`);
+      } else if (bm.id) {
+        // Promiedos bracket ID — link to match detail using fifa.world prefix
+        map.set(bm.id, `/match/fifa.world:pm-${bm.id}`);
+      }
     }
     return map;
   }, [brackets, allEspnMatches]);

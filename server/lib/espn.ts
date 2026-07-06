@@ -380,8 +380,8 @@ export async function fetchLeagueMatches(leagueId: string, utcDateStr?: string, 
           "paraguay": "paraguay", "perú": "peru", "polonia": "poland",
           "portugal": "portugal", "qatar": "qatar", "rd congo": "congo dr",
           "republica checa": "czechia", "arabia saudita": "saudi arabia",
-          "senegal": "senegal", "suecia": "sweden", "suiza": "switzerland",
           "senegal": "senegal", "sudáfrica": "south africa",
+          "suecia": "sweden", "suiza": "switzerland",
           "túnez": "tunisia", "turquía": "turkiye", "uruguay": "uruguay",
           "uzbekistán": "uzbekistan",
         };
@@ -690,13 +690,40 @@ export async function fetchMatchDetail(matchId: string, leagueId: string): Promi
 
   // Fallback: direct league fetch
   const leagueMatches = await fetchLeagueMatches(leagueId);
-  return leagueMatches.find((m) => m.id === matchId) ?? null;
+  const byId = leagueMatches.find((m) => m.id === matchId);
+  if (byId) return byId;
+
+  // For pm- prefixed IDs (Promiedos matches that weren't enriched with ESPN IDs):
+  // the match might exist with the same ID in the league fetch results
+  // since promiedos matches use `pm-{gameId}` format
+  if (matchId.startsWith("pm-")) {
+    // Already searched above, but also try raw promiedos fetch for the date range
+    if (leagueId === "fifa.world" && PROMIEDOS_LEAGUE_MAP[leagueId]) {
+      const pmMatches = await promiedosWeekExtended(
+        leagueId,
+        LEAGUES[leagueId as LeagueId]?.name ?? "",
+        LEAGUES[leagueId as LeagueId]?.slug ?? "",
+        LEAGUES[leagueId as LeagueId]?.category ?? "destacados",
+        LEAGUES[leagueId as LeagueId]?.flag ?? "🌍",
+      );
+      const pmFound = pmMatches.find((m) => m.id === matchId);
+      if (pmFound) return pmFound;
+    }
+  }
+
+  return null;
 }
 
 export async function fetchMatchEvents(matchId: string, leagueId: string): Promise<MatchEvent[]> {
   const cacheKey = `events:${matchId}`;
   const cached = getCache<MatchEvent[]>(cacheKey);
   if (cached) return cached;
+
+  // Promiedos-only matches (pm- prefix) don't have ESPN events
+  if (matchId.startsWith("pm-")) {
+    setCache(cacheKey, [], 60_000);
+    return [];
+  }
 
   try {
     const data = (await espnFetch(`${ESPN_SCOREBOARD}/${leagueId}/summary?event=${matchId}`)) as Record<string, unknown>;
@@ -714,6 +741,12 @@ export async function fetchMatchStats(matchId: string, leagueId: string): Promis
   const cacheKey = `stats:${leagueId}:${matchId}`;
   const cached = getCache<MatchStats | null>(cacheKey);
   if (cached !== undefined) return cached;
+
+  // Promiedos-only matches (pm- prefix) don't have ESPN stats
+  if (matchId.startsWith("pm-")) {
+    setCache(cacheKey, null, 60_000);
+    return null;
+  }
 
   try {
     const data = (await espnFetch(`${ESPN_SCOREBOARD}/${leagueId}/summary?event=${matchId}`)) as Record<string, unknown>;
@@ -781,6 +814,19 @@ export async function fetchStandings(leagueId: string): Promise<StandingsGroup[]
       console.error("[promiedos] standings fallback failed", leagueId, err);
     }
     return [];
+  }
+
+  // Mundial: use Promiedos directly for Spanish team names
+  if (leagueId === "fifa.world" && PROMIEDOS_LEAGUE_MAP[leagueId]) {
+    try {
+      const groups = await promiedosStandings(leagueId);
+      if (groups.length > 0) {
+        setCache(cacheKey, groups, 5 * 60_000);
+        return groups;
+      }
+    } catch (err) {
+      console.error("[promiedos] mundiales standings failed", leagueId, err);
+    }
   }
 
   try {
@@ -882,6 +928,20 @@ export async function fetchScorers(leagueId: string): Promise<ScorerEntry[]> {
       console.error("[promiedos] scorers fallback failed", leagueId, err);
     }
     return [];
+  }
+
+  // Mundial: use Promiedos directly for Spanish team names
+  if (leagueId === "fifa.world" && PROMIEDOS_LEAGUE_MAP[leagueId]) {
+    try {
+      const groups = await promiedosScorers(leagueId);
+      const scorers = convertPromiedosScorers(groups);
+      if (scorers.length > 0) {
+        setCache(cacheKey, scorers, 10 * 60_000);
+        return scorers;
+      }
+    } catch (err) {
+      console.error("[promiedos] mundiales scorers failed", leagueId, err);
+    }
   }
 
   try {
@@ -1336,6 +1396,16 @@ export async function fetchMatchSummary(matchId: string, leagueId: string): Prom
   const cacheKey = `summary:${matchId}:${leagueId}`;
   const cached = getCache<MatchSummaryData>(cacheKey);
   if (cached) return cached;
+
+  // Promiedos-only matches (pm- prefix) don't have ESPN summary
+  if (matchId.startsWith("pm-")) {
+    const empty: MatchSummaryData = {
+      events: [], rosters: [], stats: [], headToHead: [],
+      boxscore: null,
+    };
+    setCache(cacheKey, empty, 60_000);
+    return empty;
+  }
 
   try {
     const data = (await espnFetch(`${ESPN_SCOREBOARD}/${leagueId}/summary?event=${matchId}`)) as Record<string, unknown>;
