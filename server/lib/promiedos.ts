@@ -244,8 +244,8 @@ export interface PromiedosMatch {
 function mapStatus(status?: string, winner?: number): MatchStatus {
   if (!status) return "upcoming";
   const s = status.toLowerCase();
-  if (s === "final" || s === "finished" || s === "ft") return "finished";
-  if (s === "live" || s === "playing" || s === "1t" || s === "2t" || s === "et") return "live";
+  if (s === "final" || s === "finished" || s === "ft" || s === "finalizado") return "finished";
+  if (s === "live" || s === "playing" || s === "1t" || s === "2t" || s === "et" || s === "entretiempo" || s === "descanso" || s === "en juego" || s === "prórroga" || s === "tanda de penales" || s === "penales") return "live";
   return "upcoming";
 }
 
@@ -1016,7 +1016,7 @@ export async function fetchBrackets(leagueId: string): Promise<BracketData | nul
         const statusName = String(gameStatus.name ?? "");
         let status: BracketMatch["status"] = "upcoming";
         if (statusName === "Finalizado" || statusName === "Final" || statusName === "FT") status = "finished";
-        else if (statusName === "En juego" || statusName === "1T" || statusName === "2T") status = "live";
+        else if (statusName === "En juego" || statusName === "1T" || statusName === "2T" || statusName === "Entretiempo" || statusName === "Descanso" || statusName === "ET" || statusName === "Prórroga" || statusName === "Tanda de penales" || statusName === "Penales") status = "live";
 
         return {
           id: String(game.id ?? ""),
