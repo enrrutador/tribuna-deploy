@@ -173,13 +173,27 @@ export interface ScorerEntry {
 }
 
 // ---------- Timezone helpers (ART = UTC-3, no DST) ----------
+const ART_OFFSET_MS = -3 * 60 * 60 * 1000;
+
 function toArgDate(utcIso: string): string {
-  const ms = new Date(utcIso).getTime() - 3 * 60 * 60 * 1000;
-  return new Date(ms).toISOString().split("T")[0]!;
+  const ms = new Date(utcIso).getTime() + ART_OFFSET_MS;
+  const d = new Date(ms);
+  const yyyy = d.getUTCFullYear();
+  const mm = String(d.getUTCMonth() + 1).padStart(2, "0");
+  const dd = String(d.getUTCDate()).padStart(2, "0");
+  return `${yyyy}-${mm}-${dd}`;
+}
+
+function artNow(): Date {
+  return new Date(Date.now() + ART_OFFSET_MS);
 }
 
 function argToday(): string {
-  return toArgDate(new Date().toISOString());
+  const d = artNow();
+  const yyyy = d.getUTCFullYear();
+  const mm = String(d.getUTCMonth() + 1).padStart(2, "0");
+  const dd = String(d.getUTCDate()).padStart(2, "0");
+  return `${yyyy}-${mm}-${dd}`;
 }
 
 function artDateToUtcDates(artDate: string): [string, string] {
@@ -281,12 +295,17 @@ function parseEvent(ev: Record<string, unknown>): MatchEvent | null {
 // ---------- Public API ----------
 
 function getWeekRange(): string {
-  const now = new Date();
+  const now = artNow();
   const start = new Date(now);
-  start.setDate(start.getDate() - 3);
+  start.setUTCDate(start.getUTCDate() - 3);
   const end = new Date(now);
-  end.setDate(end.getDate() + 4);
-  const fmt = (d: Date) => d.toISOString().slice(0, 10).replace(/-/g, "");
+  end.setUTCDate(end.getUTCDate() + 4);
+  const fmt = (d: Date) => {
+    const yyyy = d.getUTCFullYear();
+    const mm = String(d.getUTCMonth() + 1).padStart(2, "0");
+    const dd = String(d.getUTCDate()).padStart(2, "0");
+    return `${yyyy}${mm}${dd}`;
+  };
   return `${fmt(start)}-${fmt(end)}`;
 }
 
@@ -359,12 +378,17 @@ export async function fetchLeagueMatches(leagueId: string, utcDateStr?: string, 
     // Try to enrich with ESPN data (match IDs for detail pages)
     // Use ±7 day range to match Promiedos window (getWeekRange is only ±3)
     try {
-      const now = new Date();
+      const now = artNow();
       const start = new Date(now);
-      start.setDate(start.getDate() - 7);
+      start.setUTCDate(start.getUTCDate() - 7);
       const end = new Date(now);
-      end.setDate(end.getDate() + 7);
-      const fmt = (d: Date) => d.toISOString().slice(0, 10).replace(/-/g, "");
+      end.setUTCDate(end.getUTCDate() + 7);
+      const fmt = (d: Date) => {
+        const yyyy = d.getUTCFullYear();
+        const mm = String(d.getUTCMonth() + 1).padStart(2, "0");
+        const dd = String(d.getUTCDate()).padStart(2, "0");
+        return `${yyyy}${mm}${dd}`;
+      };
       const wideRange = `${fmt(start)}-${fmt(end)}`;
       const espnUrl = utcDateStr
         ? `${ESPN_SCOREBOARD}/${leagueId}/scoreboard?dates=${utcDateStr}`

@@ -5,31 +5,59 @@ import { Link } from "wouter";
 import { useTournamentBrackets, useTournamentFixtures } from "@/lib/hooks";
 import { useTranslation } from "@/lib/i18n";
 import { Badge } from "@/components/ui/Badge";
-import { format, parse } from "date-fns";
+import { format } from "date-fns";
 import { es, type Locale } from "date-fns/locale";
 import type { BracketMatch, Match } from "@/lib/types";
 
 const WORLD_CUP_SLUG = "mundial-2026";
 
+const ART_OFFSET_MS = -3 * 60 * 60 * 1000;
+
+function toArtDate(date: Date): Date {
+  return new Date(date.getTime() + date.getTimezoneOffset() * 60_000 + ART_OFFSET_MS);
+}
+
+function artNow(): Date {
+  return toArtDate(new Date());
+}
+
+function artTodayStr(): string {
+  const d = artNow();
+  const yyyy = d.getFullYear();
+  const mm = String(d.getMonth() + 1).padStart(2, "0");
+  const dd = String(d.getDate()).padStart(2, "0");
+  return `${yyyy}-${mm}-${dd}`;
+}
+
 function parseBracketTime(startTime: string | null): Date | null {
   if (!startTime) return null;
   try {
-    const parsed = parse(startTime, "dd-MM-yyyy HH:mm", new Date());
-    if (isNaN(parsed.getTime())) return null;
-    return parsed;
+    const [datePart, timePart] = startTime.split(" ");
+    if (!datePart || !timePart) return null;
+    const [dd, mm, yyyy] = datePart.split("-");
+    if (!dd || !mm || !yyyy) return null;
+    const iso = `${yyyy}-${mm}-${dd}T${timePart}:00-03:00`;
+    const d = new Date(iso);
+    return isNaN(d.getTime()) ? null : d;
   } catch {
     return null;
   }
 }
 
 function formatBracketTime(startTime: string | null): string {
-  const d = parseBracketTime(startTime);
-  return d ? format(d, "HH:mm") : "";
+  if (!startTime) return "";
+  const [, timePart] = startTime.split(" ");
+  return timePart ?? "";
 }
 
 function formatBracketDay(startTime: string | null, locale: Locale): string {
-  const d = parseBracketTime(startTime);
-  return d ? format(d, "EEE d 'de' MMMM", { locale }) : "";
+  if (!startTime) return "";
+  const [datePart] = startTime.split(" ");
+  if (!datePart) return "";
+  const [dd, mm, yyyy] = datePart.split("-");
+  if (!dd || !mm || !yyyy) return "";
+  const d = new Date(Number(yyyy), Number(mm) - 1, Number(dd), 12, 0, 0);
+  return format(d, "EEE d 'de' MMMM", { locale });
 }
 
 function normalizeTeamName(name: string): string {
@@ -186,7 +214,7 @@ export default function WorldCupBanner() {
 
   if (loadingBrackets || octavosByDay.length === 0) return null;
 
-  const todayStr = format(new Date(), "yyyy-MM-dd");
+  const todayStr = artTodayStr();
   const todayBlock = octavosByDay.find((d) => d.day === todayStr);
   const upcomingBlock = octavosByDay.find((d) => new Date(d.day) >= new Date(todayStr));
   const activeBlock = todayBlock ?? upcomingBlock ?? octavosByDay[0];
