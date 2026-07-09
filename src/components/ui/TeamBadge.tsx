@@ -1,7 +1,7 @@
+import { useState } from "react";
 import { cn } from "@/lib/utils";
 import { getTeamColors } from "@/lib/teamColors";
 import type { TeamRef } from "@/lib/types";
-import { useTranslation } from "@/lib/i18n";
 
 interface TeamBadgeProps {
   team: Pick<TeamRef, "name" | "shortName" | "logoUrl">;
@@ -18,8 +18,11 @@ const sizes = {
 };
 
 export function TeamBadge({ team, size = "md", className }: TeamBadgeProps) {
-const { t } = useTranslation();
+  const [imgFailed, setImgFailed] = useState(false);
   const colors = getTeamColors(team.name);
+  const initials = (team.shortName ?? team.name).slice(0, 3).toUpperCase();
+  const showImage = team.logoUrl && !imgFailed;
+
   return (
     <div
       className={cn(
@@ -29,19 +32,17 @@ const { t } = useTranslation();
       )}
       style={{ backgroundColor: colors.bg, color: colors.text }}
     >
-      {team.logoUrl ? (
+      {showImage ? (
         <img
           src={team.logoUrl}
           alt={team.name}
           loading="lazy"
           className="h-full w-full object-contain p-0.5"
           width="100" height="100"
-          onError={(e) => {
-            (e.target as HTMLImageElement).style.display = "none";
-          }}
+          onError={() => setImgFailed(true)}
         />
       ) : (
-        (team.shortName ?? team.name).slice(0, 3).toUpperCase()
+        initials
       )}
     </div>
   );
