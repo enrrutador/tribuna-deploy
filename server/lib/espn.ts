@@ -5,6 +5,7 @@
  */
 
 import {
+  fetchBrackets,
   fetchPromiedosToday as promiedosToday,
   fetchPromiedosWeek as promiedosWeek,
   promiedosWeekExtended,
