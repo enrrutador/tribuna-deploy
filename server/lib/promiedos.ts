@@ -94,6 +94,10 @@ interface PromiedosGame {
   winner?: number;
   teams: PromiedosTeam[];
   score?: { local: number; visit: number };
+  scores?: number[];
+  game_time?: number;
+  game_time_to_display?: string;
+  game_time_status_to_display?: string;
 }
 
 interface PromiedosLeague {
@@ -306,7 +310,12 @@ function mapStatus(status?: string, winner?: number): MatchStatus {
   if (!status) return "upcoming";
   const s = status.toLowerCase();
   if (s === "final" || s === "finished" || s === "ft" || s === "finalizado") return "finished";
-  if (s === "live" || s === "playing" || s === "1t" || s === "2t" || s === "et" || s === "entretiempo" || s === "descanso" || s === "en juego" || s === "prórroga" || s === "tanda de penales" || s === "penales") return "live";
+  if (
+    s === "live" || s === "playing" || s === "1t" || s === "2t" || s === "et" ||
+    s === "entretiempo" || s === "descanso" || s === "en juego" || s === "prórroga" ||
+    s === "tanda de penales" || s === "penales" ||
+    s === "primer tiempo" || s === "segundo tiempo" || s === "1°" || s === "2°"
+  ) return "live";
   return "upcoming";
 }
 
@@ -330,11 +339,15 @@ function parseGame(game: PromiedosGame, leagueId: string, leagueName: string, le
   // Normalize status: can be string or object
   let statusStr: string | undefined;
   let statusLabel: string | null = null;
+  let gameTimeDisplay: string | null = null;
   if (typeof game.status === "string") {
     statusStr = game.status;
   } else if (game.status && typeof game.status === "object") {
     statusStr = game.status.name ?? game.status.short_name;
     statusLabel = statusStr ?? null;
+  }
+  if (game.game_time_to_display) {
+    gameTimeDisplay = game.game_time_to_display;
   }
 
   const status = mapStatus(statusStr, game.winner);
@@ -352,8 +365,8 @@ function parseGame(game: PromiedosGame, leagueId: string, leagueName: string, le
     }
   }
 
-  const homeScore = game.score?.local ?? null;
-  const awayScore = game.score?.visit ?? null;
+  const homeScore = game.scores?.[0] ?? game.score?.local ?? null;
+  const awayScore = game.scores?.[1] ?? game.score?.visit ?? null;
 
   return {
     id: `pm-${game.id}`,
@@ -364,7 +377,7 @@ function parseGame(game: PromiedosGame, leagueId: string, leagueName: string, le
     tournamentCategory: category,
     kickoffTime,
     status,
-    minute: status === "live" ? statusLabel : null,
+    minute: status === "live" ? (gameTimeDisplay || statusLabel) : null,
     homeTeam: home ?? { id: "?", name: "?", shortName: "?", abbreviation: "?", logoUrl: "", color: "334155" },
     awayTeam: away ?? { id: "?", name: "?", shortName: "?", abbreviation: "?", logoUrl: "", color: "334155" },
     homeScore: status !== "upcoming" ? homeScore : null,
