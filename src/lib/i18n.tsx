@@ -89,6 +89,7 @@ const translations: Record<Lang, Record<string, string>> = {
 
     // DateNav
     "Hoy": "Today",
+    "Mañana": "Tomorrow",
     "Día anterior": "Previous day",
     "Día siguiente": "Next day",
 
@@ -300,6 +301,7 @@ const translations: Record<Lang, Record<string, string>> = {
     "Editar": "Bewerken",
     "Compartir": "Delen",
     "Hoy": "Vandaag",
+    "Mañana": "Morgen",
     "Día anterior": "Vorige dag",
     "Día siguiente": "Volgende dag",
     "partido": "wedstrijd",
@@ -440,6 +442,7 @@ const translations: Record<Lang, Record<string, string>> = {
     "Editar": "编辑",
     "Compartir": "分享",
     "Hoy": "今天",
+    "Mañana": "明天",
     "Día anterior": "前一天",
     "Día siguiente": "后一天",
     "partido": "场比赛",

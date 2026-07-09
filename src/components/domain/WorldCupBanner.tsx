@@ -1,4 +1,4 @@
-import { useMemo } from "react";
+import { useMemo, useState } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { Trophy, ChevronRight, CalendarDays, Radio } from "lucide-react";
 import { Link } from "wouter";
@@ -23,6 +23,15 @@ function artNow(): Date {
 
 function artTodayStr(): string {
   const d = artNow();
+  const yyyy = d.getFullYear();
+  const mm = String(d.getMonth() + 1).padStart(2, "0");
+  const dd = String(d.getDate()).padStart(2, "0");
+  return `${yyyy}-${mm}-${dd}`;
+}
+
+function artTomorrowStr(): string {
+  const d = artNow();
+  d.setDate(d.getDate() + 1);
   const yyyy = d.getFullYear();
   const mm = String(d.getMonth() + 1).padStart(2, "0");
   const dd = String(d.getDate()).padStart(2, "0");
@@ -162,6 +171,7 @@ export default function WorldCupBanner() {
   const { t } = useTranslation();
   const { data: brackets, isLoading: loadingBrackets } = useTournamentBrackets(WORLD_CUP_SLUG);
   const { data: fixtures } = useTournamentFixtures(WORLD_CUP_SLUG);
+  const [selectedDay, setSelectedDay] = useState<string | null>(null);
 
   const allEspnMatches = useMemo(
     () => fixtures?.groups?.flatMap((g) => g.matches) ?? [],
@@ -215,9 +225,14 @@ export default function WorldCupBanner() {
   if (loadingBrackets || octavosByDay.length === 0) return null;
 
   const todayStr = artTodayStr();
+  const tomorrowStr = artTomorrowStr();
   const todayBlock = octavosByDay.find((d) => d.day === todayStr);
   const upcomingBlock = octavosByDay.find((d) => new Date(d.day) >= new Date(todayStr));
-  const activeBlock = todayBlock ?? upcomingBlock ?? octavosByDay[0];
+  const autoDay = todayBlock?.day ?? upcomingBlock?.day ?? octavosByDay[0]?.day;
+  const activeDay = selectedDay && octavosByDay.some((d) => d.day === selectedDay)
+    ? selectedDay
+    : autoDay;
+  const activeBlock = octavosByDay.find((d) => d.day === activeDay) ?? octavosByDay[0];
 
   return (
     <motion.div
@@ -264,14 +279,16 @@ export default function WorldCupBanner() {
         <div className="flex items-center gap-2 overflow-x-auto no-scrollbar pb-1">
           {octavosByDay.map((block) => {
             const isToday = block.day === todayStr;
+            const isTomorrow = block.day === tomorrowStr;
             const isActive = block.day === activeBlock.day;
             return (
-              <div
+              <button
                 key={block.day}
-                className={`flex-shrink-0 cursor-pointer rounded-lg px-3 py-1.5 text-[11px] font-semibold transition-all ${
+                onClick={() => setSelectedDay(selectedDay === block.day ? null : block.day)}
+                className={`flex-shrink-0 rounded-lg px-3 py-1.5 text-[11px] font-semibold transition-all ${
                   isActive
                     ? "bg-indigo-500/20 text-indigo-100 ring-1 ring-indigo-400/40"
-                    : "bg-white/[0.03] text-[var(--color-slate-500)] ring-1 ring-white/5"
+                    : "bg-white/[0.03] text-[var(--color-slate-500)] ring-1 ring-white/5 hover:bg-white/[0.06]"
                 }`}
               >
                 <div className="flex items-center gap-1.5">
@@ -282,8 +299,13 @@ export default function WorldCupBanner() {
                       {t("Hoy")}
                     </Badge>
                   )}
+                  {isTomorrow && !isToday && (
+                    <Badge tone="default" className="text-[8px] px-1 py-0 bg-indigo-500/20">
+                      {t("Mañana")}
+                    </Badge>
+                  )}
                 </div>
-              </div>
+              </button>
             );
           })}
         </div>
