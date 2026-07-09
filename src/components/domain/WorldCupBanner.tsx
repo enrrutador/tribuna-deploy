@@ -225,23 +225,57 @@ function buildDayBlocks(matches: BracketMatch[]): DayBlock[] {
     }));
 }
 
+const FLAG_MAP: Record<string, string> = {
+  alemania: "\u{1F1E9}\u{1F1EA}", francia: "\u{1F1EB}\u{1F1F7}", espana: "\u{1F1EA}\u{1F1F8}",
+  portugal: "\u{1F1F5}\u{1F1F9}", holanda: "\u{1F1F3}\u{1F1F1}", brasil: "\u{1F1E7}\u{1F1F7}",
+  argentina: "\u{1F1E6}\u{1F1F7}", uruguay: "\u{1F1FA}\u{1F1FE}", colombia: "\u{1F1E8}\u{1F1F4}",
+  chile: "\u{1F1E8}\u{1F1F1}", ecuador: "\u{1F1EA}\u{1F1F8}", paraguay: "\u{1F1F5}\u{1F1F7}",
+  peru: "\u{1F1F5}\u{1F1EA}", mexico: "\u{1F1F2}\u{1F1FD}", canada: "\u{1F1E8}\u{1F1E6}",
+  belgica: "\u{1F1E7}\u{1F1EA}", italia: "\u{1F1EE}\u{1F1F9}", croacia: "\u{1F1ED}\u{1F1F7}",
+  inglaterra: "\u{1F1EC}\u{1F1E7}", marruecos: "\u{1F1F2}\u{1F1E6}", suiza: "\u{1F1E8}\u{1F1ED}",
+  japon: "\u{1F1EF}\u{1F1F5}", "corea del sur": "\u{1F1F0}\u{1F1F7}",
+  "arabia saudita": "\u{1F1F8}\u{1F1E6}", iran: "\u{1F1EE}\u{1F1F7}", tunez: "\u{1F1F9}\u{1F1EF}",
+  senegal: "\u{1F1F8}\u{1F1F3}", ghana: "\u{1F1EC}\u{1F1ED}", polonia: "\u{1F1F5}\u{1F1F1}",
+  nigeria: "\u{1F1F3}\u{1F1EC}", camerun: "\u{1F1E8}\u{1F1F2}", australia: "\u{1F1E6}\u{1F1FA}",
+  dinamarca: "\u{1F1E9}\u{1F1F0}", "estados unidos": "\u{1F1FA}\u{1F1F8}",
+};
+
+function getTeamFlag(name: string): string {
+  const n = normalizeTeamName(name);
+  return FLAG_MAP[n] ?? "\u26BD";
+}
+
 function pickActiveStage(
   stages: { name: string; matches: BracketMatch[] }[],
   todayStr: string
 ): { name: string; matches: BracketMatch[] } | null {
   if (stages.length === 0) return null;
 
+  const todayTime = new Date(todayStr + "T12:00:00").getTime();
+
   let best: { name: string; matches: BracketMatch[] } | null = null;
   let bestScore = -Infinity;
 
   for (const stage of stages) {
     if (stage.matches.length === 0) continue;
+
     const hasLive = stage.matches.some((m) => m.status === "live");
-    const hasUpcoming = stage.matches.some((m) => m.status === "upcoming");
-    const hasToday = stage.matches.some((m) => {
+
+    const futureMatches = stage.matches.filter((m) => {
+      if (m.status === "live") return true;
+      if (m.status === "finished") return false;
+      const d = parseBracketTime(m.startTime);
+      if (!d) return false;
+      return d.getTime() >= todayTime;
+    });
+
+    const hasToday = futureMatches.some((m) => {
       const d = parseBracketTime(m.startTime);
       return d && format(d, "yyyy-MM-dd") === todayStr;
     });
+
+    const hasUpcoming = futureMatches.length > 0 && !hasToday;
+
     const allFinished = stage.matches.every((m) => m.status === "finished");
     const rp = roundPriority(stage.name);
 
@@ -249,11 +283,10 @@ function pickActiveStage(
     if (hasLive) score = 1000 + (ROUND_ORDER.length - rp);
     else if (hasToday) score = 800 + (ROUND_ORDER.length - rp);
     else if (hasUpcoming) {
-      const nextDate = stage.matches
-        .filter((m) => m.status === "upcoming")
+      const nextDate = futureMatches
         .map((m) => parseBracketTime(m.startTime)?.getTime() ?? Infinity)
         .sort((a, b) => a - b)[0];
-      const daysAway = nextDate < Infinity ? (nextDate - new Date(todayStr).getTime()) / 86400000 : 30;
+      const daysAway = nextDate < Infinity ? (nextDate - todayTime) / 86400000 : 30;
       score = 500 - daysAway + (ROUND_ORDER.length - rp);
     } else if (allFinished) {
       score = 100 + (ROUND_ORDER.length - rp);
@@ -462,12 +495,7 @@ export default function WorldCupBanner() {
                       <div className="space-y-2">
                         <div className="flex items-center justify-between gap-2">
                           <div className="flex items-center gap-2 min-w-0">
-                            <span
-                              className="flex h-6 w-6 items-center justify-center rounded-full text-[10px] font-bold shadow-sm ring-1 ring-white/10"
-                              style={{ backgroundColor: `#${match.homeTeam.color}`, color: `#${match.homeTeam.textColor}` }}
-                            >
-                              {match.homeTeam.symbolName?.slice(0, 2) ?? "?"}
-                            </span>
+                            <span className="text-base leading-none">{getTeamFlag(match.homeTeam.name)}</span>
                             <span className={`truncate text-sm font-semibold ${
                               homeWon ? "text-indigo-300" : "text-[var(--color-slate-200)]"
                             }`}>
@@ -483,12 +511,7 @@ export default function WorldCupBanner() {
 
                         <div className="flex items-center justify-between gap-2">
                           <div className="flex items-center gap-2 min-w-0">
-                            <span
-                              className="flex h-6 w-6 items-center justify-center rounded-full text-[10px] font-bold shadow-sm ring-1 ring-white/10"
-                              style={{ backgroundColor: `#${match.awayTeam.color}`, color: `#${match.awayTeam.textColor}` }}
-                            >
-                              {match.awayTeam.symbolName?.slice(0, 2) ?? "?"}
-                            </span>
+                            <span className="text-base leading-none">{getTeamFlag(match.awayTeam.name)}</span>
                             <span className={`truncate text-sm font-semibold ${
                               awayWon ? "text-indigo-300" : "text-[var(--color-slate-200)]"
                             }`}>
