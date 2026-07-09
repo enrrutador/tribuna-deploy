@@ -317,7 +317,7 @@ function parseTeam(team: PromiedosTeam, index: number): PromiedosMatch["homeTeam
     name: team.name,
     shortName: team.short_name || team.name,
     abbreviation: (team.short_name || team.name).slice(0, 4).toUpperCase(),
-    logoUrl: overrideLogo || `https://img.promiedos.com.ar/${team.id}.png`,
+    logoUrl: overrideLogo || "",
     color: team.colors?.color?.replace("#", "") || "334155",
   };
 }
@@ -722,7 +722,7 @@ export async function fetchPromiedosStandings(leagueId: string): Promise<Standin
           const teamName = teamObj?.name || `Equipo ${row.num}`;
           const teamShortName = teamObj?.short_name || teamName;
           const teamId = teamObj?.id || `pm-row-${row.num}`;
-          const teamLogoUrl = getTeamLogoUrl(teamName) || (teamObj?.id ? `https://img.promiedos.com.ar/${teamObj.id}.png` : "");
+          const teamLogoUrl = getTeamLogoUrl(teamName);
 
           return {
             position: row.num,
@@ -832,7 +832,7 @@ export async function fetchPromiedosScorers(leagueId: string): Promise<ScorersGr
           position_label: playerObj?.position || "",
           teamId,
           teamName,
-          teamLogoUrl: getTeamLogoUrl(teamName) || (teamId ? `https://img.promiedos.com.ar/${teamId}.png` : ""),
+          teamLogoUrl: getTeamLogoUrl(teamName),
           value,
         };
       });
@@ -985,7 +985,7 @@ export async function fetchPromiedosTeam(teamId: string): Promise<TeamInfo | nul
       id: comp.id,
       name: comp.name,
       shortName: comp.short_name,
-      logoUrl: getTeamLogoUrl(comp.name) || `https://img.promiedos.com.ar/${comp.id}.png`,
+      logoUrl: getTeamLogoUrl(comp.name),
       color: comp.colors?.color?.replace("#", "") || "334155",
       mainLeague: data.main_league,
       info,

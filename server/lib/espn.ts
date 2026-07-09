@@ -782,7 +782,7 @@ export async function fetchMatchDetail(matchId: string, leagueId: string): Promi
           name: bracketMatch.homeTeam.name,
           shortName: bracketMatch.homeTeam.shortName,
           abbreviation: bracketMatch.homeTeam.symbolName,
-          logoUrl: getTeamLogoUrl(bracketMatch.homeTeam.name) || `https://img.promiedos.com.ar/${bracketMatch.homeTeam.id}.png`,
+          logoUrl: getTeamLogoUrl(bracketMatch.homeTeam.name),
           color: bracketMatch.homeTeam.color,
         },
         awayTeam: {
@@ -790,7 +790,7 @@ export async function fetchMatchDetail(matchId: string, leagueId: string): Promi
           name: bracketMatch.awayTeam.name,
           shortName: bracketMatch.awayTeam.shortName,
           abbreviation: bracketMatch.awayTeam.symbolName,
-          logoUrl: getTeamLogoUrl(bracketMatch.awayTeam.name) || `https://img.promiedos.com.ar/${bracketMatch.awayTeam.id}.png`,
+          logoUrl: getTeamLogoUrl(bracketMatch.awayTeam.name),
           color: bracketMatch.awayTeam.color,
         },
         homeScore: bracketMatch.homeScore,
