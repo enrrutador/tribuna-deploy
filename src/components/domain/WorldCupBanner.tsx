@@ -91,27 +91,27 @@ const TEAM_NAME_MAP: Record<string, string[]> = {
   chile: ["chile"],
   ecuador: ["ecuador"],
   paraguay: ["paraguay"],
-  peru: ["peru", "peru"],
-  mexico: ["mexico", "mexico", "mexico"],
+  peru: ["peru", "perú"],
+  mexico: ["mexico", "méxico"],
   "estados unidos": ["united states", "estados unidos", "eeuu", "usa"],
-  canada: ["canada", "canada"],
-  belgica: ["belgium", "belgica", "belgica"],
+  canada: ["canada", "canadá"],
+  belgica: ["belgium", "bélgica"],
   italia: ["italy", "italia"],
   croacia: ["croatia", "croacia"],
   inglaterra: ["england", "inglaterra"],
   marruecos: ["morocco", "marruecos"],
   suiza: ["switzerland", "suiza"],
-  japon: ["japan", "japon", "japon"],
+  japon: ["japan", "japón"],
   "corea del sur": ["south korea", "corea del sur"],
   "arabia saudita": ["saudi arabia", "arabia saudita"],
-  iran: ["iran", "iran"],
-  tunez: ["tunisia", "tunez", "tunez"],
+  iran: ["iran", "irán"],
+  tunez: ["tunisia", "túnez"],
   senegal: ["senegal"],
   ghana: ["ghana"],
   polonia: ["poland", "polonia"],
   serbia: ["serbia"],
   nigeria: ["nigeria"],
-  camerun: ["cameroon", "camerun", "camerun"],
+  camerun: ["cameroon", "camerún"],
   "costa de marfil": ["ivory coast", "costa de marfil"],
   "costa marfil": ["ivory coast", "costa de marfil"],
   australia: ["australia"],
@@ -123,7 +123,7 @@ const TEAM_NAME_MAP: Record<string, string[]> = {
   "bosnia y herzegovina": ["bosnia-herzegovina", "bosnia herzegovina", "bosnia"],
   "republica democratica del congo": ["congo dr", "republica democratica del congo"],
   congo: ["congo dr", "congo"],
-  hungria: ["hungary", "hungria", "hungria"],
+  hungria: ["hungary", "hungría"],
   escocia: ["scotland", "escocia"],
   gales: ["wales", "gales"],
 };
@@ -159,11 +159,112 @@ function findEspnMatchId(
       matchTeamNames(bracketAway, mHome);
 
     if (homeOk && awayOk) {
-      // Prefer numeric ESPN IDs over Promiedos IDs
       if (/^\d+$/.test(m.id)) return { id: m.id, leagueId: m.leagueId };
       if (!best) best = { id: m.id, leagueId: m.leagueId };
     }
   }
+  return best;
+}
+
+const ROUND_ORDER = ["final", "semifinal", "cuartos", "octavos", "16avos"];
+
+function roundPriority(name: string): number {
+  const lower = name.toLowerCase();
+  for (let i = 0; i < ROUND_ORDER.length; i++) {
+    if (lower.includes(ROUND_ORDER[i])) return i;
+  }
+  return ROUND_ORDER.length;
+}
+
+function roundDisplayName(name: string): string {
+  const lower = name.toLowerCase();
+  if (lower.includes("final") && !lower.includes("semi") && !lower.includes("cuarto") && !lower.includes("octavo") && !lower.includes("16avo")) return "Final";
+  if (lower.includes("semifinal") || lower.includes("semi-final")) return "Semifinal";
+  if (lower.includes("cuartos")) return "Cuartos de Final";
+  if (lower.includes("octavos")) return "Octavos de Final";
+  if (lower.includes("16avos")) return "16avos de Final";
+  return name;
+}
+
+function roundTitleKey(name: string): string {
+  const lower = name.toLowerCase();
+  if (lower.includes("final") && !lower.includes("semi") && !lower.includes("cuarto") && !lower.includes("octavo") && !lower.includes("16avo")) return "La gran final del Mundial";
+  if (lower.includes("semifinal") || lower.includes("semi-final")) return "Semifinales del Mundial";
+  if (lower.includes("cuartos")) return "Cuartos de Final";
+  if (lower.includes("octavos")) return "Octavos de Final";
+  if (lower.includes("16avos")) return "16avos de Final";
+  return name;
+}
+
+interface DayBlock {
+  day: string;
+  dayLabel: string;
+  matches: BracketMatch[];
+}
+
+function buildDayBlocks(matches: BracketMatch[]): DayBlock[] {
+  const byDay = new Map<string, BracketMatch[]>();
+  for (const m of matches) {
+    const dayKey = parseBracketTime(m.startTime);
+    if (!dayKey) continue;
+    const key = format(dayKey, "yyyy-MM-dd");
+    if (!byDay.has(key)) byDay.set(key, []);
+    byDay.get(key)!.push(m);
+  }
+  return [...byDay.entries()]
+    .sort(([a], [b]) => new Date(a).getTime() - new Date(b).getTime())
+    .map(([day, ms]) => ({
+      day,
+      dayLabel: formatBracketDay(ms[0].startTime, es),
+      matches: ms.sort((a, b) => {
+        const ta = parseBracketTime(a.startTime);
+        const tb = parseBracketTime(b.startTime);
+        if (ta && tb) return ta.getTime() - tb.getTime();
+        return 0;
+      }),
+    }));
+}
+
+function pickActiveStage(
+  stages: { name: string; matches: BracketMatch[] }[],
+  todayStr: string
+): { name: string; matches: BracketMatch[] } | null {
+  if (stages.length === 0) return null;
+
+  let best: { name: string; matches: BracketMatch[] } | null = null;
+  let bestScore = -Infinity;
+
+  for (const stage of stages) {
+    if (stage.matches.length === 0) continue;
+    const hasLive = stage.matches.some((m) => m.status === "live");
+    const hasUpcoming = stage.matches.some((m) => m.status === "upcoming");
+    const hasToday = stage.matches.some((m) => {
+      const d = parseBracketTime(m.startTime);
+      return d && format(d, "yyyy-MM-dd") === todayStr;
+    });
+    const allFinished = stage.matches.every((m) => m.status === "finished");
+    const rp = roundPriority(stage.name);
+
+    let score = 0;
+    if (hasLive) score = 1000 + (ROUND_ORDER.length - rp);
+    else if (hasToday) score = 800 + (ROUND_ORDER.length - rp);
+    else if (hasUpcoming) {
+      const nextDate = stage.matches
+        .filter((m) => m.status === "upcoming")
+        .map((m) => parseBracketTime(m.startTime)?.getTime() ?? Infinity)
+        .sort((a, b) => a - b)[0];
+      const daysAway = nextDate < Infinity ? (nextDate - new Date(todayStr).getTime()) / 86400000 : 30;
+      score = 500 - daysAway + (ROUND_ORDER.length - rp);
+    } else if (allFinished) {
+      score = 100 + (ROUND_ORDER.length - rp);
+    }
+
+    if (score > bestScore) {
+      bestScore = score;
+      best = stage;
+    }
+  }
+
   return best;
 }
 
@@ -178,34 +279,19 @@ export default function WorldCupBanner() {
     [fixtures]
   );
 
-  const octavosByDay = useMemo(() => {
-    const stage = brackets?.stages?.find(
-      (s) => s.name.toLowerCase().includes("octavos")
-    );
-    if (!stage || stage.matches.length === 0) return [];
-
-    const byDay = new Map<string, BracketMatch[]>();
-    for (const m of stage.matches) {
-      const dayKey = parseBracketTime(m.startTime);
-      if (!dayKey) continue;
-      const key = format(dayKey, "yyyy-MM-dd");
-      if (!byDay.has(key)) byDay.set(key, []);
-      byDay.get(key)!.push(m);
-    }
-
-    return [...byDay.entries()]
-      .sort(([a], [b]) => new Date(a).getTime() - new Date(b).getTime())
-      .map(([day, matches]) => ({
-        day,
-        dayLabel: formatBracketDay(matches[0].startTime, es),
-        matches: matches.sort((a, b) => {
-          const ta = parseBracketTime(a.startTime);
-          const tb = parseBracketTime(b.startTime);
-          if (ta && tb) return ta.getTime() - tb.getTime();
-          return 0;
-        }),
-      }));
+  const activeStage = useMemo(() => {
+    if (!brackets?.stages) return null;
+    const knockoutStages = brackets.stages.filter((s) => {
+      const n = s.name.toLowerCase();
+      return n.includes("octavos") || n.includes("cuartos") || n.includes("semifinal") || n.includes("semi-final") || n.includes("final") || n.includes("16avos");
+    });
+    return pickActiveStage(knockoutStages, artTodayStr());
   }, [brackets]);
+
+  const dayBlocks = useMemo(() => {
+    if (!activeStage) return [];
+    return buildDayBlocks(activeStage.matches);
+  }, [activeStage]);
 
   const bracketToMatchPath = useMemo(() => {
     const map = new Map<string, string>();
@@ -215,24 +301,28 @@ export default function WorldCupBanner() {
       if (found) {
         map.set(bm.id, `/match/${found.leagueId}:${found.id}`);
       } else if (bm.id) {
-        // Promiedos bracket ID — link to match detail using fifa.world prefix
         map.set(bm.id, `/match/fifa.world:pm-${bm.id}`);
       }
     }
     return map;
   }, [brackets, allEspnMatches]);
 
-  if (loadingBrackets || octavosByDay.length === 0) return null;
+  if (loadingBrackets || !activeStage || dayBlocks.length === 0) return null;
 
   const todayStr = artTodayStr();
   const tomorrowStr = artTomorrowStr();
-  const todayBlock = octavosByDay.find((d) => d.day === todayStr);
-  const upcomingBlock = octavosByDay.find((d) => new Date(d.day) >= new Date(todayStr));
-  const autoDay = todayBlock?.day ?? upcomingBlock?.day ?? octavosByDay[0]?.day;
-  const activeDay = selectedDay && octavosByDay.some((d) => d.day === selectedDay)
+  const todayBlock = dayBlocks.find((d) => d.day === todayStr);
+  const upcomingBlock = dayBlocks.find((d) => new Date(d.day) >= new Date(todayStr));
+  const autoDay = todayBlock?.day ?? upcomingBlock?.day ?? dayBlocks[0]?.day;
+  const activeDay = selectedDay && dayBlocks.some((d) => d.day === selectedDay)
     ? selectedDay
     : autoDay;
-  const activeBlock = octavosByDay.find((d) => d.day === activeDay) ?? octavosByDay[0];
+  const activeBlock = dayBlocks.find((d) => d.day === activeDay) ?? dayBlocks[0];
+
+  const stageLabel = roundDisplayName(activeStage.name);
+  const stageTitle = roundTitleKey(activeStage.name);
+
+  const liveCount = activeStage.matches.filter((m) => m.status === "live").length;
 
   return (
     <motion.div
@@ -260,10 +350,17 @@ export default function WorldCupBanner() {
             </motion.div>
             <div>
               <h2 className="text-lg font-black tracking-tight sm:text-xl text-white">
-                Mundial 2026 · Octavos de Final
+                Mundial 2026 · {stageLabel}
               </h2>
               <p className="text-[11px] text-indigo-200/60 font-medium">
-                {t("La instancia más emocionante del fútbol mundial")}
+                {liveCount > 0 ? (
+                  <span className="flex items-center gap-1">
+                    <Radio size={9} className="text-[var(--color-live)]" />
+                    {liveCount} {liveCount === 1 ? "partido en vivo" : "partidos en vivo"}
+                  </span>
+                ) : (
+                  t("La instancia más emocionante del fútbol mundial")
+                )}
               </p>
             </div>
           </div>
@@ -276,39 +373,41 @@ export default function WorldCupBanner() {
         </div>
 
         {/* Day tabs */}
-        <div className="flex items-center gap-2 overflow-x-auto no-scrollbar pb-1">
-          {octavosByDay.map((block) => {
-            const isToday = block.day === todayStr;
-            const isTomorrow = block.day === tomorrowStr;
-            const isActive = block.day === activeBlock.day;
-            return (
-              <button
-                key={block.day}
-                onClick={() => setSelectedDay(selectedDay === block.day ? null : block.day)}
-                className={`flex-shrink-0 rounded-lg px-3 py-1.5 text-[11px] font-semibold transition-all ${
-                  isActive
-                    ? "bg-indigo-500/20 text-indigo-100 ring-1 ring-indigo-400/40"
-                    : "bg-white/[0.03] text-[var(--color-slate-500)] ring-1 ring-white/5 hover:bg-white/[0.06]"
-                }`}
-              >
-                <div className="flex items-center gap-1.5">
-                  <CalendarDays size={11} />
-                  <span className="capitalize">{block.dayLabel}</span>
-                  {isToday && (
-                    <Badge tone="live" pulse className="text-[8px] px-1 py-0">
-                      {t("Hoy")}
-                    </Badge>
-                  )}
-                  {isTomorrow && !isToday && (
-                    <Badge tone="default" className="text-[8px] px-1 py-0 bg-indigo-500/20">
-                      {t("Mañana")}
-                    </Badge>
-                  )}
-                </div>
-              </button>
-            );
-          })}
-        </div>
+        {dayBlocks.length > 1 && (
+          <div className="flex items-center gap-2 overflow-x-auto no-scrollbar pb-1">
+            {dayBlocks.map((block) => {
+              const isToday = block.day === todayStr;
+              const isTomorrow = block.day === tomorrowStr;
+              const isActive = block.day === activeBlock.day;
+              return (
+                <button
+                  key={block.day}
+                  onClick={() => setSelectedDay(selectedDay === block.day ? null : block.day)}
+                  className={`flex-shrink-0 rounded-lg px-3 py-1.5 text-[11px] font-semibold transition-all ${
+                    isActive
+                      ? "bg-indigo-500/20 text-indigo-100 ring-1 ring-indigo-400/40"
+                      : "bg-white/[0.03] text-[var(--color-slate-500)] ring-1 ring-white/5 hover:bg-white/[0.06]"
+                  }`}
+                >
+                  <div className="flex items-center gap-1.5">
+                    <CalendarDays size={11} />
+                    <span className="capitalize">{block.dayLabel}</span>
+                    {isToday && (
+                      <Badge tone="live" pulse className="text-[8px] px-1 py-0">
+                        {t("Hoy")}
+                      </Badge>
+                    )}
+                    {isTomorrow && !isToday && (
+                      <Badge tone="default" className="text-[8px] px-1 py-0 bg-indigo-500/20">
+                        {t("Mañana")}
+                      </Badge>
+                    )}
+                  </div>
+                </button>
+              );
+            })}
+          </div>
+        )}
 
         {/* Matches for the active day */}
         <AnimatePresence mode="wait">
@@ -356,12 +455,11 @@ export default function WorldCupBanner() {
                         ) : (
                           <span className="text-[10px] font-bold text-indigo-300/80">{kickoff} hs</span>
                         )}
-                        <span className="text-[9px] text-[var(--color-slate-600)]">Octavos</span>
+                        <span className="text-[9px] text-[var(--color-slate-600)]">{stageLabel}</span>
                       </div>
 
                       {/* Teams */}
                       <div className="space-y-2">
-                        {/* Home team */}
                         <div className="flex items-center justify-between gap-2">
                           <div className="flex items-center gap-2 min-w-0">
                             <span
@@ -383,7 +481,6 @@ export default function WorldCupBanner() {
                           </span>
                         </div>
 
-                        {/* Away team */}
                         <div className="flex items-center justify-between gap-2">
                           <div className="flex items-center gap-2 min-w-0">
                             <span
@@ -406,7 +503,7 @@ export default function WorldCupBanner() {
                         </div>
                       </div>
 
-                      {/* Extra info */}
+                      {/* Winner highlight */}
                       {isFinished && match.homeScore !== null && match.awayScore !== null && (
                         <div className="mt-2.5 flex items-center gap-2 text-[10px] text-indigo-300/60">
                           <span>{match.homeScore === match.awayScore ? "Empate" : homeWon ? "Ganador" : ""}</span>
