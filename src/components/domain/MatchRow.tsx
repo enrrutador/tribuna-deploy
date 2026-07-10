@@ -70,6 +70,11 @@ const { t } = useTranslation();
               )}>
                 {match.homeTeam.shortName ?? match.homeTeam.name}
               </p>
+              {match.homeTeam.goals?.length ? (
+                <p className="truncate text-[10px] text-[var(--color-slate-500)] leading-tight">
+                  {match.homeTeam.goals.map((g) => g.player_name?.split(" ").pop() ?? "?").join(", ")}
+                </p>
+              ) : null}
             </div>
           </div>
 
@@ -109,6 +114,11 @@ const { t } = useTranslation();
               )}>
                 {match.awayTeam.shortName ?? match.awayTeam.name}
               </p>
+              {match.awayTeam.goals?.length ? (
+                <p className="truncate text-[10px] text-[var(--color-slate-500)] leading-tight">
+                  {match.awayTeam.goals.map((g) => g.player_name?.split(" ").pop() ?? "?").join(", ")}
+                </p>
+              ) : null}
             </div>
             <TeamBadge team={match.awayTeam} size={compact ? "xs" : "sm"} />
           </div>

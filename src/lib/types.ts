@@ -10,6 +10,8 @@ export interface TeamRef {
   abbreviation: string;
   logoUrl: string;
   color: string;
+  goals?: { player_name: string; time_to_display?: string }[];
+  redCards?: number;
 }
 
 export interface Match {
@@ -29,6 +31,8 @@ export interface Match {
   venue: string | null;
   round: string | null;
   broadcastChannel: string | null;
+  winner?: number;
+  gameTime?: number;
 }
 
 export type MatchEventType =

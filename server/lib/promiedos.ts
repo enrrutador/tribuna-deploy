@@ -74,13 +74,20 @@ export function getTeamLogoUrl(teamName: string): string {
 }
 
 // ---------- Types ----------
+interface Goal {
+  player_name: string;
+  player_sname?: string;
+  time?: number;
+  time_to_display?: string;
+}
+
 interface PromiedosTeam {
   name: string;
   short_name: string;
   id: string;
   country_id: string;
   colors?: { color: string; text_color: string };
-  goals?: { player_name: string }[];
+  goals?: Goal[];
   red_cards?: number;
 }
 
@@ -98,6 +105,8 @@ interface PromiedosGame {
   game_time?: number;
   game_time_to_display?: string;
   game_time_status_to_display?: string;
+  tv_networks?: { id: string; name: string }[];
+  url_name?: string;
 }
 
 interface PromiedosLeague {
@@ -290,6 +299,8 @@ export interface PromiedosMatch {
     abbreviation: string;
     logoUrl: string;
     color: string;
+    goals?: Goal[];
+    redCards?: number;
   };
   awayTeam: {
     id: string;
@@ -298,12 +309,16 @@ export interface PromiedosMatch {
     abbreviation: string;
     logoUrl: string;
     color: string;
+    goals?: Goal[];
+    redCards?: number;
   };
   homeScore: number | null;
   awayScore: number | null;
   venue: string | null;
   round: string | null;
   broadcastChannel: string | null;
+  winner?: number;
+  gameTime?: number;
 }
 
 function mapStatus(status?: string, winner?: number): MatchStatus {
@@ -325,9 +340,11 @@ function parseTeam(team: PromiedosTeam, index: number): PromiedosMatch["homeTeam
     id: team.id || `pm-${index}`,
     name: team.name,
     shortName: team.short_name || team.name,
-    abbreviation: (team.short_name || team.name).slice(0, 4).toUpperCase(),
+    abbreviation: (team.short_name || team.name).slice(0, 3).toUpperCase(),
     logoUrl: overrideLogo || "",
     color: team.colors?.color?.replace("#", "") || "334155",
+    goals: team.goals,
+    redCards: team.red_cards,
   };
 }
 
@@ -384,7 +401,9 @@ function parseGame(game: PromiedosGame, leagueId: string, leagueName: string, le
     awayScore: status !== "upcoming" ? awayScore : null,
     venue: null,
     round: game.stage_round_name ?? null,
-    broadcastChannel: null,
+    broadcastChannel: game.tv_networks?.[0]?.name ?? null,
+    winner: game.winner,
+    gameTime: game.game_time,
   };
 }
 

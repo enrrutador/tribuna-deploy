@@ -19,6 +19,7 @@ import {
   PROMIEDOS_HEADERS,
   getTeamLogoUrl,
   type PromiedosMatch,
+  type BracketMatch,
   type StandingGroup,
   type ScorersGroup,
   type TeamInfo,
@@ -82,6 +83,8 @@ export interface TeamRef {
   abbreviation: string;
   logoUrl: string;
   color: string;
+  goals?: { player_name: string; time_to_display?: string }[];
+  redCards?: number;
 }
 
 export interface Match {
@@ -101,6 +104,8 @@ export interface Match {
   venue: string | null;
   round: string | null;
   broadcastChannel: string | null;
+  winner?: number;
+  gameTime?: number;
 }
 
 export interface MatchEvent {
@@ -742,9 +747,20 @@ export async function fetchMatchDetail(matchId: string, leagueId: string): Promi
   if (matchId.startsWith("pm-") && leagueId === "fifa.world" && PROMIEDOS_LEAGUE_MAP[leagueId]) {
     const brackets = await fetchBrackets(leagueId);
     const bracketGameId = matchId.slice(3); // remove "pm-" prefix
-    const bracketMatch = brackets?.stages
-      ?.flatMap((s) => s.matches)
-      .find((bm) => bm.id === bracketGameId);
+
+    // Find the bracket match AND its stage name using proper types
+    let bracketMatch: BracketMatch | undefined;
+    let stageName: string | null = null;
+    if (brackets?.stages) {
+      for (const stage of brackets.stages) {
+        const found = stage.matches.find((bm) => bm.id === bracketGameId);
+        if (found) {
+          bracketMatch = found;
+          stageName = stage.name ?? null;
+          break;
+        }
+      }
+    }
 
     if (bracketMatch) {
       const normalize = (s: string) =>
@@ -797,8 +813,9 @@ export async function fetchMatchDetail(matchId: string, leagueId: string): Promi
         homeScore: bracketMatch.homeScore,
         awayScore: bracketMatch.awayScore,
         venue: null,
-        round: null,
+        round: stageName,
         broadcastChannel: null,
+        winner: bracketMatch.winner >= 0 ? bracketMatch.winner : undefined,
       };
     }
 
@@ -822,7 +839,35 @@ export async function fetchMatchEvents(matchId: string, leagueId: string): Promi
   if (cached) return cached;
 
   // Promiedos-only matches (pm- prefix) don't have ESPN events
+  // Build basic events from Promiedos goal data instead
   if (matchId.startsWith("pm-")) {
+    try {
+      const match = await fetchMatchDetail(matchId, leagueId);
+      if (match) {
+        const events: MatchEvent[] = [];
+        const pushGoals = (teamGoals: { player_name: string; time_to_display?: string }[], teamId: string, teamName: string) => {
+          for (let i = 0; i < teamGoals.length; i++) {
+            const g = teamGoals[i];
+            const minute = g.time_to_display ? parseInt(g.time_to_display.replace(/[^0-9]/g, ""), 10) || 0 : 0;
+            events.push({
+              id: `${matchId}-goal-${i}`,
+              type: "goal",
+              typeText: "Gol",
+              minute: minute || i + 1,
+              teamId,
+              teamName,
+              playerName: g.player_name,
+              assistName: null,
+              text: `${g.player_name} ${g.time_to_display ?? ""}`.trim(),
+            });
+          }
+        };
+        if (match.homeTeam.goals?.length) pushGoals(match.homeTeam.goals, match.homeTeam.id, match.homeTeam.name);
+        if (match.awayTeam.goals?.length) pushGoals(match.awayTeam.goals, match.awayTeam.id, match.awayTeam.name);
+        setCache(cacheKey, events, 60_000);
+        return events;
+      }
+    } catch { /* fall through to empty */ }
     setCache(cacheKey, [], 60_000);
     return [];
   }
