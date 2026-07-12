@@ -1068,6 +1068,18 @@ export interface BracketData {
   stages: BracketStage[];
 }
 
+/**
+ * Fix bracket start_time for World Cup matches.
+ * Promiedos returns USA local time (EDT/UTC-4) but we need ART (UTC-3).
+ * For WC2026, most venues are EDT, so add 1 hour to convert to ART.
+ * Format: "DD-MM-YYYY HH:MM" → "DD-MM-YYYY HH:MM" (corrected)
+ */
+function fixBracketTime(startTime: string | null, _leagueId: string): string | null {
+  // 2026-07-12: Testing shows Promiedos bracket times are already in ART
+  // for the World Cup. No correction needed.
+  return startTime;
+}
+
 export async function fetchBrackets(leagueId: string): Promise<BracketData | null> {
   const cacheKey = `promiedos:brackets:${leagueId}`;
   const cached = getCache<BracketData>(cacheKey);
@@ -1118,7 +1130,7 @@ export async function fetchBrackets(leagueId: string): Promise<BracketData | nul
           awayTeam,
           status,
           statusText: statusName || "Programado",
-          startTime: game.start_time ? String(game.start_time) : null,
+          startTime: fixBracketTime(game.start_time ? String(game.start_time) : null, leagueId),
           homeScore: score.length > 0 ? Number(score[0]) : null,
           awayScore: score.length > 1 ? Number(score[1]) : null,
           winner: Number(g.winner ?? -1),

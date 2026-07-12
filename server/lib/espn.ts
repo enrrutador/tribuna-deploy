@@ -29,31 +29,12 @@ const ESPN_SCOREBOARD = "https://site.api.espn.com/apis/site/v2/sports/soccer";
 const ESPN_STANDINGS = "https://site.api.espn.com/apis/v2/sports/soccer";
 
 /**
- * Promiedos devuelve horas locales de la sede para el Mundial.
- * La mayoría de sedes WC2026 están en EDT (UTC-4).
- * Esta función convierte un timestamp "falso ART" a UTC correcto
- * asumiendo que la hora original es EDT.
- *
- * Ejemplo: "2026-07-14T12:00:00-03:00" (Promiedos dice 12:00 ART)
- * → en realidad es 12:00 EDT = 16:00 UTC = 13:00 ART
- * → corregido: "2026-07-14T16:00:00Z"
+ * Promiedos fixture times for World Cup are already in ART (UTC-3).
+ * No timezone correction needed. This function is kept as a safety net
+ * but currently returns the input unchanged.
  */
 function fixPromiedosWorldCupTime(fakeArtIso: string): string {
-  try {
-    const d = new Date(fakeArtIso);
-    if (isNaN(d.getTime())) return fakeArtIso;
-
-    // Promiedos applied -03:00 (ART) but the time is actually EDT (-04:00)
-    // Difference: +1 hour to the UTC that was derived from -03:00
-    const ASSUMED_VENUE_OFFSET_HOURS = -4; // EDT
-    const ART_OFFSET_HOURS = -3;
-    const correctionMs = (ART_OFFSET_HOURS - ASSUMED_VENUE_OFFSET_HOURS) * 60 * 60 * 1000;
-
-    const corrected = new Date(d.getTime() + correctionMs);
-    return corrected.toISOString();
-  } catch {
-    return fakeArtIso;
-  }
+  return fakeArtIso;
 }
 
 // ---------- Leagues mapped to our domain ----------
