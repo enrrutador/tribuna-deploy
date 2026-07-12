@@ -534,6 +534,21 @@ if (isProduction) {
   });
 }
 
-app.listen(PORT, () => {
+const server = app.listen(PORT, () => {
   console.log(`\n  ⚽  Tribuna API escuchando en http://localhost:${PORT}\n`);
+});
+
+server.on("error", (err: Error) => {
+  console.error("[server] Listen error:", err);
+  process.exit(1);
+});
+
+process.on("uncaughtException", (err: Error) => {
+  console.error("[process] Uncaught exception:", err);
+  console.error(err.stack);
+  process.exit(1);
+});
+
+process.on("unhandledRejection", (reason: unknown) => {
+  console.error("[process] Unhandled rejection:", reason);
 });
