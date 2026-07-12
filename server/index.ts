@@ -529,7 +529,7 @@ app.use((err: unknown, _req: Request, res: Response, _next: NextFunction) => {
 
 // SPA fallback: any non-API route → index.html
 if (isProduction) {
-  app.get("/{*path}", (_req, res) => {
+  app.get("*", (_req, res) => {
     res.sendFile(path.join(__dirname, "..", "dist", "index.html"));
   });
 }
