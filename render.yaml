@@ -4,7 +4,7 @@ services:
     runtime: node
     plan: free
     buildCommand: npm install --include=dev && npm run build
-    startCommand: node dist-server/index.js
+    startCommand: node -e "process.on('uncaughtException',e=>console.error('FATAL',e));process.on('unhandledRejection',r=>console.error('REJECTION',r));import('./dist-server/index.js').catch(e=>{console.error('IMPORT FAILED',e);process.exit(1)})"
     healthCheckPath: /api/health
     envVars:
       - key: NODE_ENV
