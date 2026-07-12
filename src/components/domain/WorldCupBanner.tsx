@@ -216,16 +216,10 @@ interface DayBlock {
   matches: BracketMatch[];
 }
 
-function buildDayBlocks(matches: BracketMatch[], kickoffMap?: Map<string, string>): DayBlock[] {
+function buildDayBlocks(matches: BracketMatch[]): DayBlock[] {
   const byDay = new Map<string, BracketMatch[]>();
   for (const m of matches) {
-    // Use correct kickoffTime from fixture if available
-    const correctKickoff = kickoffMap?.get(m.id);
-    let dayKey: Date | null = null;
-    if (correctKickoff) {
-      try { dayKey = new Date(correctKickoff); } catch { dayKey = null; }
-    }
-    if (!dayKey) dayKey = parseBracketTime(m.startTime);
+    const dayKey = parseBracketTime(m.startTime);
     if (!dayKey) continue;
     const key = format(dayKey, "yyyy-MM-dd");
     if (!byDay.has(key)) byDay.set(key, []);
@@ -237,14 +231,8 @@ function buildDayBlocks(matches: BracketMatch[], kickoffMap?: Map<string, string
       day,
       dayLabel: formatBracketDay(ms[0].startTime, es),
       matches: ms.sort((a, b) => {
-        const correctA = kickoffMap?.get(a.id);
-        const correctB = kickoffMap?.get(b.id);
-        let ta: Date | null = null;
-        let tb: Date | null = null;
-        if (correctA) try { ta = new Date(correctA); } catch { ta = null; }
-        if (correctB) try { tb = new Date(correctB); } catch { tb = null; }
-        if (!ta) ta = parseBracketTime(a.startTime);
-        if (!tb) tb = parseBracketTime(b.startTime);
+        const ta = parseBracketTime(a.startTime);
+        const tb = parseBracketTime(b.startTime);
         if (ta && tb) return ta.getTime() - tb.getTime();
         return 0;
       }),
@@ -347,11 +335,6 @@ export default function WorldCupBanner() {
     return pickActiveStage(knockoutStages, artTodayStr());
   }, [brackets]);
 
-  const dayBlocks = useMemo(() => {
-    if (!activeStage) return [];
-    return buildDayBlocks(activeStage.matches, bracketToKickoff);
-  }, [activeStage, bracketToKickoff]);
-
   const bracketToMatchPath = useMemo(() => {
     const map = new Map<string, string>();
     const allMatches = brackets?.stages?.flatMap((s) => s.matches) ?? [];
@@ -381,6 +364,11 @@ export default function WorldCupBanner() {
     }
     return map;
   }, [brackets, allEspnMatches]);
+
+  const dayBlocks = useMemo(() => {
+    if (!activeStage) return [];
+    return buildDayBlocks(activeStage.matches);
+  }, [activeStage]);
 
   if (loadingBrackets || !activeStage || dayBlocks.length === 0) return null;
 
