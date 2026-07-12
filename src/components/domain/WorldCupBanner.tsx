@@ -59,6 +59,20 @@ function formatBracketTime(startTime: string | null): string {
   return timePart ?? "";
 }
 
+/** Display kickoff time in ART from a UTC ISO string */
+function displayKickoffArt(utcIso: string | null, fallback: string | null): string {
+  if (utcIso) {
+    try {
+      return new Date(utcIso).toLocaleTimeString("es-AR", {
+        hour: "2-digit",
+        minute: "2-digit",
+        timeZone: "America/Buenos_Aires",
+      });
+    } catch { /* fall through */ }
+  }
+  return formatBracketTime(fallback);
+}
+
 function formatBracketDay(startTime: string | null, locale: Locale): string {
   if (!startTime) return "";
   const [datePart] = startTime.split(" ");
@@ -484,10 +498,7 @@ export default function WorldCupBanner() {
               const isLive = match.status === "live";
               const isFinished = match.status === "finished";
               // Use correct kickoffTime from ESPN fixture if available, otherwise fall back to bracket time
-              const correctKickoff = bracketToKickoff.get(match.id);
-              const kickoff = correctKickoff
-                ? (() => { try { return new Date(correctKickoff).toLocaleTimeString("es-AR", { hour: "2-digit", minute: "2-digit", timeZone: "America/Buenos_Aires" }); } catch { return formatBracketTime(match.startTime); } })()
-                : formatBracketTime(match.startTime);
+              const kickoff = displayKickoffArt(bracketToKickoff.get(match.id) ?? null, match.startTime);
               const homeWon = isFinished && match.winner === 1;
               const awayWon = isFinished && match.winner === 2;
               const matchPath = bracketToMatchPath.get(match.id) ?? `/tournament/${WORLD_CUP_SLUG}`;
