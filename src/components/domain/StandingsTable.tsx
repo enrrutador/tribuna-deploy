@@ -3,6 +3,7 @@ import { Link } from "wouter";
 import { cn } from "@/lib/utils";
 import { GlassCard } from "@/components/ui/GlassCard";
 import { Badge } from "@/components/ui/Badge";
+import { TeamBadge } from "@/components/ui/TeamBadge";
 import type { StandingEntry, StandingsGroup } from "@/lib/types";
 import { useTranslation } from "@/lib/i18n";
 
@@ -35,6 +36,12 @@ const { t } = useTranslation();
 function GroupTable({ group, maxRows }: { group: StandingsGroup; maxRows?: number }) {
   const { t } = useTranslation();
   const rows = maxRows ? group.entries.slice(0, maxRows) : group.entries;
+  const total = rows.length;
+
+  // Determine zone boundaries (Libertadores top 4, Sudamericana 5-6, descenso last 3)
+  const libPositions = Math.min(4, Math.floor(total * 0.25));
+  const sudPositions = Math.min(2, Math.floor(total * 0.12));
+  const relegPositions = Math.min(3, Math.floor(total * 0.15));
 
   return (
     <div className={group.name ? "mb-6" : ""}>
@@ -62,22 +69,31 @@ function GroupTable({ group, maxRows }: { group: StandingsGroup; maxRows?: numbe
           </thead>
           <tbody className="divide-y divide-white/[0.02]">
             {rows.map((entry, i) => {
-              const isTop4 = entry.position <= 4;
-              const isBottom3 = entry.position > rows.length - 3;
+              const pos = entry.position;
+              const isLib = pos <= libPositions;
+              const isSud = pos > libPositions && pos <= libPositions + sudPositions;
+              const isReleg = pos > total - relegPositions;
+              const zoneColor = isLib
+                ? "border-l-[var(--color-lime-400)]"
+                : isSud
+                  ? "border-l-[var(--color-cyan-400)]"
+                  : isReleg
+                    ? "border-l-[var(--color-danger)]"
+                    : "border-l-transparent";
               return (
                 <motion.tr
                   key={entry.teamId}
                   initial={{ opacity: 0 }}
                   animate={{ opacity: 1 }}
                   transition={{ delay: i * 0.02 }}
-                  className="group transition-colors hover:bg-white/[0.02]"
+                  className={cn("group transition-colors hover:bg-white/[0.02] border-l-2", zoneColor)}
                 >
                   <td
                     className={cn(
                       "py-2.5 text-center text-xs font-bold tabular-nums",
-                      isTop4 && "text-[var(--color-lime-400)]",
-                      isBottom3 && "text-[var(--color-danger)]",
-                      !isTop4 && !isBottom3 && "text-[var(--color-slate-500)]"
+                      isLib && "text-[var(--color-lime-400)]",
+                      isReleg && "text-[var(--color-danger)]",
+                      !isLib && !isReleg && "text-[var(--color-slate-500)]"
                     )}
                   >
                     {entry.position}
@@ -85,15 +101,10 @@ function GroupTable({ group, maxRows }: { group: StandingsGroup; maxRows?: numbe
                   <td className="py-2.5 pl-3">
                     <Link href={`/team/${entry.teamId}`}>
                       <div className="flex items-center gap-2 no-underline">
-                        {entry.teamLogoUrl && (
-                          <img
-                            src={entry.teamLogoUrl}
-                            alt={entry.teamName}
-                            className="h-5 w-5 object-contain"
-                            loading="lazy"
-                            width="20" height="20"
-                          />
-                        )}
+                        <TeamBadge
+                          team={{ name: entry.teamName, shortName: entry.teamShortName, logoUrl: entry.teamLogoUrl }}
+                          size="xs"
+                        />
                         <span className="font-semibold text-[var(--color-slate-200)] group-hover:text-white truncate max-w-[140px]">
                           {entry.teamShortName ?? entry.teamName}
                         </span>

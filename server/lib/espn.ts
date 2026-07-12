@@ -17,13 +17,13 @@ import {
   PROMIEDOS_LEAGUE_MAP,
   PROMIEDOS_BASE,
   PROMIEDOS_HEADERS,
-  getTeamLogoUrl,
   type PromiedosMatch,
   type BracketMatch,
   type StandingGroup,
   type ScorersGroup,
   type TeamInfo,
 } from "./promiedos.js";
+import { resolverLogo } from "./team-logos.js";
 
 const ESPN_SCOREBOARD = "https://site.api.espn.com/apis/site/v2/sports/soccer";
 const ESPN_STANDINGS = "https://site.api.espn.com/apis/v2/sports/soccer";
@@ -257,15 +257,18 @@ function mapStatus(state: string, completed: boolean): MatchStatus {
   return "upcoming";
 }
 
-function parseTeam(c: Record<string, unknown>): TeamRef {
+function parseTeam(c: Record<string, unknown>, leagueId?: string): TeamRef {
   const team = c.team as Record<string, unknown>;
+  const id = String(team.id ?? "");
+  const name = String(team.displayName ?? team.name ?? "");
+  const color = String(team.color ?? "cccccc");
   return {
-    id: String(team.id ?? ""),
-    name: String(team.displayName ?? team.name ?? ""),
+    id,
+    name,
     shortName: String(team.shortDisplayName ?? team.name ?? ""),
     abbreviation: String(team.abbreviation ?? ""),
-    logoUrl: String(team.logo ?? ""),
-    color: String(team.color ?? "cccccc"),
+    logoUrl: resolverLogo(id, name, String(team.logo ?? ""), color, leagueId ?? ""),
+    color,
   };
 }
 
@@ -565,8 +568,8 @@ export async function fetchLeagueMatches(leagueId: string, utcDateStr?: string, 
         kickoffTime: String(ev.date),
         status: matchStatus,
         minute: matchStatus === "live" ? String(statusType?.detail ?? statusType?.shortDetail ?? "") : null,
-        homeTeam: parseTeam(home),
-        awayTeam: parseTeam(away),
+        homeTeam: parseTeam(home, leagueId),
+        awayTeam: parseTeam(away, leagueId),
         homeScore: matchStatus !== "upcoming" ? homeScore : null,
         awayScore: matchStatus !== "upcoming" ? awayScore : null,
         venue: venue?.fullName ? String(venue.fullName) : null,
@@ -834,7 +837,7 @@ export async function fetchMatchDetail(matchId: string, leagueId: string): Promi
           name: bracketMatch.homeTeam.name,
           shortName: bracketMatch.homeTeam.shortName,
           abbreviation: bracketMatch.homeTeam.symbolName,
-          logoUrl: getTeamLogoUrl(bracketMatch.homeTeam.name),
+          logoUrl: resolverLogo(bracketMatch.homeTeam.id, bracketMatch.homeTeam.name, null, bracketMatch.homeTeam.color, "fifa.world"),
           color: bracketMatch.homeTeam.color,
         },
         awayTeam: {
@@ -842,7 +845,7 @@ export async function fetchMatchDetail(matchId: string, leagueId: string): Promi
           name: bracketMatch.awayTeam.name,
           shortName: bracketMatch.awayTeam.shortName,
           abbreviation: bracketMatch.awayTeam.symbolName,
-          logoUrl: getTeamLogoUrl(bracketMatch.awayTeam.name),
+          logoUrl: resolverLogo(bracketMatch.awayTeam.id, bracketMatch.awayTeam.name, null, bracketMatch.awayTeam.color, "fifa.world"),
           color: bracketMatch.awayTeam.color,
         },
         homeScore: bracketMatch.homeScore,

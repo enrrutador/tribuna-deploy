@@ -6,17 +6,34 @@ export function cn(...inputs: ClassValue[]) {
   return twMerge(clsx(inputs));
 }
 
-/** Format an ISO date to Argentine time string (HH:mm). */
+/** Format an ISO date to Argentine time with relative day label. */
 export function formatKickoff(iso: string): string {
   try {
     const d = new Date(iso);
-    // ART = UTC-3
-    const art = new Date(d.getTime() - 3 * 60 * 60 * 1000);
-    return art.toLocaleTimeString("es-AR", {
+    const hora = d.toLocaleTimeString("es-AR", {
       hour: "2-digit",
       minute: "2-digit",
-      timeZone: "UTC",
+      timeZone: "America/Buenos_Aires",
     });
+
+    const now = new Date();
+    const todayStr = now.toLocaleDateString("es-CA", { timeZone: "America/Buenos_Aires" });
+    const matchStr = d.toLocaleDateString("es-CA", { timeZone: "America/Buenos_Aires" });
+
+    const today = new Date(todayStr);
+    const match = new Date(matchStr);
+    const diffMs = match.getTime() - today.getTime();
+    const diffDays = Math.round(diffMs / 86400000);
+
+    if (diffDays === 0) return `Hoy ${hora}`;
+    if (diffDays === 1) return `Mañana ${hora}`;
+    if (diffDays === -1) return `Ayer ${hora}`;
+    if (diffDays > 1 && diffDays < 7) {
+      const dia = d.toLocaleDateString("es-AR", { weekday: "short", timeZone: "America/Buenos_Aires" });
+      return `${dia} ${hora}`;
+    }
+    const fecha = d.toLocaleDateString("es-AR", { day: "numeric", month: "short", timeZone: "America/Buenos_Aires" });
+    return `${fecha} ${hora}`;
   } catch {
     return "--:--";
   }

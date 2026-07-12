@@ -1,6 +1,6 @@
 import { Link } from "wouter";
 import { motion } from "framer-motion";
-import { Target } from "lucide-react";
+import { Target, Tv } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { formatKickoff } from "@/lib/utils";
 import { useFavorites } from "@/lib/favorites";
@@ -128,6 +128,14 @@ const { t } = useTranslation();
         {(homeFav || awayFav) && (
           <div className="absolute right-2 top-1">
             <span className="text-[9px] text-[var(--color-warn)]/60">★</span>
+          </div>
+        )}
+
+        {/* Broadcast info (always visible) */}
+        {match.broadcastChannel && (
+          <div className="absolute bottom-0.5 right-3 flex items-center gap-0.5 text-[8px] text-[var(--color-cyan-400)]/50">
+            <Tv size={8} />
+            <span>{match.broadcastChannel}</span>
           </div>
         )}
 

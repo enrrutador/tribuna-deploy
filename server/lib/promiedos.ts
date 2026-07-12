@@ -12,66 +12,7 @@
 export const PROMIEDOS_BASE = "https://api.promiedos.com.ar";
 export const PROMIEDOS_HEADERS = { "X-VER": "1.11.7.5" };
 
-// Fallback team logos (img.promiedos.com.ar DNS is broken)
-// TheSportsDB badges for national teams + flagcdn.com fallback
-const TEAM_LOGO_OVERRIDES: Record<string, string> = {
-  "argentina": "https://r2.thesportsdb.com/images/media/team/badge/3zplhu1726167477.png",
-  "francia": "https://r2.thesportsdb.com/images/media/team/badge/p3n0z51726166851.png",
-  "brasil": "https://r2.thesportsdb.com/images/media/team/badge/jl6dip1726167280.png",
-  "alemania": "https://r2.thesportsdb.com/images/media/team/badge/1xysi51726167152.png",
-  "españa": "https://r2.thesportsdb.com/images/media/team/badge/ncgqyr1726166942.png",
-  "inglaterra": "https://r2.thesportsdb.com/images/media/team/badge/vf5ttc1726166739.png",
-  "portugal": "https://r2.thesportsdb.com/images/media/team/badge/swqvpy1455466083.png",
-  "italia": "https://r2.thesportsdb.com/images/media/team/badge/fxijcp1726167035.png",
-  "croacia": "https://r2.thesportsdb.com/images/media/team/badge/vvtsyu1455465317.png",
-  "japón": "https://r2.thesportsdb.com/images/media/team/badge/ffsyxz1591989843.png",
-  "irán": "https://r2.thesportsdb.com/images/media/team/badge/uttpvw1455465617.png",
-  "senegal": "https://r2.thesportsdb.com/images/media/team/badge/slayb01780546342.png",
-  "ghana": "https://r2.thesportsdb.com/images/media/team/badge/j589xw1751526124.png",
-  "nigeria": "https://r2.thesportsdb.com/images/media/team/badge/qruyxr1455466056.png",
-  "australia": "https://r2.thesportsdb.com/images/media/team/badge/eylq8x1781926138.png",
-  "suecia": "https://r2.thesportsdb.com/images/media/team/badge/h5adzg1591981772.png",
-  "noruega": "https://r2.thesportsdb.com/images/media/team/badge/gyfn811591973155.png",
-  "austria": "https://r2.thesportsdb.com/images/media/team/badge/874p631628721400.png",
-  "escocia": "https://r2.thesportsdb.com/images/media/team/badge/3691i11552945146.png",
-  "gales": "https://r2.thesportsdb.com/images/media/team/badge/pdayn21591983222.png",
-  "serbia": "https://r2.thesportsdb.com/images/media/team/badge/oxvynb1689195538.png",
-  "méxico": "https://r2.thesportsdb.com/images/media/team/badge/3rmosi1748525208.png",
-  "canadá": "https://r2.thesportsdb.com/images/media/team/badge/2t631f1595154867.png",
-  "colombia": "https://r2.thesportsdb.com/images/media/team/badge/4ymyku1691180081.png",
-  "uruguay": "https://r2.thesportsdb.com/images/media/team/badge/6vjbr11726167756.png",
-  "chile": "https://r2.thesportsdb.com/images/media/team/badge/5xjsy41591988732.png",
-  "ecuador": "https://r2.thesportsdb.com/images/media/team/badge/47wv2y1591989301.png",
-  "paraguay": "https://r2.thesportsdb.com/images/media/team/badge/khgav41553419195.png",
-  "perú": "https://r2.thesportsdb.com/images/media/team/badge/unszat1529144812.png",
-  "panamá": "https://r2.thesportsdb.com/images/media/team/badge/asp2ck1715849700.png",
-  "jamaica": "https://r2.thesportsdb.com/images/media/team/badge/v6mk4r1594321722.png",
-  "túnez": "https://r2.thesportsdb.com/images/media/team/badge/7r89rg1526727277.png",
-  "camerún": "https://r2.thesportsdb.com/images/media/team/badge/txqspw1455463989.png",
-  "países bajos": "https://r2.thesportsdb.com/images/media/team/badge/1p0hr41593787110.png",
-  "holanda": "https://r2.thesportsdb.com/images/media/team/badge/1p0hr41593787110.png",
-  "bélgica": "https://r2.thesportsdb.com/images/media/team/badge/8xlvxv1592062265.png",
-  "suiza": "https://r2.thesportsdb.com/images/media/team/badge/mb7yqe1717365808.png",
-  "corea del sur": "https://r2.thesportsdb.com/images/media/team/badge/24xwpq1594125742.png",
-  "egipto": "https://flagcdn.com/w80/eg.png",
-  "arabia saudita": "https://flagcdn.com/w80/sa.png",
-  "bosnia y herzegovina": "https://flagcdn.com/w80/ba.png",
-  "hungría": "https://flagcdn.com/w80/hu.png",
-  "dinamarca": "https://flagcdn.com/w80/dk.png",
-  "estados unidos": "https://r2.thesportsdb.com/images/media/team/badge/vwpvry1467462651.png",
-  "argelia": "https://flagcdn.com/w80/dz.png",
-  "cabo verde": "https://flagcdn.com/w80/cv.png",
-  "jordania": "https://flagcdn.com/w80/jo.png",
-};
-
-export function getTeamLogoUrl(teamName: string): string {
-  const lower = teamName.toLowerCase().normalize("NFD").replace(/[\u0300-\u036f]/g, "").trim();
-  if (TEAM_LOGO_OVERRIDES[lower]) return TEAM_LOGO_OVERRIDES[lower];
-  // Check original name too (with accents)
-  const original = teamName.toLowerCase().trim();
-  if (TEAM_LOGO_OVERRIDES[original]) return TEAM_LOGO_OVERRIDES[original];
-  return "";
-}
+import { resolverLogo } from "./team-logos.js";
 
 // ---------- Types ----------
 interface Goal {
@@ -334,15 +275,16 @@ function mapStatus(status?: string, winner?: number): MatchStatus {
   return "upcoming";
 }
 
-function parseTeam(team: PromiedosTeam, index: number): PromiedosMatch["homeTeam"] {
-  const overrideLogo = getTeamLogoUrl(team.name);
+function parseTeam(team: PromiedosTeam, index: number, leagueId?: string): PromiedosMatch["homeTeam"] {
+  const teamId = team.id || `pm-${index}`;
+  const teamColor = team.colors?.color?.replace("#", "") || "334155";
   return {
-    id: team.id || `pm-${index}`,
+    id: teamId,
     name: team.name,
     shortName: team.short_name || team.name,
     abbreviation: (team.short_name || team.name).slice(0, 3).toUpperCase(),
-    logoUrl: overrideLogo || "",
-    color: team.colors?.color?.replace("#", "") || "334155",
+    logoUrl: resolverLogo(teamId, team.name, null, teamColor, leagueId ?? ""),
+    color: teamColor,
     goals: team.goals,
     redCards: team.red_cards,
   };
@@ -350,8 +292,8 @@ function parseTeam(team: PromiedosTeam, index: number): PromiedosMatch["homeTeam
 
 function parseGame(game: PromiedosGame, leagueId: string, leagueName: string, leagueSlug: string, category: string, flag: string): PromiedosMatch {
   const teams = game.teams || [];
-  const home = teams[0] ? parseTeam(teams[0], 0) : null;
-  const away = teams[1] ? parseTeam(teams[1], 1) : null;
+  const home = teams[0] ? parseTeam(teams[0], 0, leagueId) : null;
+  const away = teams[1] ? parseTeam(teams[1], 1, leagueId) : null;
 
   // Normalize status: can be string or object
   let statusStr: string | undefined;
@@ -754,7 +696,7 @@ export async function fetchPromiedosStandings(leagueId: string): Promise<Standin
           const teamName = teamObj?.name || `Equipo ${row.num}`;
           const teamShortName = teamObj?.short_name || teamName;
           const teamId = teamObj?.id || `pm-row-${row.num}`;
-          const teamLogoUrl = getTeamLogoUrl(teamName);
+          const teamLogoUrl = resolverLogo(teamId, teamName, null, "334155", leagueId);
 
           return {
             position: row.num,
@@ -864,7 +806,7 @@ export async function fetchPromiedosScorers(leagueId: string): Promise<ScorersGr
           position_label: playerObj?.position || "",
           teamId,
           teamName,
-          teamLogoUrl: getTeamLogoUrl(teamName),
+          teamLogoUrl: resolverLogo(teamId, teamName, null, "334155", leagueId),
           value,
         };
       });
@@ -1017,7 +959,7 @@ export async function fetchPromiedosTeam(teamId: string): Promise<TeamInfo | nul
       id: comp.id,
       name: comp.name,
       shortName: comp.short_name,
-      logoUrl: getTeamLogoUrl(comp.name),
+      logoUrl: resolverLogo(comp.id, comp.name, null, comp.colors?.color?.replace("#", "") || "334155", ""),
       color: comp.colors?.color?.replace("#", "") || "334155",
       mainLeague: data.main_league,
       info,

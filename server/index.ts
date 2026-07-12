@@ -25,6 +25,7 @@ import {
   cacheStats,
 } from "./lib/espn.js";
 import { fetchBrackets } from "./lib/promiedos.js";
+import { buscarLogoExterno } from "./lib/team-logos.js";
 import { fetchNews } from "./lib/news.js";
 import { fetchTrending, fetchTrendingTopic, trendingToRSS } from "./lib/trending.js";
 import { startKeepAlive } from "./lib/keepalive.js";
@@ -400,6 +401,21 @@ app.get("/api/teams/:teamId/schedule", async (req, res) => {
   } catch (err) {
     console.error(err);
     res.status(500).json({ error: "Error interno" });
+  }
+});
+
+// ---------- Team Logo (on-demand lookup) ----------
+app.get("/api/teams/:teamId/logo", async (req, res) => {
+  try {
+    const name = req.query.name as string;
+    if (!name) {
+      res.status(400).json({ error: "Falta query param 'name'" });
+      return;
+    }
+    const logo = await buscarLogoExterno(name);
+    res.json({ logo });
+  } catch {
+    res.status(500).json({ error: "Error buscando logo" });
   }
 });
 
