@@ -202,10 +202,16 @@ interface DayBlock {
   matches: BracketMatch[];
 }
 
-function buildDayBlocks(matches: BracketMatch[]): DayBlock[] {
+function buildDayBlocks(matches: BracketMatch[], kickoffMap?: Map<string, string>): DayBlock[] {
   const byDay = new Map<string, BracketMatch[]>();
   for (const m of matches) {
-    const dayKey = parseBracketTime(m.startTime);
+    // Use correct kickoffTime from fixture if available
+    const correctKickoff = kickoffMap?.get(m.id);
+    let dayKey: Date | null = null;
+    if (correctKickoff) {
+      try { dayKey = new Date(correctKickoff); } catch { dayKey = null; }
+    }
+    if (!dayKey) dayKey = parseBracketTime(m.startTime);
     if (!dayKey) continue;
     const key = format(dayKey, "yyyy-MM-dd");
     if (!byDay.has(key)) byDay.set(key, []);
@@ -217,8 +223,14 @@ function buildDayBlocks(matches: BracketMatch[]): DayBlock[] {
       day,
       dayLabel: formatBracketDay(ms[0].startTime, es),
       matches: ms.sort((a, b) => {
-        const ta = parseBracketTime(a.startTime);
-        const tb = parseBracketTime(b.startTime);
+        const correctA = kickoffMap?.get(a.id);
+        const correctB = kickoffMap?.get(b.id);
+        let ta: Date | null = null;
+        let tb: Date | null = null;
+        if (correctA) try { ta = new Date(correctA); } catch { ta = null; }
+        if (correctB) try { tb = new Date(correctB); } catch { tb = null; }
+        if (!ta) ta = parseBracketTime(a.startTime);
+        if (!tb) tb = parseBracketTime(b.startTime);
         if (ta && tb) return ta.getTime() - tb.getTime();
         return 0;
       }),
@@ -323,8 +335,8 @@ export default function WorldCupBanner() {
 
   const dayBlocks = useMemo(() => {
     if (!activeStage) return [];
-    return buildDayBlocks(activeStage.matches);
-  }, [activeStage]);
+    return buildDayBlocks(activeStage.matches, bracketToKickoff);
+  }, [activeStage, bracketToKickoff]);
 
   const bracketToMatchPath = useMemo(() => {
     const map = new Map<string, string>();
@@ -335,6 +347,22 @@ export default function WorldCupBanner() {
         map.set(bm.id, `/match/${found.leagueId}:${found.id}`);
       } else if (bm.id) {
         map.set(bm.id, `/match/fifa.world:pm-${bm.id}`);
+      }
+    }
+    return map;
+  }, [brackets, allEspnMatches]);
+
+  // Map bracket match ID → correct kickoffTime from ESPN fixture data
+  const bracketToKickoff = useMemo(() => {
+    const map = new Map<string, string>();
+    const allMatches = brackets?.stages?.flatMap((s) => s.matches) ?? [];
+    for (const bm of allMatches) {
+      const found = findEspnMatchId(bm, allEspnMatches);
+      if (found) {
+        const fixture = allEspnMatches.find((m) => m.id === found.id);
+        if (fixture?.kickoffTime) {
+          map.set(bm.id, fixture.kickoffTime);
+        }
       }
     }
     return map;
@@ -455,7 +483,11 @@ export default function WorldCupBanner() {
             {activeBlock.matches.map((match, idx) => {
               const isLive = match.status === "live";
               const isFinished = match.status === "finished";
-              const kickoff = formatBracketTime(match.startTime);
+              // Use correct kickoffTime from ESPN fixture if available, otherwise fall back to bracket time
+              const correctKickoff = bracketToKickoff.get(match.id);
+              const kickoff = correctKickoff
+                ? (() => { try { return new Date(correctKickoff).toLocaleTimeString("es-AR", { hour: "2-digit", minute: "2-digit", timeZone: "America/Buenos_Aires" }); } catch { return formatBracketTime(match.startTime); } })()
+                : formatBracketTime(match.startTime);
               const homeWon = isFinished && match.winner === 1;
               const awayWon = isFinished && match.winner === 2;
               const matchPath = bracketToMatchPath.get(match.id) ?? `/tournament/${WORLD_CUP_SLUG}`;
