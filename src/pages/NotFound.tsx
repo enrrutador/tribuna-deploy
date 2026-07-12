@@ -1,27 +1,16 @@
 import { Link } from "wouter";
-import { motion } from "framer-motion";
 import { Home, ArrowLeft } from "lucide-react";
 import { Button } from "@/components/ui/Button";
 import { GlassCard } from "@/components/ui/GlassCard";
 import { useTranslation } from "@/lib/i18n";
 
 export default function NotFound() {
-const { t } = useTranslation();
+  const { t } = useTranslation();
   return (
     <div className="flex min-h-[60vh] items-center justify-center">
-      <motion.div
-        initial={{ opacity: 0, y: 20 }}
-        animate={{ opacity: 1, y: 0 }}
-        transition={{ duration: 0.4 }}
-      >
+      <div className="animate-page-in">
         <GlassCard variant="strong" className="p-10 text-center max-w-md">
-          <motion.div
-            animate={{ rotate: [0, 5, -5, 0] }}
-            transition={{ duration: 4, repeat: Infinity }}
-            className="text-7xl mb-4"
-          >
-            ⚽
-          </motion.div>
+          <div className="text-7xl mb-4 animate-float">⚽</div>
           <h1 className="text-4xl font-black text-gradient-lime mb-2">404</h1>
           <p className="text-[var(--color-slate-400)] mb-6">
             Esta página no existe o fue removida. El partido quizás ya terminó y el link cambió.
@@ -39,7 +28,7 @@ const { t } = useTranslation();
             </Button>
           </div>
         </GlassCard>
-      </motion.div>
+      </div>
     </div>
   );
 }

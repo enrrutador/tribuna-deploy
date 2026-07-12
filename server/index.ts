@@ -2,6 +2,9 @@ import express from "express";
 import path from "node:path";
 import { fileURLToPath } from "node:url";
 import type { Request, Response, NextFunction } from "express";
+import compression from "compression";
+import helmet from "helmet";
+import rateLimit from "express-rate-limit";
 import {
   LEAGUES,
   SLUG_TO_LEAGUE,
@@ -24,11 +27,33 @@ import {
 import { fetchBrackets } from "./lib/promiedos.js";
 import { fetchNews } from "./lib/news.js";
 import { fetchTrending, fetchTrendingTopic, trendingToRSS } from "./lib/trending.js";
+import { startKeepAlive } from "./lib/keepalive.js";
+import { warmupCache } from "./lib/warmup.js";
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
 
 const app = express();
+
+app.use(compression());
+
+app.use(
+  helmet({
+    contentSecurityPolicy: false,
+    crossOriginEmbedderPolicy: false,
+  })
+);
+
+const apiLimiter = rateLimit({
+  windowMs: 60 * 1000,
+  max: 60,
+  standardHeaders: true,
+  legacyHeaders: false,
+  message: { error: "Demasiadas solicitudes, esperá un momento" },
+});
+
+app.use("/api", apiLimiter);
+
 const PORT = Number(process.env.PORT ?? 3001);
 const isProduction = process.env.NODE_ENV === "production";
 
@@ -39,7 +64,19 @@ app.use((req, _res, next) => {
 
 if (isProduction) {
   const distPath = path.join(__dirname, "..", "dist");
-  app.use(express.static(distPath));
+  app.use(
+    express.static(distPath, {
+      maxAge: "7d",
+      immutable: true,
+      etag: true,
+    })
+  );
+  // index.html no se cachea (SPA fallback necesita siempre la última)
+  app.get("*", (req, res, next) => {
+    if (req.path.startsWith("/api")) return next();
+    res.setHeader("Cache-Control", "no-cache");
+    res.sendFile(path.join(distPath, "index.html"));
+  });
 }
 
 // ---------- Tournaments ----------
@@ -527,16 +564,15 @@ app.use((err: unknown, _req: Request, res: Response, _next: NextFunction) => {
   res.status(500).json({ error: "Error interno del servidor" });
 });
 
-// SPA fallback: any non-API route → index.html
-if (isProduction) {
-  app.get("*", (_req, res) => {
-    res.sendFile(path.join(__dirname, "..", "dist", "index.html"));
-  });
-}
-
 const server = app.listen(PORT, () => {
   console.log(`\n  ⚽  Tribuna API escuchando en http://localhost:${PORT}\n`);
 });
+
+warmupCache();
+
+if (isProduction) {
+  startKeepAlive();
+}
 
 server.on("error", (err: Error) => {
   console.error("[server] Listen error:", err);

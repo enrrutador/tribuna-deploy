@@ -1,4 +1,3 @@
-import { motion } from "framer-motion";
 import { Helmet } from "react-helmet-async";
 import { TrendingUp, RefreshCw } from "lucide-react";
 import { useTrending } from "@/lib/hooks";
@@ -6,7 +5,7 @@ import TrendingCard from "@/components/domain/TrendingCard";
 import { useTranslation } from "@/lib/i18n";
 
 export default function Trending() {
-const { t } = useTranslation();
+  const { t } = useTranslation();
   const { data, isLoading, refetch, isFetching } = useTrending();
 
   return (
@@ -41,7 +40,7 @@ const { t } = useTranslation();
             disabled={isFetching}
             className="flex items-center gap-1.5 rounded-lg bg-white/5 px-3 py-1.5 text-xs font-medium text-white/70 transition-colors hover:bg-white/10 hover:text-white disabled:opacity-50"
           >
-            <RefreshCw className={`h-3.5 w-3.5 ${isFetching ? 'animate-spin' : ''}`} />
+            <RefreshCw className={`h-3.5 w-3.5 ${isFetching ? "animate-spin" : ""}`} />
             Actualizar
           </button>
         </div>
@@ -72,11 +71,10 @@ const { t } = useTranslation();
           <>
             <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
               {data.topics.map((topic, i) => (
-                <motion.div
+                <div
                   key={topic.slug}
-                  initial={{ opacity: 0, y: 20 }}
-                  animate={{ opacity: 1, y: 0 }}
-                  transition={{ delay: i * 0.05 }}
+                  className="animate-page-in"
+                  style={{ animationDelay: `${i * 50}ms` }}
                 >
                   <TrendingCard
                     title={topic.title}
@@ -85,7 +83,7 @@ const { t } = useTranslation();
                     sources={topic.sources}
                     items={topic.topItems}
                   />
-                </motion.div>
+                </div>
               ))}
             </div>
 
@@ -106,11 +104,11 @@ const { t } = useTranslation();
                         {item.title}
                       </p>
                       <p className="text-xs text-white/40">
-                        {item.source === 'google_trends' && 'Google Trends'}
-                        {item.source === 'google_news' && 'Google News'}
-                        {item.source === 'youtube' && 'YouTube'}
-                        {item.source === 'reddit' && `Reddit r/${item.meta.subreddit ?? ''}`}
-                        {item.publishedAgo ? ` · ${item.publishedAgo}` : ''}
+                        {item.source === "google_trends" && "Google Trends"}
+                        {item.source === "google_news" && "Google News"}
+                        {item.source === "youtube" && "YouTube"}
+                        {item.source === "reddit" && `Reddit r/${item.meta.subreddit ?? ""}`}
+                        {item.publishedAgo ? ` · ${item.publishedAgo}` : ""}
                       </p>
                     </div>
                   </a>
@@ -119,7 +117,7 @@ const { t } = useTranslation();
             </div>
 
             <p className="text-center text-[10px] text-white/30">
-              Actualizado: {new Date(data.lastUpdated).toLocaleString('es-AR')} · Fuentes: Google Trends, Google News, YouTube, Reddit
+              Actualizado: {new Date(data.lastUpdated).toLocaleString("es-AR")} · Fuentes: Google Trends, Google News, YouTube, Reddit
             </p>
           </>
         )}

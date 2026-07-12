@@ -1,6 +1,5 @@
 import { useEffect } from "react";
 import { Switch, Route, useLocation } from "wouter";
-import { motion } from "framer-motion";
 import Layout from "@/components/layout/Layout";
 import ErrorBoundary from "@/components/layout/ErrorBoundary";
 import Home from "@/pages/Home";
@@ -16,26 +15,15 @@ import NotFound from "@/pages/NotFound";
 import { useTranslation } from "@/lib/i18n";
 
 function AnimatedRoutes() {
-const { t } = useTranslation();
+  const { t } = useTranslation();
   const [location] = useLocation();
 
   useEffect(() => {
     window.scrollTo({ top: 0, behavior: "instant" });
   }, [location]);
 
-  // NOTE: We intentionally avoid <AnimatePresence mode="wait"> here.
-  // With framer-motion v11 + React 19, the exit animation can fail to
-  // resolve, which blocks the new route from mounting and leaves the
-  // page blank until a hard refresh. Using a plain key'd motion.div
-  // remounts the subtree per route (clean query state) and keeps a
-  // smooth enter animation without the risk.
   return (
-    <motion.div
-      key={location}
-      initial={{ opacity: 0, y: 8 }}
-      animate={{ opacity: 1, y: 0 }}
-      transition={{ duration: 0.22, ease: "easeOut" }}
-    >
+    <div key={location} className="animate-page-in">
       <Switch>
         <Route path="/" component={Home} />
         <Route path="/live" component={Live} />
@@ -56,7 +44,7 @@ const { t } = useTranslation();
         </Route>
         <Route component={NotFound} />
       </Switch>
-    </motion.div>
+    </div>
   );
 }
 

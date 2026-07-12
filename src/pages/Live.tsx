@@ -1,4 +1,3 @@
-import { motion } from "framer-motion";
 import { Radio, RefreshCw } from "lucide-react";
 import { useLiveMatches } from "@/lib/hooks";
 import { timeAgo } from "@/lib/utils";
@@ -11,7 +10,7 @@ import MatchGroupCard from "@/components/domain/MatchGroupCard";
 import { useTranslation } from "@/lib/i18n";
 
 export default function Live() {
-const { t } = useTranslation();
+  const { t } = useTranslation();
   const {
     data: liveData,
     isLoading,
@@ -64,15 +63,11 @@ const { t } = useTranslation();
           description="No hay partidos jugándose en este momento. Volvé más tarde o explorá los resultados del día."
         />
       ) : (
-        <motion.div
-          initial={{ opacity: 0 }}
-          animate={{ opacity: 1 }}
-          className="space-y-3"
-        >
+        <div className="space-y-3 animate-page-in">
           {groups.map((group, i) => (
             <MatchGroupCard key={group.tournament.id} group={group} index={i} glow="magenta" />
           ))}
-        </motion.div>
+        </div>
       )}
     </div>
   );

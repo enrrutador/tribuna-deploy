@@ -1,5 +1,4 @@
 import { Link } from "wouter";
-import { motion } from "framer-motion";
 import { Trophy, Globe2, Flag } from "lucide-react";
 import { useTournaments } from "@/lib/hooks";
 import { SectionTitle } from "@/components/ui/SectionTitle";
@@ -23,7 +22,7 @@ const ACCENTS: Record<string, string> = {
 };
 
 export default function Tournaments() {
-const { t } = useTranslation();
+  const { t } = useTranslation();
   const { data: tournaments, isLoading } = useTournaments();
 
   if (isLoading) return <PageLoader label="Cargando torneos" />;
@@ -54,18 +53,13 @@ const { t } = useTranslation();
 
               <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
                 {items.map((t, i) => (
-                  <motion.div
+                  <div
                     key={t.slug}
-                    initial={{ opacity: 0, y: 10 }}
-                    animate={{ opacity: 1, y: 0 }}
-                    transition={{ delay: i * 0.03 }}
+                    className="animate-page-in"
+                    style={{ animationDelay: `${i * 30}ms` }}
                   >
                     <Link href={`/tournament/${t.slug}`}>
-                      <GlassCard
-                        variant="soft"
-                        hover
-                        className="flex items-center gap-3 px-4 py-3.5 h-full"
-                      >
+                      <GlassCard variant="soft" hover className="flex items-center gap-3 px-4 py-3.5 h-full">
                         <div className="flex h-11 w-11 shrink-0 items-center justify-center rounded-xl bg-white/5 text-2xl ring-1 ring-white/5">
                           {t.flag}
                         </div>
@@ -80,7 +74,7 @@ const { t } = useTranslation();
                         </div>
                       </GlassCard>
                     </Link>
-                  </motion.div>
+                  </div>
                 ))}
               </div>
             </div>
