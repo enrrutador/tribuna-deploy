@@ -28,6 +28,34 @@ import {
 const ESPN_SCOREBOARD = "https://site.api.espn.com/apis/site/v2/sports/soccer";
 const ESPN_STANDINGS = "https://site.api.espn.com/apis/v2/sports/soccer";
 
+/**
+ * Promiedos devuelve horas locales de la sede para el Mundial.
+ * La mayoría de sedes WC2026 están en EDT (UTC-4).
+ * Esta función convierte un timestamp "falso ART" a UTC correcto
+ * asumiendo que la hora original es EDT.
+ *
+ * Ejemplo: "2026-07-14T12:00:00-03:00" (Promiedos dice 12:00 ART)
+ * → en realidad es 12:00 EDT = 16:00 UTC = 13:00 ART
+ * → corregido: "2026-07-14T16:00:00Z"
+ */
+function fixPromiedosWorldCupTime(fakeArtIso: string): string {
+  try {
+    const d = new Date(fakeArtIso);
+    if (isNaN(d.getTime())) return fakeArtIso;
+
+    // Promiedos applied -03:00 (ART) but the time is actually EDT (-04:00)
+    // Difference: +1 hour to the UTC that was derived from -03:00
+    const ASSUMED_VENUE_OFFSET_HOURS = -4; // EDT
+    const ART_OFFSET_HOURS = -3;
+    const correctionMs = (ART_OFFSET_HOURS - ASSUMED_VENUE_OFFSET_HOURS) * 60 * 60 * 1000;
+
+    const corrected = new Date(d.getTime() + correctionMs);
+    return corrected.toISOString();
+  } catch {
+    return fakeArtIso;
+  }
+}
+
 // ---------- Leagues mapped to our domain ----------
 export const LEAGUES = {
   // Destacados
@@ -432,35 +460,61 @@ export async function fetchLeagueMatches(leagueId: string, utcDateStr?: string, 
         const normalize = (s: string) =>
           s.normalize("NFD").replace(/[\u0300-\u036f]/g, "").toLowerCase().replace(/[^a-z0-9]/g, "").trim();
 
-        // Build lookup from ESPN: normalized translated "home|away" → espnId
-        const espnLookup = new Map<string, string>();
+        // Build a second lookup: ESPN sig → full ESPN match data (id + kickoff + status)
+        const espnMatchData = new Map<string, { id: string; kickoffTime: string; status: MatchStatus; minute: string | null }>();
         for (const ev of espnEvents) {
           const comp = (ev.competitions as Record<string, unknown>[])?.[0] ?? {};
           const competitors = (comp.competitors as Record<string, unknown>[]) ?? [];
           const home = competitors.find((c) => c.homeAway === "home") ?? competitors[0] ?? {};
           const away = competitors.find((c) => c.homeAway === "away") ?? competitors[1] ?? {};
-          const homeName = String(((home.team as Record<string, unknown>)?.displayName) ?? ((home.team as Record<string, unknown>)?.shortDisplayName) ?? "");
-          const awayName = String(((away.team as Record<string, unknown>)?.displayName) ?? ((away.team as Record<string, unknown>)?.shortDisplayName) ?? "");
+          const homeName = String(((home.team as Record<string, unknown>)?.displayName) ?? "");
+          const awayName = String(((away.team as Record<string, unknown>)?.displayName) ?? "");
           const sig = `${normalize(homeName)}|${normalize(awayName)}`;
           const sigRev = `${normalize(awayName)}|${normalize(homeName)}`;
-          espnLookup.set(sig, String(ev.id));
-          espnLookup.set(sigRev, String(ev.id));
+
+          const status = comp.status as Record<string, unknown> | undefined;
+          const statusType = status?.type as Record<string, unknown> | undefined;
+          const state = String(statusType?.state ?? "pre");
+          const completed = Boolean(statusType?.completed ?? false);
+          const matchStatus: MatchStatus = mapStatus(state, completed);
+          const clock = status?.displayClock ? String(status.displayClock) : null;
+          const minuteStr = matchStatus === "live" ? (clock ?? null) : null;
+
+          // ESPN gives proper UTC date
+          const espnDate = String(ev.date ?? "");
+
+          const data = { id: String(ev.id), kickoffTime: espnDate, status: matchStatus, minute: minuteStr };
+          espnMatchData.set(sig, data);
+          espnMatchData.set(sigRev, data);
         }
 
-        // Enrich Promiedos matches with ESPN IDs (translate Spanish → English before matching)
+        // Enrich Promiedos matches with ESPN IDs + correct kickoff times + live status
         let enriched = 0;
         let unmatched = 0;
         for (const pm of matches) {
           const homeEn = translateToEn(pm.homeTeam.name);
           const awayEn = translateToEn(pm.awayTeam.name);
           const pmSig = `${normalize(homeEn)}|${normalize(awayEn)}`;
-          const espnId = espnLookup.get(pmSig);
-          if (espnId) {
-            pm.id = espnId;
+          const espn = espnMatchData.get(pmSig);
+          if (espn) {
+            pm.id = espn.id;
+            // Override kickoff time with ESPN's correct UTC timestamp
+            if (espn.kickoffTime) {
+              pm.kickoffTime = espn.kickoffTime;
+            }
+            // Override status from ESPN (more reliable for live detection)
+            if (espn.status === "live") {
+              pm.status = "live";
+              pm.minute = espn.minute;
+            } else if (espn.status === "finished" && pm.status !== "finished") {
+              pm.status = "finished";
+            }
             enriched++;
           } else {
             unmatched++;
             console.log(`[espn] mundial unmatched: ${pm.homeTeam.name} vs ${pm.awayTeam.name} (sig: ${pmSig})`);
+            // Fix timezone for unmatched World Cup matches (Promiedos gives USA local time, not ART)
+            pm.kickoffTime = fixPromiedosWorldCupTime(pm.kickoffTime);
           }
         }
         console.log(`[espn] mundial enrichment: ${enriched} matched, ${unmatched} unmatched out of ${espnEvents.length} ESPN events, ${matches.length} PM matches`);
