@@ -10,68 +10,80 @@ interface EventTimelineProps {
   match?: Match;
 }
 
-const EVENT_ICONS: Record<string, { icon: string; color: string }> = {
-  goal:        { icon: "⚽", color: "text-[var(--color-lime-400)]" },
-  owngoal:     { icon: "⚽", color: "text-[var(--color-danger)]" },
-  penalty:     { icon: "⚽", color: "text-[var(--color-lime-400)]" },
-  penalty_miss:{ icon: "❌", color: "text-[var(--color-warn)]" },
-  yellow_card: { icon: "🟨", color: "text-[var(--color-warn)]" },
-  red_card:    { icon: "🟥", color: "text-[var(--color-danger)]" },
-  substitution:{ icon: "🔄", color: "text-[var(--color-cyan-400)]" },
-  var_review:  { icon: "📺", color: "text-[var(--color-magenta-400)]" },
+const EVENT_ICONS: Record<string, { icon: string; color: string; bg: string }> = {
+  goal:        { icon: "⚽", color: "text-[var(--color-lime-400)]",  bg: "bg-[var(--color-lime-400)]" },
+  owngoal:     { icon: "⚽", color: "text-[var(--color-danger)]",   bg: "bg-[var(--color-danger)]" },
+  penalty:     { icon: "⚽", color: "text-[var(--color-lime-400)]",  bg: "bg-[var(--color-lime-400)]" },
+  penalty_miss:{ icon: "✕",  color: "text-[var(--color-warn)]",     bg: "bg-[var(--color-warn)]" },
+  yellow_card: { icon: "🟨", color: "text-[var(--color-warn)]",     bg: "bg-[var(--color-warn)]" },
+  red_card:    { icon: "🟥", color: "text-[var(--color-danger)]",   bg: "bg-[var(--color-danger)]" },
+  substitution:{ icon: "🔄", color: "text-[var(--color-cyan-400)]", bg: "bg-[var(--color-cyan-400)]" },
+  var_review:  { icon: "📺", color: "text-[var(--color-magenta-400)]", bg: "bg-[var(--color-magenta-400)]" },
 };
 
-function EventRow({ event, homeId, isFirst }: { event: MatchEvent; homeId: string; isFirst: boolean }) {
-const { t } = useTranslation();
+function EventRow({ event, homeId, isFirst, isLast }: { event: MatchEvent; homeId: string; isFirst: boolean; isLast: boolean }) {
+  const { t } = useTranslation();
   const isHome = event.teamId === homeId;
   const style = EVENT_ICONS[event.type] ?? EVENT_ICONS.goal!;
-  const homeName = event.teamName;
 
   return (
     <motion.div
-      initial={{ opacity: 0, x: isHome ? -12 : 12 }}
+      initial={{ opacity: 0, x: isHome ? -16 : 16 }}
       animate={{ opacity: 1, x: 0 }}
-      transition={{ delay: isFirst ? 0 : 0.05, duration: 0.3 }}
-      className="flex items-center gap-3 py-2.5 group"
+      transition={{ delay: isFirst ? 0 : 0.06, duration: 0.35 }}
+      className="relative flex items-stretch gap-3 group"
     >
-      {/* Home side */}
-      <div className={cn("flex-1 flex items-center gap-2", isHome ? "justify-end" : "justify-start opacity-0 h-0")}>
+      {/* Home side (left) */}
+      <div className={cn("flex-1 flex items-center gap-2 min-w-0", isHome ? "justify-end" : "justify-end")}>
         {isHome && (
-          <>
-            <span className="text-xs text-[var(--color-slate-400)] text-right truncate max-w-[140px]">
-              {event.playerName && (
-                <span className="font-semibold text-[var(--color-slate-200)]">{event.playerName}</span>
-              )}
+          <div className="flex items-center gap-2 min-w-0">
+            <div className="text-right min-w-0">
+              <p className="text-xs font-semibold text-[var(--color-slate-200)] truncate">{event.playerName}</p>
               {event.assistName && (
-                <span className="ml-1 text-[var(--color-slate-500)]">(asist. {event.assistName})</span>
+                <p className="text-[10px] text-[var(--color-slate-500)] truncate">asist. {event.assistName}</p>
               )}
-            </span>
-            <span className={cn("text-base", style.color)}>{style.icon}</span>
-          </>
+            </div>
+            <div className={cn(
+              "flex h-7 w-7 shrink-0 items-center justify-center rounded-full text-sm",
+              style.color, "bg-white/[0.04]"
+            )}>
+              {style.icon}
+            </div>
+          </div>
         )}
       </div>
 
-      {/* Minute (center) */}
-      <div className="flex w-10 shrink-0 items-center justify-center">
-        <span className="text-[11px] font-bold tabular-nums text-[var(--color-slate-400)]">
+      {/* Center: minute + timeline node */}
+      <div className="relative flex flex-col items-center w-12 shrink-0">
+        {/* Vertical line segment */}
+        {!isFirst && <div className="absolute top-0 bottom-1/2 w-px bg-white/[0.08]" />}
+        {!isLast && <div className="absolute top-1/2 bottom-0 w-px bg-white/[0.08]" />}
+        {/* Node */}
+        <div className={cn(
+          "relative z-10 flex h-7 w-7 items-center justify-center rounded-full text-[10px] font-black tabular-nums border-2 border-[var(--color-graphite)]",
+          style.bg, "text-[var(--color-void)]"
+        )}>
           {event.minute}'
-        </span>
+        </div>
       </div>
 
-      {/* Away side */}
-      <div className={cn("flex-1 flex items-center gap-2", !isHome ? "justify-start" : "justify-end opacity-0 h-0")}>
+      {/* Away side (right) */}
+      <div className={cn("flex-1 flex items-center gap-2 min-w-0", !isHome ? "justify-start" : "justify-start")}>
         {!isHome && (
-          <>
-            <span className={cn("text-base", style.color)}>{style.icon}</span>
-            <span className="text-xs text-[var(--color-slate-400)] truncate max-w-[140px]">
-              {event.playerName && (
-                <span className="font-semibold text-[var(--color-slate-200)]">{event.playerName}</span>
-              )}
+          <div className="flex items-center gap-2 min-w-0">
+            <div className={cn(
+              "flex h-7 w-7 shrink-0 items-center justify-center rounded-full text-sm",
+              style.color, "bg-white/[0.04]"
+            )}>
+              {style.icon}
+            </div>
+            <div className="text-left min-w-0">
+              <p className="text-xs font-semibold text-[var(--color-slate-200)] truncate">{event.playerName}</p>
               {event.assistName && (
-                <span className="ml-1 text-[var(--color-slate-500)]">(asist. {event.assistName})</span>
+                <p className="text-[10px] text-[var(--color-slate-500)] truncate">asist. {event.assistName}</p>
               )}
-            </span>
-          </>
+            </div>
+          </div>
         )}
       </div>
     </motion.div>
@@ -91,32 +103,35 @@ export default function EventTimeline({ events, match }: EventTimelineProps) {
   const homeId = match?.homeTeam.id ?? "";
   const sorted = [...events].sort((a, b) => a.minute - b.minute);
 
-  // Group by half
   const firstHalf = sorted.filter((e) => e.minute <= 45);
-  const secondHalf = sorted.filter((e) => e.minute > 45);
+  const secondHalf = sorted.filter((e) => e.minute > 45 && e.minute <= 90);
+  const extraTime = sorted.filter((e) => e.minute > 90);
+
+  const renderHalf = (label: string, tone: "cyan" | "magenta" | "default", items: MatchEvent[]) => {
+    if (items.length === 0) return null;
+    return (
+      <div>
+        <Badge tone={tone} className="mb-3">{t(label)}</Badge>
+        <div className="space-y-3">
+          {items.map((e, i) => (
+            <EventRow
+              key={e.id}
+              event={e}
+              homeId={homeId}
+              isFirst={i === 0}
+              isLast={i === items.length - 1}
+            />
+          ))}
+        </div>
+      </div>
+    );
+  };
 
   return (
-    <div className="space-y-4">
-      {firstHalf.length > 0 && (
-        <div>
-          <Badge tone="cyan" className="mb-2">{t("1er Tiempo")}</Badge>
-          <GlassCard variant="soft" className="px-4 py-1">
-            {firstHalf.map((e, i) => (
-              <EventRow key={e.id} event={e} homeId={homeId} isFirst={i === 0} />
-            ))}
-          </GlassCard>
-        </div>
-      )}
-      {secondHalf.length > 0 && (
-        <div>
-          <Badge tone="magenta" className="mb-2">{t("2do Tiempo")}</Badge>
-          <GlassCard variant="soft" className="px-4 py-1">
-            {secondHalf.map((e, i) => (
-              <EventRow key={e.id} event={e} homeId={homeId} isFirst={i === 0} />
-            ))}
-          </GlassCard>
-        </div>
-      )}
-    </div>
+    <GlassCard variant="soft" className="p-4 space-y-5">
+      {renderHalf("1er Tiempo", "cyan", firstHalf)}
+      {renderHalf("2do Tiempo", "magenta", secondHalf)}
+      {extraTime.length > 0 && renderHalf("Tiempo extra", "default", extraTime)}
+    </GlassCard>
   );
 }

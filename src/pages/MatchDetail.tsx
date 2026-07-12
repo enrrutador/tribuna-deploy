@@ -24,21 +24,51 @@ const { t } = useTranslation();
   const starters = players.filter((p) => p.starter);
   const subs = players.filter((p) => !p.starter);
 
+  // Group starters by position line for formation display
+  const posOrder: Record<string, number> = { "Goalkeeper": 0, "Defender": 1, "Midfielder": 2, "Forward": 3 };
+  const grouped = new Map<string, typeof starters>();
+  for (const p of starters) {
+    const pos = p.position ?? "Unknown";
+    const key = Object.keys(posOrder).find((k) => pos.includes(k)) ?? pos;
+    if (!grouped.has(key)) grouped.set(key, []);
+    grouped.get(key)!.push(p);
+  }
+  const sortedGroups = [...grouped.entries()].sort(([a], [b]) => (posOrder[a] ?? 99) - (posOrder[b] ?? 99));
+
+  const posShort: Record<string, string> = { Goalkeeper: "ARQ", Defender: "DEF", Midfielder: "MED", Forward: "DEL" };
+
   return (
     <GlassCard variant="soft" className="p-4">
       <div className="flex items-center justify-between mb-3">
         <h4 className="text-sm font-bold text-[var(--color-slate-100)]">{teamName}</h4>
-        {formation && <span className="text-[10px] font-bold text-[var(--color-cyan-400)]">{formation}</span>}
+        {formation && (
+          <span className="inline-flex items-center gap-1 rounded-md bg-[var(--color-cyan-400)]/10 px-2 py-0.5 text-[10px] font-black text-[var(--color-cyan-400)]">
+            {formation}
+          </span>
+        )}
       </div>
-      <div className="space-y-1">
-        {starters.map((p, i) => (
-          <div key={i} className="flex items-center gap-2 py-1 text-xs">
-            <span className="w-6 text-center font-bold text-[var(--color-slate-500)]">{p.jerseyNumber ?? "-"}</span>
-            <span className="flex-1 text-[var(--color-slate-200)]">{p.name}</span>
-            <span className="text-[10px] text-[var(--color-slate-500)]">{p.position ?? ""}</span>
+
+      {/* Formation visual (grouped by line) */}
+      <div className="space-y-2 mb-3">
+        {sortedGroups.map(([posKey, players]) => (
+          <div key={posKey}>
+            <span className="text-[9px] font-bold uppercase tracking-wider text-[var(--color-slate-600)] mb-1 block">
+              {posShort[posKey] ?? posKey}
+            </span>
+            <div className="flex flex-wrap gap-1.5">
+              {players.map((p, i) => (
+                <div key={i} className="flex items-center gap-1.5 rounded-md bg-white/[0.03] border border-white/[0.05] px-2 py-1">
+                  <span className="flex h-5 w-5 items-center justify-center rounded bg-[var(--color-lime-400)]/10 text-[9px] font-black text-[var(--color-lime-400)]">
+                    {p.jerseyNumber ?? "-"}
+                  </span>
+                  <span className="text-[11px] font-medium text-[var(--color-slate-200)]">{p.name}</span>
+                </div>
+              ))}
+            </div>
           </div>
         ))}
       </div>
+
       {subs.length > 0 && (
         <>
           <div className="mt-3 mb-2 border-t border-white/5 pt-2">
@@ -47,7 +77,7 @@ const { t } = useTranslation();
           <div className="space-y-1">
             {subs.map((p, i) => (
               <div key={i} className="flex items-center gap-2 py-0.5 text-[11px]">
-                <span className="w-6 text-center text-[var(--color-slate-600)]">{p.jerseyNumber ?? "-"}</span>
+                <span className="w-5 text-center text-[var(--color-slate-600)] text-[10px]">{p.jerseyNumber ?? "-"}</span>
                 <span className="text-[var(--color-slate-400)]">{p.name}</span>
               </div>
             ))}
@@ -61,19 +91,78 @@ const { t } = useTranslation();
 function HeadToHead({ games }: { games: { date: string; homeTeam: string; awayTeam: string; homeScore: number; awayScore: number; competition: string }[] }) {
   const { t } = useTranslation();
   if (games.length === 0) return null;
+
+  // Stats
+  let homeWins = 0, awayWins = 0, draws = 0;
+  for (const g of games) {
+    if (g.homeScore > g.awayScore) homeWins++;
+    else if (g.awayScore > g.homeScore) awayWins++;
+    else draws++;
+  }
+
   return (
     <GlassCard variant="soft" className="p-4">
       <h4 className="text-sm font-bold text-[var(--color-slate-100)] mb-3">{t("Historial entre ambos")}</h4>
-      <div className="space-y-2">
-        {games.slice(0, 5).map((g, i) => (
-          <div key={i} className="flex items-center gap-2 text-xs py-1.5 border-b border-white/[0.03] last:border-0">
-            <span className="w-20 text-[var(--color-slate-500)]">{g.date.slice(0, 10)}</span>
-            <span className="flex-1 text-right text-[var(--color-slate-300)] truncate">{g.homeTeam}</span>
-            <span className="w-12 text-center font-bold text-[var(--color-lime-400)]">{g.homeScore} - {g.awayScore}</span>
-            <span className="flex-1 text-[var(--color-slate-300)] truncate">{g.awayTeam}</span>
-          </div>
-        ))}
+
+      {/* Summary bar */}
+      <div className="flex items-center gap-2 mb-3 text-[11px]">
+        <span className="flex-1 text-right font-bold text-[var(--color-lime-400)]">{homeWins} {t("G")}</span>
+        <div className="flex h-6 items-center gap-1 rounded-md bg-white/[0.04] px-2">
+          <span className="font-bold text-[var(--color-slate-300)]">{homeWins}</span>
+          <span className="text-[var(--color-slate-600)]">-</span>
+          <span className="font-bold text-[var(--color-slate-300)]">{draws}</span>
+          <span className="text-[var(--color-slate-600)]">-</span>
+          <span className="font-bold text-[var(--color-slate-300)]">{awayWins}</span>
+        </div>
+        <span className="flex-1 text-left font-bold text-[var(--color-cyan-400)]">{awayWins} {t("G")}</span>
       </div>
+
+      <div className="space-y-0">
+        {games.slice(0, 5).map((g, i) => {
+          const isHomeWin = g.homeScore > g.awayScore;
+          const isAwayWin = g.awayScore > g.homeScore;
+          const isDraw = g.homeScore === g.awayScore;
+          return (
+            <motion.div
+              key={i}
+              initial={{ opacity: 0, y: 4 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ delay: i * 0.05 }}
+              className="flex items-center gap-2 text-xs py-2 border-b border-white/[0.03] last:border-0"
+            >
+              <span className="w-16 text-[10px] text-[var(--color-slate-600)] shrink-0">
+                {g.date.slice(0, 10)}
+              </span>
+              <span className={cn(
+                "flex-1 text-right truncate",
+                isHomeWin ? "font-bold text-[var(--color-lime-400)]" : "text-[var(--color-slate-400)]"
+              )}>
+                {g.homeTeam}
+              </span>
+              <div className={cn(
+                "flex shrink-0 items-center justify-center rounded-md px-2 py-1 font-black tabular-nums",
+                isDraw ? "bg-[var(--color-slate-500)]/10 text-[var(--color-slate-300)]" :
+                isHomeWin ? "bg-[var(--color-lime-400)]/10 text-[var(--color-lime-400)]" :
+                "bg-[var(--color-cyan-400)]/10 text-[var(--color-cyan-400)]"
+              )}>
+                {g.homeScore} - {g.awayScore}
+              </div>
+              <span className={cn(
+                "flex-1 text-left truncate",
+                isAwayWin ? "font-bold text-[var(--color-cyan-400)]" : "text-[var(--color-slate-400)]"
+              )}>
+                {g.awayTeam}
+              </span>
+            </motion.div>
+          );
+        })}
+      </div>
+
+      {games.length > 5 && (
+        <p className="mt-2 text-center text-[10px] text-[var(--color-slate-600)]">
+          +{games.length - 5} {t("partidos más")}
+        </p>
+      )}
     </GlassCard>
   );
 }
