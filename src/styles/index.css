@@ -1,0 +1,331 @@
+@import "tailwindcss";
+
+/* ============================================================
+   TRIBUNA — Design System
+   Glassmorphism oscuro con acentos neón.
+   Paleta: Carbón profundo + Verde lima eléctrico + Cyan hielo
+           + Magenta neón (énfasis) + Ámbar (vivo/warning)
+   ============================================================ */
+
+@theme {
+  /* —— Base: carbón profundo con tinte azul-noche —— */
+  --color-void: #050608;          /* el más oscuro */
+  --color-carbon: #0a0c12;        /* fondo principal */
+  --color-graphite: #11141d;      /* superficie base */
+  --color-slate-900: #161a25;     /* tarjetas */
+  --color-slate-800: #1d2230;     /* tarjetas elevadas */
+  --color-slate-700: #272d3d;     /* bordes sutiles */
+  --color-slate-600: #353c50;     /* bordes */
+  --color-slate-500: #4b5470;     /* texto terciario */
+  --color-slate-400: #6b7494;     /* texto secundario */
+  --color-slate-300: #9ba3c0;     /* texto principal */
+  --color-slate-200: #c8cee0;     /* texto destacado */
+  --color-slate-100: #e8ebf5;     /* texto brillante */
+  --color-slate-50: #f5f7fc;      /* el más claro */
+
+  /* —— Acento primario: Verde lima eléctrico (deporte/energía) —— */
+  --color-lime-500: #84ff3d;      /* acento principal */
+  --color-lime-400: #a4ff66;
+  --color-lime-300: #c4ff8f;
+  --color-lime-600: #5cd610;
+  --color-lime-700: #3da60a;
+  --color-lime-glow: rgba(132, 255, 61, 0.5);
+
+  /* —— Acento secundario: Cyan hielo (datos/tecnología) —— */
+  --color-cyan-500: #00e5ff;
+  --color-cyan-400: #4af0ff;
+  --color-cyan-600: #00b8d4;
+  --color-cyan-glow: rgba(0, 229, 255, 0.4);
+
+  /* —— Acento terciario: Magenta neón (vivo/alerta/emoción) —— */
+  --color-magenta-500: #ff2d9b;
+  --color-magenta-400: #ff5fb0;
+  --color-magenta-600: #d40076;
+  --color-magenta-glow: rgba(255, 45, 155, 0.45);
+
+  /* —— Estados —— */
+  --color-live: #ff3850;          /* rojo vivo (partido en juego) */
+  --color-live-glow: rgba(255, 56, 80, 0.55);
+  --color-warn: #ffb800;          /* amarillo tarjeta */
+  --color-danger: #ff4d4f;        /* rojo tarjeta / error */
+  --color-success: #84ff3d;       /* verde = éxito */
+  --color-info: #00e5ff;          /* cyan = info */
+
+  /* —— Fondos glass —— */
+  --color-glass-1: rgba(22, 26, 37, 0.65);
+  --color-glass-2: rgba(29, 34, 48, 0.55);
+  --color-glass-3: rgba(40, 46, 64, 0.45);
+
+  /* —— Gradientes —— */
+  --gradient-stadium: radial-gradient(ellipse at top, rgba(132, 255, 61, 0.08), transparent 60%),
+                      radial-gradient(ellipse at bottom right, rgba(255, 45, 155, 0.06), transparent 50%),
+                      radial-gradient(ellipse at bottom left, rgba(0, 229, 255, 0.05), transparent 50%);
+
+  /* —— Tipografía —— */
+  --font-display: "Space Grotesk", system-ui, sans-serif;
+  --font-sans: "Inter", system-ui, -apple-system, sans-serif;
+  --font-mono: "JetBrains Mono", ui-monospace, monospace;
+
+  /* —— Radios —— */
+  --radius-sm: 6px;
+  --radius-md: 10px;
+  --radius-lg: 16px;
+  --radius-xl: 22px;
+  --radius-2xl: 28px;
+
+  /* —— Sombras con glow —— */
+  --shadow-glow-lime: 0 0 24px var(--color-lime-glow);
+  --shadow-glow-cyan: 0 0 24px var(--color-cyan-glow);
+  --shadow-glow-magenta: 0 0 24px var(--color-magenta-glow);
+  --shadow-glow-live: 0 0 18px var(--color-live-glow);
+  --shadow-card: 0 8px 32px rgba(0, 0, 0, 0.4), 0 2px 8px rgba(0, 0, 0, 0.3);
+}
+
+/* ============================================================
+   Fuentes (cargadas vía Google Fonts en el head)
+   ============================================================ */
+
+/* ============================================================
+   Base
+   ============================================================ */
+* {
+  border-color: var(--color-slate-700);
+}
+
+html {
+  -webkit-text-size-adjust: 100%;
+  scrollbar-gutter: stable;
+}
+
+body {
+  font-family: var(--font-sans);
+  background: var(--color-void);
+  color: var(--color-slate-200);
+  min-height: 100vh;
+  overflow-x: hidden;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+  text-rendering: optimizeLegibility;
+}
+
+/* Fondo atmosférico: luces de estadio de noche */
+#root {
+  position: relative;
+  min-height: 100vh;
+  isolation: isolate;
+}
+
+#root::before {
+  content: "";
+  position: fixed;
+  inset: 0;
+  background: var(--gradient-stadium);
+  z-index: -2;
+  pointer-events: none;
+}
+
+/* Patrón sutil de grilla hexagonal tipo césped tech */
+#root::after {
+  content: "";
+  position: fixed;
+  inset: 0;
+  background-image:
+    linear-gradient(rgba(132, 255, 61, 0.025) 1px, transparent 1px),
+    linear-gradient(90deg, rgba(132, 255, 61, 0.025) 1px, transparent 1px);
+  background-size: 44px 44px;
+  z-index: -1;
+  pointer-events: none;
+  mask-image: radial-gradient(ellipse at center, black 0%, transparent 80%);
+}
+
+h1, h2, h3, h4, h5, h6 {
+  font-family: var(--font-display);
+  font-weight: 700;
+  letter-spacing: -0.02em;
+  color: var(--color-slate-50);
+}
+
+::selection {
+  background: var(--color-lime-500);
+  color: var(--color-void);
+}
+
+/* ============================================================
+   Scrollbar personalizada
+   ============================================================ */
+::-webkit-scrollbar {
+  width: 10px;
+  height: 10px;
+}
+::-webkit-scrollbar-track {
+  background: var(--color-carbon);
+}
+::-webkit-scrollbar-thumb {
+  background: linear-gradient(var(--color-slate-700), var(--color-slate-600));
+  border-radius: 999px;
+  border: 2px solid var(--color-carbon);
+}
+::-webkit-scrollbar-thumb:hover {
+  background: linear-gradient(var(--color-lime-700), var(--color-lime-600));
+}
+
+/* ============================================================
+   Utilidades glass
+   ============================================================ */
+@utility glass {
+  background: var(--color-glass-1);
+  backdrop-filter: blur(20px) saturate(160%);
+  -webkit-backdrop-filter: blur(20px) saturate(160%);
+  border: 1px solid rgba(255, 255, 255, 0.06);
+  box-shadow: var(--shadow-card);
+}
+
+@utility glass-soft {
+  background: var(--color-glass-2);
+  backdrop-filter: blur(14px) saturate(140%);
+  -webkit-backdrop-filter: blur(14px) saturate(140%);
+  border: 1px solid rgba(255, 255, 255, 0.05);
+}
+
+@utility glass-strong {
+  background: var(--color-glass-1);
+  backdrop-filter: blur(30px) saturate(180%);
+  -webkit-backdrop-filter: blur(30px) saturate(180%);
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  box-shadow: var(--shadow-card), inset 0 1px 0 rgba(255, 255, 255, 0.04);
+}
+
+@utility text-glow-lime {
+  text-shadow: 0 0 18px var(--color-lime-glow);
+}
+@utility text-glow-cyan {
+  text-shadow: 0 0 18px var(--color-cyan-glow);
+}
+@utility text-glow-magenta {
+  text-shadow: 0 0 18px var(--color-magenta-glow);
+}
+
+/* Borde con gradiente animado */
+@utility border-glow {
+  position: relative;
+  border: 1px solid transparent;
+  background-clip: padding-box;
+}
+
+/* ============================================================
+   Animaciones globales
+   ============================================================ */
+@keyframes pulse-live {
+  0%, 100% { opacity: 1; transform: scale(1); box-shadow: 0 0 0 0 var(--color-live-glow); }
+  50% { opacity: 0.85; transform: scale(1.08); box-shadow: 0 0 0 8px transparent; }
+}
+
+@keyframes shimmer {
+  0% { background-position: -200% 0; }
+  100% { background-position: 200% 0; }
+}
+
+@keyframes float {
+  0%, 100% { transform: translateY(0); }
+  50% { transform: translateY(-6px); }
+}
+
+@keyframes gradient-shift {
+  0%, 100% { background-position: 0% 50%; }
+  50% { background-position: 100% 50%; }
+}
+
+@keyframes score-pop {
+  0% { transform: scale(0.6); opacity: 0; }
+  60% { transform: scale(1.25); }
+  100% { transform: scale(1); opacity: 1; }
+}
+
+@keyframes page-in {
+  from { opacity: 0; transform: translateY(8px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
+@keyframes spin-slow {
+  to { transform: rotate(360deg); }
+}
+
+@keyframes ticker {
+  0% { transform: translateX(0); }
+  100% { transform: translateX(-50%); }
+}
+
+.animate-pulse-live {
+  animation: pulse-live 1.6s ease-in-out infinite;
+}
+.animate-float {
+  animation: float 4s ease-in-out infinite;
+}
+.animate-gradient {
+  background-size: 200% 200%;
+  animation: gradient-shift 6s ease infinite;
+}
+.animate-spin-slow {
+  animation: spin-slow 8s linear infinite;
+}
+.animate-ticker {
+  animation: ticker 40s linear infinite;
+}
+.animate-score-pop {
+  animation: score-pop 0.45s cubic-bezier(0.34, 1.56, 0.64, 1);
+}
+.animate-page-in {
+  animation: page-in 0.22s cubic-bezier(0.16, 1, 0.3, 1) both;
+}
+
+/* Skeleton shimmer */
+.shimmer {
+  background: linear-gradient(
+    90deg,
+    var(--color-slate-800) 25%,
+    var(--color-slate-700) 50%,
+    var(--color-slate-800) 75%
+  );
+  background-size: 200% 100%;
+  animation: shimmer 1.6s linear infinite;
+}
+
+/* ============================================================
+   Helpers
+   ============================================================ */
+.no-scrollbar::-webkit-scrollbar {
+  display: none;
+}
+.no-scrollbar {
+  -ms-overflow-style: none;
+  scrollbar-width: none;
+}
+
+.tabular-nums {
+  font-variant-numeric: tabular-nums;
+}
+
+/* Texto con gradiente neón */
+.text-gradient-lime {
+  background: linear-gradient(135deg, var(--color-lime-300), var(--color-cyan-400));
+  -webkit-background-clip: text;
+  background-clip: text;
+  color: transparent;
+}
+.text-gradient-fire {
+  background: linear-gradient(135deg, var(--color-magenta-500), var(--color-warn));
+  -webkit-background-clip: text;
+  background-clip: text;
+  color: transparent;
+}
+
+/* Gráfico recharts: ocultar líneas de grid por defecto */
+.recharts-cartesian-grid line {
+  stroke: var(--color-slate-700);
+}
+
+/* Safe area iOS */
+@supports (padding: max(0px)) {
+  .safe-top { padding-top: max(0.5rem, env(safe-area-inset-top)); }
+  .safe-bottom { padding-bottom: max(0.5rem, env(safe-area-inset-bottom)); }
+}
